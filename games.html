@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070707" />
+    <title>Black Russia: Играть</title>
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+  </head>
+  <body class="game-page">
+    <div class="app-shell app-shell--game">
+      <header class="top-glass top-glass--hero" aria-label="Панель профиля">
+        <a class="brand-mark" href="index.html" aria-label="Главная">
+          <img src="assets/logo.png" alt="Black Russia" class="brand-mark__logo" />
+        </a>
+
+        <a class="profile-pill" href="#profile" aria-label="Открыть профиль">
+          <img src="assets/profile.png" alt="Фото профиля" class="profile-pill__avatar" />
+          <span class="profile-pill__text">
+            <span class="profile-pill__name">Dima</span>
+            <span class="profile-pill__uid">#0</span>
+          </span>
+        </a>
+      </header>
+
+      <main class="content-flow game-content" aria-label="Игровые задания">
+        <section class="game-summary" aria-label="Прогресс игрока">
+          <div class="game-summary__header">
+            <div>
+              <span class="game-summary__eyebrow">Уровень</span>
+              <h1 class="game-summary__title">13</h1>
+            </div>
+            <span class="game-summary__badge">+ 12%</span>
+          </div>
+
+          <div class="game-summary__meta">
+            <div class="game-summary__stat">
+              <span class="game-summary__stat-label">XP</span>
+              <strong>42 / 60</strong>
+            </div>
+            <div class="game-summary__stat">
+              <span class="game-summary__stat-label">До уровня</span>
+              <strong>18 XP</strong>
+            </div>
+          </div>
+
+          <div class="game-summary__progress" aria-hidden="true">
+            <span class="game-summary__progress-fill"></span>
+          </div>
+        </section>
+
+        <nav class="game-tabs" aria-label="Фильтры заданий">
+          <button class="game-tab is-active" type="button" data-game-filter="all">ВСЕ РАБОТЫ</button>
+          <button class="game-tab" type="button" data-game-filter="available">ДОСТУПНЫЕ</button>
+          <button class="game-tab" type="button" data-game-filter="soon">СКОРО ОТКРОЮТСЯ</button>
+          <button class="game-tab" type="button" data-game-filter="high">ВЫСОКИЙ ДОХОД</button>
+        </nav>
+
+        <section class="game-jobs" aria-label="Список задач">
+          <article class="job-card" data-level="1" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--farm" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ФЕРМА</h2>
+              <span class="job-card__level">Уровень 1</span>
+              <p class="job-card__description">Сбор урожая.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="1" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--mine" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ШАХТА</h2>
+              <span class="job-card__level">Уровень 1</span>
+              <p class="job-card__description">Добыча руды.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="1" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--factory" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ЗАВОД</h2>
+              <span class="job-card__level">Уровень 1</span>
+              <p class="job-card__description">Производство товаров.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="2" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--courier" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">КУРЬЕР</h2>
+              <span class="job-card__level">Уровень 2</span>
+              <p class="job-card__description">Доставка посылок.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="2" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--bus" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ВОДИТЕЛЬ АВТОБУСА</h2>
+              <span class="job-card__level">Уровень 2</span>
+              <p class="job-card__description">Перевозка пассажиров.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="3" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--vehicle" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">УГОНЩИК ТРАНСПОРТНЫХ СРЕДСТВ</h2>
+              <span class="job-card__level">Уровень 3</span>
+              <p class="job-card__description">Перевозка имущества.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="3" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--treasure" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">КЛАДОИСКАТЕЛЬ</h2>
+              <span class="job-card__level">Уровень 3</span>
+              <p class="job-card__description">Поиск сокровищ.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="3" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--fish" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">РЫБАЛКА</h2>
+              <span class="job-card__level">Уровень 3</span>
+              <p class="job-card__description">Ловля рыбы.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="3" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--truck" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ВОДИТЕЛЬ МУСОРОВОЗА</h2>
+              <span class="job-card__level">Уровень 3</span>
+              <p class="job-card__description">Вывоз отходов.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="4" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--mechanic" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">АВТОМЕХАНИК</h2>
+              <span class="job-card__level">Уровень 4</span>
+              <p class="job-card__description">Ремонт техники.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="4" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--hunter" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ОХОТНИК</h2>
+              <span class="job-card__level">Уровень 4</span>
+              <p class="job-card__description">Добыча ресурсов.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="5" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--gas" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ГАЗОВЩИК</h2>
+              <span class="job-card__level">Уровень 5</span>
+              <p class="job-card__description">Обслуживание систем.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="5" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--pvz" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">КУРЬЕР ПВЗ</h2>
+              <span class="job-card__level">Уровень 5</span>
+              <p class="job-card__description">Доставка заказов.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="7" data-available="true" data-income="standard">
+            <div class="job-card__preview job-card__preview--warehouse" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">СКЛАДСКОЙ РАБОТНИК</h2>
+              <span class="job-card__level">Уровень 7</span>
+              <p class="job-card__description">Подготовка грузов.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="10" data-available="true" data-income="high">
+            <div class="job-card__preview job-card__preview--trucker" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ДАЛЬНОБОЙЩИК</h2>
+              <span class="job-card__level">Уровень 10</span>
+              <p class="job-card__description">Дальние перевозки.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card" data-level="12" data-available="true" data-income="high">
+            <div class="job-card__preview job-card__preview--electric" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ЭЛЕКТРИК</h2>
+              <span class="job-card__level">Уровень 12</span>
+              <p class="job-card__description">Ремонт сетей.</p>
+              <p class="job-card__reward">Награда зависит от результата</p>
+            </div>
+            <button class="job-card__cta" type="button">НАЧАТЬ</button>
+          </article>
+
+          <article class="job-card job-card--locked" data-level="15" data-available="false" data-income="high">
+            <div class="job-card__preview job-card__preview--locked" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ИНКАССАТОР</h2>
+              <span class="job-card__level">Уровень 15</span>
+              <p class="job-card__description">Перевозка ценностей.</p>
+              <p class="job-card__reward">Откроется на 15 уровне</p>
+            </div>
+            <button class="job-card__cta job-card__cta--locked" type="button" disabled>LOCK</button>
+          </article>
+
+          <article class="job-card job-card--locked" data-level="18" data-available="false" data-income="high">
+            <div class="job-card__preview job-card__preview--locked" aria-hidden="true"></div>
+            <div class="job-card__content">
+              <h2 class="job-card__title">ВОДОЛАЗ</h2>
+              <span class="job-card__level">Уровень 18</span>
+              <p class="job-card__description">Поиск предметов под водой.</p>
+              <p class="job-card__reward">Откроется на 18 уровне</p>
+            </div>
+            <button class="job-card__cta job-card__cta--locked" type="button" disabled>LOCK</button>
+          </article>
+        </section>
+
+        <section id="jobGameView" class="job-game-view is-hidden" aria-live="polite">
+          <header class="job-game-view__header">
+            <button id="gameBackButton" class="game-back" type="button" aria-label="Назад к работам">←</button>
+            <div class="job-game-view__meta">
+              <span class="job-game-view__label">РАБОТА</span>
+              <h2 id="gameTitle" class="job-game-view__title">ФЕРМА</h2>
+            </div>
+            <div id="gameTimer" class="job-game-view__timer">00:15</div>
+          </header>
+
+          <div id="gameArena" class="job-game-view__arena" aria-live="polite"></div>
+
+          <div class="job-game-view__footer">
+            <p id="gameInstruction" class="job-game-view__instruction">Нажмите готовые растения.</p>
+            <div id="gameActions" class="job-game-view__actions"></div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-glass bottom-nav" aria-label="Основная навигация">
+        <a class="bottom-nav__item" href="index.html" aria-label="Главное">
+          <img src="assets/home.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Главное</span>
+        </a>
+        <a class="bottom-nav__item" href="market.html" aria-label="Рынок">
+          <img src="assets/store.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Рынок</span>
+        </a>
+        <a class="bottom-nav__item" href="chat.html" aria-label="Общение">
+          <img src="assets/messages.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Общение</span>
+        </a>
+        <a class="bottom-nav__item bottom-nav__item--active" href="games.html" aria-current="page" aria-label="Играть">
+          <img src="assets/gamepad.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Играть</span>
+        </a>
+        <a class="bottom-nav__item" href="#profile" aria-label="Профиль">
+          <img src="assets/user.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Профиль</span>
+        </a>
+      </nav>
+    </div>
+
+    <script src="js/app.js" type="module"></script>
+  </body>
+</html>

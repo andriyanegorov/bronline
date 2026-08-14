@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070707" />
+    <title>Black Russia: Общение</title>
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/components.css" />
+  </head>
+  <body class="chat-page">
+    <div class="app-shell app-shell--chat">
+      <header class="top-glass top-glass--chat" aria-label="Панель профиля">
+        <a class="brand-mark" href="index.html" aria-label="Главная">
+          <img src="assets/logo.png" alt="Black Russia" class="brand-mark__logo" />
+        </a>
+
+        <a class="profile-pill" href="#profile" aria-label="Открыть профиль">
+          <img src="assets/profile.png" alt="Фото профиля" class="profile-pill__avatar" />
+          <span class="profile-pill__text">
+            <span class="profile-pill__name">Dima</span>
+            <span class="profile-pill__uid">#0</span>
+          </span>
+        </a>
+      </header>
+
+      <main class="chat-content" aria-label="Чаты">
+        <div class="chat-tabs" role="tablist" aria-label="Тип чата">
+          <button class="chat-tab is-active" type="button" data-chat-tab="general" role="tab" aria-selected="true">
+            ОБЩИЙ ЧАТ
+          </button>
+          <button class="chat-tab" type="button" data-chat-tab="search" role="tab" aria-selected="false">
+            ПОИСК ПО ID
+          </button>
+        </div>
+
+        <section class="chat-panel is-active" data-chat-panel="general" aria-label="Общий чат">
+          <article class="chat-server-card" aria-label="Сервер чата">
+            <div class="chat-server-card__title">BLACK RUSSIA | SERVER 1</div>
+            <div class="chat-server-card__meta">
+              <span class="chat-server-card__players">2 456 игроков онлайн</span>
+              <button class="chat-server-card__rules" type="button">Правила чата</button>
+            </div>
+          </article>
+
+          <div class="chat-message-list" aria-label="Список сообщений общего чата">
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--red">A</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Artem_777</span>
+                  <span class="chat-message__id">#4582</span>
+                  <span class="chat-message__time">21:42</span>
+                </div>
+                <p class="chat-message__text">Куплю квартиру в Арзамасе бюджет 3.5kk</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--dark">D</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Dima</span>
+                  <span class="chat-message__id">#1847</span>
+                  <span class="chat-message__badge">Администратор</span>
+                  <span class="chat-message__time">21:43</span>
+                </div>
+                <p class="chat-message__text">Уважаемые игроки, соблюдайте правила чата</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--red">K</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Kirill_01</span>
+                  <span class="chat-message__id">#9021</span>
+                  <span class="chat-message__time">21:43</span>
+                </div>
+                <p class="chat-message__text">Продам скин админа, цена договорная</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--dark">S</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Smoke</span>
+                  <span class="chat-message__id">#3120</span>
+                  <span class="chat-message__time">21:44</span>
+                </div>
+                <p class="chat-message__text">Обменяю BMW M5 F90 на G63</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--red">M</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Maksimka</span>
+                  <span class="chat-message__id">#7755</span>
+                  <span class="chat-message__time">21:44</span>
+                </div>
+                <p class="chat-message__text">Кто в казино на крупные ставки?</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--dark">D</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Dima</span>
+                  <span class="chat-message__id">#1847</span>
+                  <span class="chat-message__badge">Администратор</span>
+                  <span class="chat-message__time">21:45</span>
+                </div>
+                <p class="chat-message__text">Запрещена реклама сторонних проектов.</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--red">N</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Nikita_Boss</span>
+                  <span class="chat-message__id">#2266</span>
+                  <span class="chat-message__time">21:45</span>
+                </div>
+                <p class="chat-message__text">Продаю бензин 24/7 у строки</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--dark">B</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Blood Squad</span>
+                  <span class="chat-message__id">#1002</span>
+                  <span class="chat-message__time">21:46</span>
+                </div>
+                <p class="chat-message__text">Сбор у дома №1025 через 10 минут</p>
+              </div>
+            </article>
+
+            <article class="chat-message">
+              <div class="chat-message__avatar avatar avatar--red">A</div>
+              <div class="chat-message__body">
+                <div class="chat-message__meta">
+                  <span class="chat-message__name">Artur4ik</span>
+                  <span class="chat-message__id">#6633</span>
+                  <span class="chat-message__time">21:46</span>
+                </div>
+                <p class="chat-message__text">Ищу напарника для инкассации</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="chat-composer" aria-label="Поле ввода сообщения">
+            <button class="chat-composer__attach" type="button" aria-label="Прикрепить файл">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 12.5l7.5-7.5a3 3 0 1 1 4.2 4.2L9.5 20.3a5 5 0 1 1-7.1-7.1L13 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <input type="text" value="" placeholder="Напишите сообщение..." aria-label="Напишите сообщение" />
+            <button class="chat-composer__send" type="button" aria-label="Отправить сообщение">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12l16-8-4 16-4-6-8-2Zm0 0l9 1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="chat-panel" data-chat-panel="search" aria-label="Поиск по ID">
+          <div class="chat-search-header">
+            <h2>Поиск игрока по ID</h2>
+            <p>Введите ID игрока, чтобы начать с ним личную переписку</p>
+          </div>
+
+          <div class="chat-search-field" aria-label="Поиск по ID">
+            <span class="chat-search-field__prefix">#</span>
+            <input type="text" data-search-input value="" placeholder="Введите ID игрока" aria-label="Введите ID игрока" />
+            <button class="chat-search-field__clear" type="button" aria-label="Очистить поле">×</button>
+          </div>
+
+          <button class="chat-search-button" type="button" data-search-btn>НАЙТИ</button>
+
+          <div class="chat-search-result" data-search-result hidden>
+            <div class="chat-search-result__row" data-open-conversation data-user-name="Dima" data-user-id="1847" data-user-role="Администратор">
+              <div class="chat-message__avatar avatar avatar--dark">D</div>
+              <div class="chat-search-result__info">
+                <span class="chat-search-result__name">Dima</span>
+                <span class="chat-search-result__meta">#1847 · Администратор</span>
+              </div>
+              <span class="chat-search-result__arrow">›</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="chat-panel chat-panel--dialog" data-chat-panel="dialog" aria-label="Личный диалог">
+          <header class="chat-dialog-header">
+            <button class="chat-dialog-header__back" type="button" aria-label="Назад">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <div class="chat-dialog-header__user">
+              <div class="chat-message__avatar avatar avatar--dark">D</div>
+              <div class="chat-dialog-header__info">
+                <span class="chat-dialog-header__name" data-dialog-name>Dima</span>
+                <span class="chat-dialog-header__meta" data-dialog-meta>#1847 · Администратор</span>
+              </div>
+            </div>
+
+            <button class="chat-dialog-header__menu" type="button" aria-label="Дополнительно">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.6" fill="currentColor"/>
+                <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+                <circle cx="12" cy="19" r="1.6" fill="currentColor"/>
+              </svg>
+            </button>
+          </header>
+
+          <div class="chat-dialog-messages" aria-label="Сообщения в переписке">
+            <div class="chat-dialog-message chat-dialog-message--incoming">
+              <div class="chat-dialog-message__bubble">Привет, интересует твоя BMW M5 F90, актуально ещё?</div>
+              <span class="chat-dialog-message__time">21:42</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--outgoing">
+              <div class="chat-dialog-message__bubble">Привет! Да, актуальна</div>
+              <span class="chat-dialog-message__time">21:42</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--incoming">
+              <div class="chat-dialog-message__bubble">Отлично, можно больше информации о ней?</div>
+              <span class="chat-dialog-message__time">21:43</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--outgoing">
+              <div class="chat-dialog-message__bubble">BMW M5 F90<br>Год: 2021<br>Пробег: 22.000 км<br>Цена: 14.200.000 ₽<br>Состояние: идеальное</div>
+              <span class="chat-dialog-message__time">21:43</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--incoming">
+              <div class="chat-dialog-message__bubble">Хорошо, давай встретимся у банка?</div>
+              <span class="chat-dialog-message__time">21:44</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--outgoing">
+              <div class="chat-dialog-message__bubble">Давай, через 10 минут буду</div>
+              <span class="chat-dialog-message__time">21:45</span>
+            </div>
+
+            <div class="chat-dialog-message chat-dialog-message--incoming">
+              <div class="chat-dialog-message__bubble">Окей, жду!</div>
+              <span class="chat-dialog-message__time">21:45</span>
+            </div>
+          </div>
+
+          <div class="chat-composer chat-composer--dialog" aria-label="Поле ввода в личном чате">
+            <button class="chat-composer__attach" type="button" aria-label="Прикрепить файл">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 12.5l7.5-7.5a3 3 0 1 1 4.2 4.2L9.5 20.3a5 5 0 1 1-7.1-7.1L13 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <input type="text" value="" placeholder="Напишите сообщение..." aria-label="Напишите сообщение" />
+            <button class="chat-composer__send" type="button" aria-label="Отправить сообщение">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12l16-8-4 16-4-6-8-2Zm0 0l9 1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-glass bottom-nav" aria-label="Основная навигация">
+        <a class="bottom-nav__item" href="index.html" aria-label="Главное">
+          <img src="assets/home.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Главное</span>
+        </a>
+        <a class="bottom-nav__item" href="market.html" aria-label="Рынок">
+          <img src="assets/store.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Рынок</span>
+        </a>
+        <a class="bottom-nav__item bottom-nav__item--active" href="chat.html" aria-current="page" aria-label="Общение">
+          <img src="assets/messages.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Общение</span>
+        </a>
+        <a class="bottom-nav__item" href="#game" aria-label="Играть">
+          <img src="assets/gamepad.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Играть</span>
+        </a>
+        <a class="bottom-nav__item" href="#profile" aria-label="Профиль">
+          <img src="assets/user.svg" alt="" class="bottom-nav__icon" />
+          <span class="bottom-nav__label">Профиль</span>
+        </a>
+      </nav>
+    </div>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
