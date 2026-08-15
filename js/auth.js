@@ -403,10 +403,75 @@ const TelegramAuth = (() => {
       if (!stored) return null;
 
       const data = JSON.parse(stored);
-      // Consider localStorage data as cache only, not authoritative
       return data;
     } catch (error) {
       console.warn('[Auth] Failed to read localStorage:', error);
+      return null;
+    }
+  };
+
+  const restoreStoredSession = async () => {
+    if (!supabase) return null;
+
+    const stored = getStoredUser();
+    if (!stored) return null;
+
+    try {
+      let profileRecord = null;
+
+      if (stored.uid) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('uid, telegram_id, telegram_username, first_name, last_name, avatar_url, nickname, level, experience, status, last_seen_at, is_banned, is_deleted, created_at, updated_at')
+          .eq('uid', stored.uid)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('[Auth] Stored session profile lookup error:', error);
+        }
+
+        profileRecord = data || null;
+      }
+
+      if (!profileRecord && stored.telegram_id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('uid, telegram_id, telegram_username, first_name, last_name, avatar_url, nickname, level, experience, status, last_seen_at, is_banned, is_deleted, created_at, updated_at')
+          .eq('telegram_id', stored.telegram_id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('[Auth] Stored session telegram lookup error:', error);
+        }
+
+        profileRecord = data || null;
+      }
+
+      if (!profileRecord) {
+        console.warn('[Auth] Stored session profile not found in Supabase');
+        return null;
+      }
+
+      const fullProfile = await fetchFullProfile(profileRecord.uid);
+      if (!fullProfile) return null;
+
+      const fallbackUser = {
+        id: profileRecord.telegram_id || stored.telegram_id,
+        username: profileRecord.telegram_username || stored.username || null,
+        first_name: profileRecord.first_name || stored.first_name || '',
+        last_name: profileRecord.last_name || stored.last_name || null,
+        photo_url: profileRecord.avatar_url || stored.avatar_url || null,
+        is_premium: false,
+        initData: '',
+      };
+
+      currentUser = fallbackUser;
+      currentProfile = fullProfile;
+      isInitialized = true;
+
+      return { user: currentUser, profile: currentProfile };
+    } catch (error) {
+      console.error('[Auth] Failed to restore stored session:', error);
       return null;
     }
   };
@@ -439,7 +504,13 @@ const TelegramAuth = (() => {
         const telegramUser = await getTelegramUser();
 
         if (!telegramUser) {
-          console.log('[Auth] No Telegram user available');
+          const restored = await restoreStoredSession();
+          if (restored) {
+            console.log('[Auth] Restored user from local session');
+            return restored;
+          }
+
+          console.log('[Auth] No Telegram user available and no stored session');
           isInitialized = true;
           return { user: null, profile: null };
         }
