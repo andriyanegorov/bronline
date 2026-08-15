@@ -367,10 +367,20 @@
           const levelEl = document.querySelector('[data-user-level]');
           if (levelEl) levelEl.textContent = profile.level;
 
+          const currentLevel = Math.max(1, Number(profile.level) || 1);
+          const currentXp = Number(profile.experience) || 0;
+          const xpGoal = Math.max(currentLevel * 100, 100);
+
           const xpEl = document.querySelector('[data-user-xp]');
           const xpLeft = document.querySelector('[data-user-xp-left]');
-          if (xpEl) xpEl.textContent = (profile.experience || 0) + ' / ' + Math.max((profile.level || 1) * 100, 100);
-          if (xpLeft) xpLeft.textContent = Math.max((profile.level || 1) * 100 - (profile.experience || 0), 0) + ' XP';
+          if (xpEl) xpEl.textContent = currentXp + ' / ' + xpGoal;
+          if (xpLeft) xpLeft.textContent = Math.max(xpGoal - currentXp, 0) + ' XP';
+
+          const progressFill = document.querySelector('.game-summary__progress-fill');
+          if (progressFill) {
+            const progressValue = Math.min((currentXp / xpGoal) * 100, 100);
+            progressFill.style.width = progressValue + '%';
+          }
 
           const vipEl = document.querySelector('[data-user-vip]');
           if (vipEl) vipEl.textContent = 'VIP ' + (vip?.vip_level || 0);

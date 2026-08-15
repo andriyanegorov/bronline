@@ -356,43 +356,89 @@
           if (result.error === 'BANNED') {
             LoadingManager.updateProgress(100);
             LoadingManager.updateStatus('Аккаунт заблокирован');
+            const current = TelegramAuth.getCurrentProfile();
+            const profile = current?.profile || { nickname: 'Guest', uid: 0, status: 'offline', level: 1, experience: 0, avatar_url: '' };
+            const balance = current?.balance || { cash: 0, bank: 0 };
+            const vip = current?.vip || { vip_level: 0 };
+
+            const avatar = document.querySelector('[data-user-avatar]');
+            if (avatar && profile.avatar_url) avatar.src = profile.avatar_url;
+            const nameElement = document.querySelector('[data-user-name]');
+            if (nameElement) nameElement.textContent = profile.nickname;
+            const uidElement = document.querySelector('[data-user-id]');
+            if (uidElement) uidElement.textContent = '#' + profile.uid;
+            const statusElement = document.querySelector('[data-user-status]');
+            if (statusElement) statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> Аккаунт недоступен';
+            const balanceElement = document.querySelector('[data-user-balance]');
+            if (balanceElement) balanceElement.textContent = '0 ₽';
+            const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
+            if (balanceStat) balanceStat.textContent = '0 ₽';
+            const levelStat = document.querySelector('[data-stat-type="level"] .profile-stat__value');
+            if (levelStat) levelStat.textContent = profile.level;
+            const ratingStat = document.querySelector('[data-stat-type="rating"] .profile-stat__value');
+            if (ratingStat) ratingStat.textContent = '#' + profile.uid;
             LoadingManager.finish();
-            alert('Ваш аккаунт заблокирован');
-            location.href = 'index.html';
             return;
           }
 
           if (result.error === 'DELETED') {
             LoadingManager.updateProgress(100);
             LoadingManager.updateStatus('Аккаунт удалён');
+            const profile = { nickname: 'Guest', uid: 0, status: 'offline', level: 1, experience: 0, avatar_url: '' };
+            const nameElement = document.querySelector('[data-user-name]');
+            if (nameElement) nameElement.textContent = profile.nickname;
+            const uidElement = document.querySelector('[data-user-id]');
+            if (uidElement) uidElement.textContent = '#' + profile.uid;
+            const statusElement = document.querySelector('[data-user-status]');
+            if (statusElement) statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> Аккаунт удалён';
+            const balanceElement = document.querySelector('[data-user-balance]');
+            if (balanceElement) balanceElement.textContent = '0 ₽';
             LoadingManager.finish();
-            alert('Ваш аккаунт удалён');
-            location.href = 'index.html';
             return;
           }
 
           if (result.error) {
             console.error('[Profile] Auth error:', result.error);
             LoadingManager.updateProgress(100);
-            LoadingManager.updateStatus('Ошибка авторизации');
+            LoadingManager.updateStatus('Режим браузера');
+            const fallbackProfile = { nickname: 'Guest', uid: 0, status: 'offline', level: 1, experience: 0, avatar_url: '' };
+            const nameElement = document.querySelector('[data-user-name]');
+            if (nameElement) nameElement.textContent = fallbackProfile.nickname;
+            const uidElement = document.querySelector('[data-user-id]');
+            if (uidElement) uidElement.textContent = '#' + fallbackProfile.uid;
+            const statusElement = document.querySelector('[data-user-status]');
+            if (statusElement) statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> Браузерный режим';
+            const balanceElement = document.querySelector('[data-user-balance]');
+            if (balanceElement) balanceElement.textContent = '0 ₽';
+            const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
+            if (balanceStat) balanceStat.textContent = '0 ₽';
+            const levelStat = document.querySelector('[data-stat-type="level"] .profile-stat__value');
+            if (levelStat) levelStat.textContent = '1';
+            const ratingStat = document.querySelector('[data-stat-type="rating"] .profile-stat__value');
+            if (ratingStat) ratingStat.textContent = '#0';
             LoadingManager.finish();
-            alert('Ошибка авторизации. Откройте приложение через Telegram.');
             return;
           }
 
           applyStep(2);
           const current = TelegramAuth.getCurrentProfile();
-          const profile = current?.profile;
-          const balance = current?.balance;
-          const vip = current?.vip;
+          const profile = current?.profile || { nickname: 'Guest', uid: 0, status: 'offline', level: 1, experience: 0, avatar_url: '' };
+          const balance = current?.balance || { cash: 0, bank: 0 };
+          const vip = current?.vip || { vip_level: 0 };
 
-          if (!profile) {
+          if (!current || !profile || !profile.uid) {
             console.warn('[Profile] User not authorized');
             LoadingManager.updateProgress(100);
-            LoadingManager.updateStatus('Требуется авторизация');
+            LoadingManager.updateStatus('Режим браузера');
+            const nameElement = document.querySelector('[data-user-name]');
+            if (nameElement) nameElement.textContent = profile.nickname;
+            const uidElement = document.querySelector('[data-user-id]');
+            if (uidElement) uidElement.textContent = '#' + profile.uid;
+            const statusElement = document.querySelector('[data-user-status]');
+            if (statusElement) statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> Браузерный режим';
+            const balanceElement = document.querySelector('[data-user-balance]');
+            if (balanceElement) balanceElement.textContent = '0 ₽';
             LoadingManager.finish();
-            alert('Требуется авторизация. Откройте приложение через Telegram.');
-            location.href = 'index.html';
             return;
           }
 
@@ -422,17 +468,21 @@
             levelElement.textContent = 'УРОВЕНЬ ' + profile.level;
           }
 
-          const expValue = Math.min(Math.max(((profile.experience || 0) / Math.max(profile.level * 100, 100)) * 100, 0), 100);
+          const currentLevel = Math.max(1, Number(profile.level) || 1);
+          const currentXp = Number(profile.experience) || 0;
+          const xpForCurrentLevel = Math.max(currentLevel * 100, 100);
+          const expValue = Math.min((currentXp / xpForCurrentLevel) * 100, 100);
+
           const progressBar = document.querySelector('[data-user-xp-bar]');
           if (progressBar) progressBar.style.width = expValue + '%';
 
           const expText = document.querySelector('[data-user-xp-percent]');
           if (expText) expText.textContent = Math.round(expValue) + '%';
 
-          const balanceElement = document.querySelector('[data-user-balance]');
-          if (balanceElement) {
-            const totalBalance = (balance?.cash || 0) + (balance?.bank || 0);
-            balanceElement.textContent = formatBalance(totalBalance) + ' ₽';
+          const xpLeftElement = document.querySelector('[data-user-xp-left]');
+          if (xpLeftElement) {
+            const xpLeft = Math.max(xpForCurrentLevel - currentXp, 0);
+            xpLeftElement.textContent = xpLeft + ' XP';
           }
 
           const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
