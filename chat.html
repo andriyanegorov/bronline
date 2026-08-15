@@ -9,9 +9,22 @@
     <link rel="stylesheet" href="css/variables.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/loading.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="chat-page">
+    <div id="loading-screen" class="loading-screen" aria-live="polite" aria-hidden="false">
+      <div class="loading-screen__inner">
+        <img src="assets/logo.png" alt="Black Russia logo" class="loading-logo" />
+        <div class="loading-title">BLACK RUSSIA:<br />ОНЛАЙН</div>
+        <div class="loading-status is-visible">Подключение к серверу...</div>
+        <div class="loading-bar" aria-label="Загрузка данных">
+          <div class="loading-bar__fill"></div>
+        </div>
+        <div class="loading-percent">0%</div>
+      </div>
+    </div>
+
     <div class="app-shell app-shell--chat">
       <header class="top-glass top-glass--chat" aria-label="Панель профиля">
         <a class="brand-mark" href="index.html" aria-label="Главная">
@@ -302,37 +315,68 @@
     </div>
 
     <script src="js/auth.js"></script>
+    <script src="js/loading.js"></script>
     <script>
       (async () => {
-        TelegramAuth.setConfig({
-          supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
-          supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
-        });
+        LoadingManager.start();
 
-        const result = await TelegramAuth.init();
-        if (result.error) {
-          console.error('[Chat] Auth error:', result.error);
-          return;
+        const steps = [
+          { progress: 20, status: 'Подключение к серверу...' },
+          { progress: 38, status: 'Проверяем Telegram...' },
+          { progress: 60, status: 'Загружаем профиль...' },
+          { progress: 84, status: 'Получаем игровые данные...' },
+          { progress: 100, status: 'Добро пожаловать' },
+        ];
+
+        const applyStep = (index) => {
+          const step = steps[index];
+          if (!step) return;
+          LoadingManager.updateProgress(step.progress);
+          LoadingManager.updateStatus(step.status);
+        };
+
+        try {
+          applyStep(0);
+          TelegramAuth.setConfig({
+            supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
+            supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
+          });
+
+          applyStep(1);
+          const result = await TelegramAuth.init();
+          if (result.error) {
+            console.error('[Chat] Auth error:', result.error);
+            throw result.error;
+          }
+
+          applyStep(2);
+          const current = TelegramAuth.getCurrentProfile();
+          const profile = current?.profile;
+          if (!profile) throw new Error('User not authorized');
+
+          const avatar = document.querySelector('[data-user-avatar]');
+          const name = document.querySelector('[data-user-name]');
+          const uid = document.querySelector('[data-user-id]');
+          if (avatar && profile.avatar_url) avatar.src = profile.avatar_url;
+          if (name) name.textContent = profile.nickname;
+          if (uid) uid.textContent = '#' + profile.uid;
+
+          const dialogName = document.querySelector('[data-dialog-name]');
+          if (dialogName) dialogName.textContent = profile.nickname;
+
+          const dialogMeta = document.querySelector('[data-dialog-meta]');
+          if (dialogMeta) dialogMeta.textContent = '#' + profile.uid + ' · ' + (profile.status === 'online' ? 'Онлайн' : 'Оффлайн');
+
+          applyStep(3);
+          document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
+          applyStep(4);
+          LoadingManager.finish();
+        } catch (error) {
+          console.error('[Chat] Initialization failed:', error);
+          LoadingManager.updateProgress(100);
+          LoadingManager.updateStatus('Ошибка загрузки данных');
+          LoadingManager.finish();
         }
-
-        const current = TelegramAuth.getCurrentProfile();
-        const profile = current?.profile;
-        if (!profile) return;
-
-        const avatar = document.querySelector('[data-user-avatar]');
-        const name = document.querySelector('[data-user-name]');
-        const uid = document.querySelector('[data-user-id]');
-        if (avatar && profile.avatar_url) avatar.src = profile.avatar_url;
-        if (name) name.textContent = profile.nickname;
-        if (uid) uid.textContent = '#' + profile.uid;
-
-        const dialogName = document.querySelector('[data-dialog-name]');
-        if (dialogName) dialogName.textContent = profile.nickname;
-
-        const dialogMeta = document.querySelector('[data-dialog-meta]');
-        if (dialogMeta) dialogMeta.textContent = '#' + profile.uid + ' · ' + (profile.status === 'online' ? 'Онлайн' : 'Оффлайн');
-
-        document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
       })();
     </script>
     <script src="js/app.js"></script>

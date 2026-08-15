@@ -9,11 +9,24 @@
     <link rel="stylesheet" href="css/variables.css" />
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/loading.css" />
 
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body class="profile-page">
+    <div id="loading-screen" class="loading-screen" aria-live="polite" aria-hidden="false">
+      <div class="loading-screen__inner">
+        <img src="assets/logo.png" alt="Black Russia logo" class="loading-logo" />
+        <div class="loading-title">BLACK RUSSIA:<br />ОНЛАЙН</div>
+        <div class="loading-status is-visible">Подключение к серверу...</div>
+        <div class="loading-bar" aria-label="Загрузка данных">
+          <div class="loading-bar__fill"></div>
+        </div>
+        <div class="loading-percent">0%</div>
+      </div>
+    </div>
+
     <div class="app-shell app-shell--profile">
       <header class="top-glass profile-top" aria-label="Панель профиля">
         <a class="brand-mark" href="index.html" aria-label="Главная">
@@ -308,104 +321,147 @@
 
     <!-- Telegram Auth Module -->
     <script src="js/auth.js"></script>
+    <script src="js/loading.js"></script>
 
     <!-- Profile Data Loader -->
     <script>
       (async () => {
-        TelegramAuth.setConfig({
-          supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
-          supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
-        });
+        LoadingManager.start();
 
-        const result = await TelegramAuth.init();
+        const steps = [
+          { progress: 20, status: 'Подключение к серверу...' },
+          { progress: 38, status: 'Проверяем Telegram...' },
+          { progress: 60, status: 'Загружаем профиль...' },
+          { progress: 86, status: 'Получаем статистику...' },
+          { progress: 100, status: 'Готово' },
+        ];
 
-        if (result.error === 'BANNED') {
-          alert('Ваш аккаунт заблокирован');
-          location.href = 'index.html';
-          return;
+        const applyStep = (index) => {
+          const step = steps[index];
+          if (!step) return;
+          LoadingManager.updateProgress(step.progress);
+          LoadingManager.updateStatus(step.status);
+        };
+
+        try {
+          applyStep(0);
+          TelegramAuth.setConfig({
+            supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
+            supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
+          });
+
+          applyStep(1);
+          const result = await TelegramAuth.init();
+
+          if (result.error === 'BANNED') {
+            LoadingManager.updateProgress(100);
+            LoadingManager.updateStatus('Аккаунт заблокирован');
+            LoadingManager.finish();
+            alert('Ваш аккаунт заблокирован');
+            location.href = 'index.html';
+            return;
+          }
+
+          if (result.error === 'DELETED') {
+            LoadingManager.updateProgress(100);
+            LoadingManager.updateStatus('Аккаунт удалён');
+            LoadingManager.finish();
+            alert('Ваш аккаунт удалён');
+            location.href = 'index.html';
+            return;
+          }
+
+          if (result.error) {
+            console.error('[Profile] Auth error:', result.error);
+            LoadingManager.updateProgress(100);
+            LoadingManager.updateStatus('Ошибка авторизации');
+            LoadingManager.finish();
+            alert('Ошибка авторизации. Откройте приложение через Telegram.');
+            return;
+          }
+
+          applyStep(2);
+          const current = TelegramAuth.getCurrentProfile();
+          const profile = current?.profile;
+          const balance = current?.balance;
+          const vip = current?.vip;
+
+          if (!profile) {
+            console.warn('[Profile] User not authorized');
+            LoadingManager.updateProgress(100);
+            LoadingManager.updateStatus('Требуется авторизация');
+            LoadingManager.finish();
+            alert('Требуется авторизация. Откройте приложение через Telegram.');
+            location.href = 'index.html';
+            return;
+          }
+
+          console.log('[Profile] Loading data for:', profile.nickname);
+
+          const avatar = document.querySelector('[data-user-avatar]');
+          if (avatar && profile.avatar_url) {
+            avatar.src = profile.avatar_url;
+            avatar.alt = profile.nickname;
+          }
+
+          const nameElement = document.querySelector('[data-user-name]');
+          if (nameElement) nameElement.textContent = profile.nickname;
+
+          const uidElement = document.querySelector('[data-user-id]');
+          if (uidElement) uidElement.textContent = '#' + profile.uid;
+
+          const statusElement = document.querySelector('[data-user-status]');
+          if (statusElement) {
+            const text = profile.status === 'online' ? 'В сети' : 'Не в сети';
+            statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> ' + text;
+            statusElement.classList.toggle('is-online', profile.status === 'online');
+          }
+
+          const levelElement = document.querySelector('[data-user-level]');
+          if (levelElement) {
+            levelElement.textContent = 'УРОВЕНЬ ' + profile.level;
+          }
+
+          const expValue = Math.min(Math.max(((profile.experience || 0) / Math.max(profile.level * 100, 100)) * 100, 0), 100);
+          const progressBar = document.querySelector('[data-user-xp-bar]');
+          if (progressBar) progressBar.style.width = expValue + '%';
+
+          const expText = document.querySelector('[data-user-xp-percent]');
+          if (expText) expText.textContent = Math.round(expValue) + '%';
+
+          const balanceElement = document.querySelector('[data-user-balance]');
+          if (balanceElement) {
+            const totalBalance = (balance?.cash || 0) + (balance?.bank || 0);
+            balanceElement.textContent = formatBalance(totalBalance) + ' ₽';
+          }
+
+          const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
+          if (balanceStat) balanceStat.textContent = formatBalance(balance?.cash || 0) + ' ₽';
+
+          const levelStat = document.querySelector('[data-stat-type="level"] .profile-stat__value');
+          if (levelStat) levelStat.textContent = profile.level;
+
+          const ratingStat = document.querySelector('[data-stat-type="rating"] .profile-stat__value');
+          if (ratingStat) ratingStat.textContent = '#' + profile.uid;
+
+          if ((vip?.vip_level || 0) > 0) {
+            const vipBadge = document.createElement('span');
+            vipBadge.className = 'profile-card__vip-badge';
+            vipBadge.textContent = 'VIP ' + vip.vip_level;
+            const nameRow = document.querySelector('.profile-card__name-row');
+            if (nameRow) nameRow.appendChild(vipBadge);
+          }
+
+          applyStep(3);
+          document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
+          applyStep(4);
+          LoadingManager.finish();
+        } catch (error) {
+          console.error('[Profile] Initialization failed:', error);
+          LoadingManager.updateProgress(100);
+          LoadingManager.updateStatus('Ошибка загрузки данных');
+          LoadingManager.finish();
         }
-
-        if (result.error === 'DELETED') {
-          alert('Ваш аккаунт удалён');
-          location.href = 'index.html';
-          return;
-        }
-
-        if (result.error) {
-          console.error('[Profile] Auth error:', result.error);
-          alert('Ошибка авторизации. Откройте приложение через Telegram.');
-          return;
-        }
-
-        const current = TelegramAuth.getCurrentProfile();
-        const profile = current?.profile;
-        const balance = current?.balance;
-        const vip = current?.vip;
-
-        if (!profile) {
-          console.warn('[Profile] User not authorized');
-          alert('Требуется авторизация. Откройте приложение через Telegram.');
-          location.href = 'index.html';
-          return;
-        }
-
-        console.log('[Profile] Loading data for:', profile.nickname);
-
-        const avatar = document.querySelector('[data-user-avatar]');
-        if (avatar && profile.avatar_url) {
-          avatar.src = profile.avatar_url;
-          avatar.alt = profile.nickname;
-        }
-
-        const nameElement = document.querySelector('[data-user-name]');
-        if (nameElement) nameElement.textContent = profile.nickname;
-
-        const uidElement = document.querySelector('[data-user-id]');
-        if (uidElement) uidElement.textContent = '#' + profile.uid;
-
-        const statusElement = document.querySelector('[data-user-status]');
-        if (statusElement) {
-          const text = profile.status === 'online' ? 'В сети' : 'Не в сети';
-          statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> ' + text;
-          statusElement.classList.toggle('is-online', profile.status === 'online');
-        }
-
-        const levelElement = document.querySelector('[data-user-level]');
-        if (levelElement) {
-          levelElement.textContent = 'УРОВЕНЬ ' + profile.level;
-        }
-
-        const expValue = Math.min(Math.max(((profile.experience || 0) / Math.max(profile.level * 100, 100)) * 100, 0), 100);
-        const progressBar = document.querySelector('[data-user-xp-bar]');
-        if (progressBar) progressBar.style.width = expValue + '%';
-
-        const expText = document.querySelector('[data-user-xp-percent]');
-        if (expText) expText.textContent = Math.round(expValue) + '%';
-
-        const balanceElement = document.querySelector('[data-user-balance]');
-        if (balanceElement) {
-          const totalBalance = (balance?.cash || 0) + (balance?.bank || 0);
-          balanceElement.textContent = formatBalance(totalBalance) + ' ₽';
-        }
-
-        const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
-        if (balanceStat) balanceStat.textContent = formatBalance(balance?.cash || 0) + ' ₽';
-
-        const levelStat = document.querySelector('[data-stat-type="level"] .profile-stat__value');
-        if (levelStat) levelStat.textContent = profile.level;
-
-        const ratingStat = document.querySelector('[data-stat-type="rating"] .profile-stat__value');
-        if (ratingStat) ratingStat.textContent = '#' + profile.uid;
-
-        if ((vip?.vip_level || 0) > 0) {
-          const vipBadge = document.createElement('span');
-          vipBadge.className = 'profile-card__vip-badge';
-          vipBadge.textContent = 'VIP ' + vip.vip_level;
-          const nameRow = document.querySelector('.profile-card__name-row');
-          if (nameRow) nameRow.appendChild(vipBadge);
-        }
-
-        document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
       })();
 
       function formatBalance(amount) {
