@@ -22,7 +22,7 @@
 
         <div class="profile-top__balance" aria-label="Баланс">
           <button class="profile-top__add" type="button" aria-label="Добавить средства">+</button>
-          <span class="profile-top__amount">14 200 000 ₽</span>
+          <span class="profile-top__amount" data-user-balance>Загрузка...</span>
         </div>
 
         <button class="profile-top__notify" type="button" aria-label="Уведомления">
@@ -46,18 +46,18 @@
 
         <section class="profile-card" aria-label="Карточка профиля">
           <div class="profile-card__avatar-wrap">
-            <img src="assets/profile.png" alt="Dima" class="profile-card__avatar" />
+            <img src="assets/profile.png" alt="Загрузка..." class="profile-card__avatar" data-user-avatar />
           </div>
 
           <div class="profile-card__summary">
             <div class="profile-card__name-row">
-              <h2>Dima</h2>
-              <span>#0</span>
+              <h2 data-user-name>Загрузка...</h2>
+              <span data-user-id>#0</span>
             </div>
 
-            <div class="profile-card__online">
+            <div class="profile-card__online" data-user-status>
               <span class="profile-card__status-dot" aria-hidden="true"></span>
-              В сети
+              Загрузка...
             </div>
           </div>
 
@@ -68,35 +68,35 @@
 
           <div class="profile-card__level">
             <div class="profile-card__level-head">
-              <span>УРОВЕНЬ 12</span>
-              <span>72%</span>
+              <span data-user-level>УРОВЕНЬ 1</span>
+              <span data-user-xp-percent>0%</span>
             </div>
-            <div class="profile-card__progress"><span></span></div>
+            <div class="profile-card__progress"><span data-user-xp-bar></span></div>
           </div>
         </section>
 
         <section class="profile-stats" aria-label="Статистика игрока">
-          <article class="profile-stat">
+          <article class="profile-stat" data-stat-type="balance">
             <span class="profile-stat__icon profile-stat__icon--money" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M3 8.5h18v9.4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8.5Zm3 0V7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v1.5M8 13.5h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
-            <div class="profile-stat__value">14.2M ₽</div>
+            <div class="profile-stat__value">0 ₽</div>
             <div class="profile-stat__label">БАЛАНС</div>
           </article>
 
-          <article class="profile-stat">
+          <article class="profile-stat" data-stat-type="level">
             <span class="profile-stat__icon profile-stat__icon--star" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.7 6.2 1.1-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-1.1L12 2.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
             </span>
-            <div class="profile-stat__value">12</div>
+            <div class="profile-stat__value">1</div>
             <div class="profile-stat__label">УРОВЕНЬ</div>
           </article>
 
-          <article class="profile-stat">
+          <article class="profile-stat" data-stat-type="rating">
             <span class="profile-stat__icon profile-stat__icon--rating" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M7 18.5V9.7m5 8.8V6.2m5 12.3v-7.5M4 18.5h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
-            <div class="profile-stat__value">#1847</div>
+            <div class="profile-stat__value">#0</div>
             <div class="profile-stat__label">РЕЙТИНГ</div>
           </article>
         </section>
@@ -312,13 +312,11 @@
     <!-- Profile Data Loader -->
     <script>
       (async () => {
-        // Set Supabase config
         TelegramAuth.setConfig({
           supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
           supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
         });
 
-        // Initialize auth
         const result = await TelegramAuth.init();
 
         if (result.error === 'BANNED') {
@@ -339,105 +337,80 @@
           return;
         }
 
-        if (!TelegramAuth.isAuthorized()) {
+        const current = TelegramAuth.getCurrentProfile();
+        const profile = current?.profile;
+        const balance = current?.balance;
+        const vip = current?.vip;
+
+        if (!profile) {
           console.warn('[Profile] User not authorized');
           alert('Требуется авторизация. Откройте приложение через Telegram.');
           location.href = 'index.html';
           return;
         }
 
-        // Update profile data
-        const profile = TelegramAuth.getProfile();
-        const balance = TelegramAuth.getBalance();
-        const vip = TelegramAuth.getVip();
-
         console.log('[Profile] Loading data for:', profile.nickname);
 
-        // Update avatar
-        const avatar = document.querySelector('.profile-card__avatar');
+        const avatar = document.querySelector('[data-user-avatar]');
         if (avatar && profile.avatar_url) {
           avatar.src = profile.avatar_url;
           avatar.alt = profile.nickname;
         }
 
-        // Update nickname and UID
-        const nameElement = document.querySelector('.profile-card__summary h2');
-        if (nameElement) {
-          nameElement.textContent = profile.nickname;
-        }
+        const nameElement = document.querySelector('[data-user-name]');
+        if (nameElement) nameElement.textContent = profile.nickname;
 
-        const uidElement = document.querySelector('.profile-card__summary span');
-        if (uidElement) {
-          uidElement.textContent = '#' + profile.uid;
-        }
+        const uidElement = document.querySelector('[data-user-id]');
+        if (uidElement) uidElement.textContent = '#' + profile.uid;
 
-        // Update online status
-        const statusElement = document.querySelector('.profile-card__online');
+        const statusElement = document.querySelector('[data-user-status]');
         if (statusElement) {
-          const statusText = profile.status === 'online' ? 'В сети' : 'Не в сети';
-          statusElement.textContent = statusText;
+          const text = profile.status === 'online' ? 'В сети' : 'Не в сети';
+          statusElement.innerHTML = '<span class="profile-card__status-dot" aria-hidden="true"></span> ' + text;
           statusElement.classList.toggle('is-online', profile.status === 'online');
         }
 
-        // Update level
-        const levelElement = document.querySelector('.profile-card__level-head span:first-child');
+        const levelElement = document.querySelector('[data-user-level]');
         if (levelElement) {
           levelElement.textContent = 'УРОВЕНЬ ' + profile.level;
         }
 
-        // Update experience bar
-        const expPercentage = Math.min((profile.experience % 1000) / 10, 100);
-        const progressBar = document.querySelector('.profile-card__progress span');
-        if (progressBar) {
-          progressBar.style.width = expPercentage + '%';
-        }
+        const expValue = Math.min(Math.max(((profile.experience || 0) / Math.max(profile.level * 100, 100)) * 100, 0), 100);
+        const progressBar = document.querySelector('[data-user-xp-bar]');
+        if (progressBar) progressBar.style.width = expValue + '%';
 
-        const expText = document.querySelector('.profile-card__level-head span:last-child');
-        if (expText) {
-          expText.textContent = Math.round(expPercentage) + '%';
-        }
+        const expText = document.querySelector('[data-user-xp-percent]');
+        if (expText) expText.textContent = Math.round(expValue) + '%';
 
-        // Update balance
-        const balanceElement = document.querySelector('.profile-top__amount');
+        const balanceElement = document.querySelector('[data-user-balance]');
         if (balanceElement) {
-          const totalBalance = balance.cash + balance.bank;
+          const totalBalance = (balance?.cash || 0) + (balance?.bank || 0);
           balanceElement.textContent = formatBalance(totalBalance) + ' ₽';
         }
 
-        // Update balance in stats
-        const balanceStatElement = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
-        if (balanceStatElement) {
-          balanceStatElement.textContent = formatBalance(balance.cash) + ' ₽';
-        }
+        const balanceStat = document.querySelector('[data-stat-type="balance"] .profile-stat__value');
+        if (balanceStat) balanceStat.textContent = formatBalance(balance?.cash || 0) + ' ₽';
 
-        // Update level in stats
-        const levelStatElement = document.querySelector('[data-stat-type="level"] .profile-stat__value');
-        if (levelStatElement) {
-          levelStatElement.textContent = profile.level;
-        }
+        const levelStat = document.querySelector('[data-stat-type="level"] .profile-stat__value');
+        if (levelStat) levelStat.textContent = profile.level;
 
-        // Update VIP badge if applicable
-        if (vip.vip_level > 0) {
+        const ratingStat = document.querySelector('[data-stat-type="rating"] .profile-stat__value');
+        if (ratingStat) ratingStat.textContent = '#' + profile.uid;
+
+        if ((vip?.vip_level || 0) > 0) {
           const vipBadge = document.createElement('span');
           vipBadge.className = 'profile-card__vip-badge';
           vipBadge.textContent = 'VIP ' + vip.vip_level;
-          
           const nameRow = document.querySelector('.profile-card__name-row');
-          if (nameRow) {
-            nameRow.appendChild(vipBadge);
-          }
+          if (nameRow) nameRow.appendChild(vipBadge);
         }
 
-        console.log('[Profile] Profile data loaded successfully');
+        document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
       })();
 
-      // Format large numbers for display
       function formatBalance(amount) {
-        if (amount >= 1000000) {
-          return (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-          return (amount / 1000).toFixed(1) + 'K';
-        }
+        if (amount >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
+        if (amount >= 1000) return (amount / 1000).toFixed(1) + 'K';
         return amount;
       }
     </script>

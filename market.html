@@ -17,11 +17,11 @@
           <img src="assets/logo.png" alt="Black Russia" class="brand-mark__logo" />
         </a>
 
-        <a class="profile-pill" href="#profile" aria-label="Открыть профиль">
-          <img src="assets/profile.png" alt="Фото профиля" class="profile-pill__avatar" />
+        <a class="profile-pill" href="profile.html" aria-label="Открыть профиль">
+          <img src="assets/profile.png" alt="Фото профиля" class="profile-pill__avatar" data-user-avatar />
           <span class="profile-pill__text">
-            <span class="profile-pill__name">Dima</span>
-            <span class="profile-pill__uid">#0</span>
+            <span class="profile-pill__name" data-user-name>Загрузка...</span>
+            <span class="profile-pill__uid" data-user-id>#0</span>
           </span>
         </a>
       </header>
@@ -40,7 +40,7 @@
                 <path d="M8 12h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
               </svg>
             </span>
-            <span class="market-balance__value">14.200.000 ₽</span>
+            <span class="market-balance__value" data-user-balance>Загрузка...</span>
           </div>
         </section>
 
@@ -331,6 +331,48 @@
           <span class="bottom-nav__label">Профиль</span>
         </a>
       </nav>
+
+      <script src="js/auth.js"></script>
+      <script>
+        (async () => {
+          TelegramAuth.setConfig({
+            supabaseUrl: 'https://lgrgormormxgayuwztpb.supabase.co',
+            supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxncmdvcm1vcm14Z2F5dXd6dHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NTE3MzgsImV4cCI6MjEwMjAyNzczOH0.NjSbMy2MSPZuQNyP7X7v34p6thRlBK_KRYtXgWBW5JQ',
+          });
+
+          const result = await TelegramAuth.init();
+          if (result.error) {
+            console.error('[Market] Auth error:', result.error);
+            return;
+          }
+
+          const current = TelegramAuth.getCurrentProfile();
+          const profile = current?.profile;
+          const balance = current?.balance;
+          if (!profile) return;
+
+          const avatar = document.querySelector('[data-user-avatar]');
+          const name = document.querySelector('[data-user-name]');
+          const uid = document.querySelector('[data-user-id]');
+          if (avatar && profile.avatar_url) avatar.src = profile.avatar_url;
+          if (name) name.textContent = profile.nickname;
+          if (uid) uid.textContent = '#' + profile.uid;
+
+          const balanceEl = document.querySelector('[data-user-balance]');
+          if (balanceEl) {
+            const total = (balance?.cash || 0) + (balance?.bank || 0);
+            balanceEl.textContent = formatBalance(total) + ' ₽';
+          }
+
+          document.dispatchEvent(new CustomEvent('telegramAuthReady', { detail: { user: TelegramAuth.getCurrentUser(), profile: current } }));
+        })();
+
+        function formatBalance(value) {
+          if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+          if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+          return value;
+        }
+      </script>
 
       <div class="market-modal-backdrop" aria-hidden="true" hidden>
         <div class="market-modal" role="dialog" aria-modal="true" aria-label="Карточка товара">

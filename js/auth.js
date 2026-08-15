@@ -528,6 +528,16 @@ const TelegramAuth = (() => {
     getCurrentProfile: () => currentProfile,
 
     /**
+     * Backward-compatible alias for the active player object
+     */
+    getCurrentPlayer: () => currentProfile,
+
+    /**
+     * Re-load the current authenticated user from Supabase
+     */
+    loadCurrentUser: initialize,
+
+    /**
      * Check if user is authorized
      */
     isAuthorized: () => currentUser !== null && currentProfile !== null,
