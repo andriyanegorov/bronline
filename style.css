@@ -1,3 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    --text-10: 10px;
+    --text-11: 11px;
+    --text-12: 12px;
+    --text-13: 13px;
+    --text-14: 14px;
+    --text-16: 16px;
+    --text-18: 18px;
+    --text-20: 20px;
+    --text-22: 22px;
+    --text-24: 24px;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,11 +25,19 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
     background: #060708;
     color: #ffffff;
     padding-top: 100px;
     padding-bottom: 100px;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
 }
 
 .header {
@@ -58,14 +86,15 @@ body {
 }
 
 .player-name {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: var(--text-16);
+    font-weight: var(--font-semibold);
     color: #ffffff;
 }
 
 .player-status {
-    font-size: 13px;
+    font-size: var(--text-11);
     color: #9ca3af;
+    font-weight: var(--font-semibold);
 }
 
 .header-right {
@@ -90,8 +119,8 @@ body {
 }
 
 .balance-amount {
-    font-size: 16px;
-    font-weight: 600;
+    font-size: var(--text-16);
+    font-weight: var(--font-bold);
     color: #ffffff;
 }
 
@@ -196,8 +225,8 @@ body {
 }
 
 .free-case-title {
-    font-size: 23px;
-    font-weight: 700;
+    font-size: var(--text-22);
+    font-weight: var(--font-bold);
     color: #ffffff;
     line-height: 1;
 }
@@ -207,9 +236,9 @@ body {
 }
 
 .free-case-subtitle {
-    font-size: 12px;
+    font-size: var(--text-13);
     color: #a0a0a0;
-    font-weight: 400;
+    font-weight: var(--font-regular);
 }
 
 .case-info {
@@ -232,14 +261,15 @@ body {
 }
 
 .counter-number {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: var(--text-20);
+    font-weight: var(--font-bold);
     color: #ff4444;
 }
 
 .counter-text {
-    font-size: 12px;
+    font-size: var(--text-12);
     color: #7a7a7a;
+    font-weight: var(--font-regular);
 }
 
 .case-timer {
@@ -257,8 +287,9 @@ body {
 }
 
 .timer-text {
-    font-size: 14px;
+    font-size: var(--text-14);
     color: #7a7a7a;
+    font-weight: var(--font-semibold);
 }
 
 .btn-grab-case {
@@ -322,14 +353,15 @@ body {
 }
 
 .regular-cases-title {
-    font-size: 20px;
-    font-weight: 400;
+    font-size: var(--text-18);
+    font-weight: var(--font-semibold);
     color: #ffffff;
 }
 
 .view-all {
-    font-size: 14px;
+    font-size: var(--text-13);
     color: #7a7a7a;
+    font-weight: var(--font-medium);
     text-decoration: none;
     transition: color 0.2s;
 }
@@ -386,8 +418,8 @@ body {
 }
 
 .case-card-title {
-    font-size: 18px;
-    font-weight: 400;
+    font-size: var(--text-14);
+    font-weight: var(--font-semibold);
     color: #ffffff;
     text-align: center;
     text-transform: uppercase;
@@ -416,8 +448,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 18px;
-    font-weight: 400;
+    font-size: var(--text-16);
+    font-weight: var(--font-bold);
     color: #ffffff;
     margin-bottom: 10px;
 }
@@ -433,8 +465,8 @@ body {
     color: #c4c4c4;
     padding: 14px 16px;
     border-radius: 8px;
-    font-size: 15px;
-    font-weight: 350;
+    font-size: 14px;
+    font-weight: var(--font-semibold);
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -464,8 +496,8 @@ body {
 }
 
 .recent-wins-title {
-    font-size: 20px;
-    font-weight: 400;
+    font-size: var(--text-18);
+    font-weight: var(--font-semibold);
     color: #ffffff;
 }
 
@@ -517,15 +549,15 @@ body {
 }
 
 .win-player-name {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: var(--text-13);
+    font-weight: var(--font-medium);
     color: #ffffff;
 }
 
 .win-item-name {
-    font-size: 12px;
+    font-size: var(--text-11);
     color: #ff4444;
-    font-weight: 600;
+    font-weight: var(--font-regular);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -554,8 +586,8 @@ body {
 .rarity-badge {
     padding: 4px 10px;
     border-radius: 4px;
-    font-size: 11px;
-
+    font-size: var(--text-10);
+    font-weight: var(--font-bold);
     letter-spacing: 0.5px;
     white-space: nowrap;
 }
@@ -597,14 +629,9 @@ body {
 }
 
 .win-time {
-    font-size: 12px;
+    font-size: var(--text-11);
     color: #7a7a7a;
-    white-space: nowrap;
-}
-
-.win-time {
-    font-size: 12px;
-    color: #7a7a7a;
+    font-weight: var(--font-regular);
     white-space: nowrap;
 }
 
@@ -666,7 +693,7 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 }
 
 .nav-label {
-font-size: 12px;
-    font-weight: 500;
+    font-size: var(--text-11);
+    font-weight: var(--font-medium);
     letter-spacing: 0.3px;
 }
