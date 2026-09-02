@@ -842,94 +842,109 @@
 
     <section class="page donate-page" data-page="donate">
         <div class="donate-wrap">
-            <div class="donate-card donate-premium-card">
-                <h2 class="donate-section-title">ПОПОЛНЕНИЕ</h2>
+            <h1 class="donate-title">Донат</h1>
 
-                <div class="premium-panel">
-                    <div class="premium-copy">
-                        <div class="premium-icon-wrap">
-                            <div class="premium-icon">✦</div>
-                        </div>
+            <div class="donate-card donate-promo-hero">
+                <div class="donate-promo-copy">
+                    <h2>Промокод</h2>
+                    <p>Введи промокод и получи бонус</p>
 
-                        <div class="premium-tag">PREMIUM</div>
-                        <div class="premium-subtitle">Получай больше <span>PREMIUM</span></div>
+                    <div class="donate-promo-form">
+                        <input class="promo-input" type="text" placeholder="Введите промокод" aria-label="Введите промокод">
+                        <button class="promo-btn" type="button">ПРИМЕНИТЬ</button>
+                    </div>
+                </div>
 
-                        <ul class="premium-features">
-                            <li>+25% к шансам в кейсах</li>
-                            <li>Ежедневный бонус</li>
-                            <li>Эксклюзивные предметы</li>
-                            <li>Приоритетная поддержка</li>
+                <div class="donate-ticket" aria-hidden="true">
+                    <span>%</span>
+                </div>
+            </div>
+
+            <section class="donate-card topup-card" aria-labelledby="topup-title">
+                <div class="topup-header">
+                    <div>
+                        <h2 id="topup-title">Пополнение баланса</h2>
+                        <p>Пополняй баланс любым удобным способом<br>через FunPay</p>
+                    </div>
+                    <img class="funpay-logo" src="./data/assets/funpay_logo.png" alt="FunPay">
+                </div>
+
+                <div class="topup-options" role="group" aria-label="Сумма пополнения">
+                    <button class="topup-option selected" type="button" aria-pressed="true">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>500 <small class="topup-currency">BC</small></strong>
+                        <em>79 ₽</em>
+                    </button>
+                    <button class="topup-option" type="button" aria-pressed="false">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>1 000 <small class="topup-currency">BC</small></strong>
+                        <em>149 ₽</em>
+                    </button>
+                    <button class="topup-option" type="button" aria-pressed="false">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>2 500 <small class="topup-currency">BC</small></strong>
+                        <em>349 ₽</em>
+                    </button>
+                    <button class="topup-option" type="button" aria-pressed="false">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>5 000 <small class="topup-currency">BC</small></strong>
+                        <em>649 ₽</em>
+                    </button>
+                    <button class="topup-option" type="button" aria-pressed="false">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>10 000 <small class="topup-currency">BC</small></strong>
+                        <em>1 199 ₽</em>
+                    </button>
+                    <button class="topup-option" type="button" aria-pressed="false">
+                        <img class="topup-cr" src="./data/assets/coin.png" alt="">
+                        <strong>25 000 <small class="topup-currency">BC</small></strong>
+                        <em>2 499 ₽</em>
+                    </button>
+                </div>
+
+                <button class="topup-submit" type="button">
+                    <img class="topup-submit-logo" src="./data/assets/funpaybw_logo.png" alt="FunPay">
+                    <strong>ПОПОЛНИТЬ ЧЕРЕЗ FUNPAY</strong>
+                </button>
+            </section>
+
+            <section class="donate-card premium-card" aria-labelledby="premium-title">
+                <div class="premium-card-main">
+                    <div class="premium-benefits">
+                        <h2 id="premium-title">PREMIUM</h2>
+                        <p>Получай больше с Premium статусом</p>
+                        <ul>
+                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>+10% к шансу на редкие предметы</span></li>
+                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Ежедневный бонус 100 <small class="benefit-currency">BC</small></span></li>
+                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Открытие кейсов без задержки</span></li>
+                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Эксклюзивный значок в профиле</span></li>
+                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Доступ к premium кейсам</span></li>
                         </ul>
                     </div>
 
-                    <div class="premium-art-block" aria-hidden="true">
-                        <div class="crown-glow"></div>
-                        <svg class="premium-crown" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="crownCore" x1="0" x2="1">
-                                    <stop offset="0%" stop-color="#ff8b8b"/>
-                                    <stop offset="35%" stop-color="#ff2f2f"/>
-                                    <stop offset="70%" stop-color="#f90e0e"/>
-                                    <stop offset="100%" stop-color="#ff8a8a"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M30 120 L58 62 L90 94 L115 40 L145 94 L170 62 L198 120 Z" fill="url(#crownCore)"/>
-                            <path d="M43 120 H185 L170 148 C150 162 120 170 110 170 C100 170 70 162 50 148 Z" fill="url(#crownCore)"/>
-                            <path d="M56 62 V86 H80 V62 Z" fill="#ffd3d3" opacity="0.7"/>
-                            <path d="M86 36 V86 H110 V36 Z" fill="#ffd3d3" opacity="0.7"/>
-                            <path d="M112 40 V86 H138 V40 Z" fill="#ffd3d3" opacity="0.7"/>
-                            <path d="M140 62 V86 H166 V62 Z" fill="#ffd3d3" opacity="0.7"/>
-                            <circle cx="110" cy="22" r="11" fill="#ffd0d0" opacity="0.9"/>
-                            <path d="M36 120 H192" stroke="#ffbcbc" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-                        </svg>
-                        <div class="crown-plate"></div>
+                    <div class="premium-crown-art" aria-hidden="true">♛</div>
+
+                    <div class="premium-plans" role="group" aria-label="Срок Premium">
+                        <button class="premium-plan selected" type="button" aria-pressed="true">
+                            <strong>30 ДНЕЙ</strong><em>299 ₽</em>
+                        </button>
+                        <button class="premium-plan" type="button" aria-pressed="false">
+                            <strong>90 ДНЕЙ</strong><em>699 ₽</em>
+                        </button>
+                        <button class="premium-plan" type="button" aria-pressed="false">
+                            <strong>180 ДНЕЙ</strong><em>1 199 ₽</em>
+                        </button>
                     </div>
                 </div>
 
-                <div class="premium-cta">
-                    <button class="donate-buy-btn" type="button">КУПИТЬ PREMIUM</button>
-                    <div class="donate-price">от 199 <span class="donate-coin">◌</span></div>
-                </div>
-            </div>
+                <button class="premium-submit" type="button">
+                    <span class="premium-submit-icon">♕</span>
+                    <strong>КУПИТЬ PREMIUM</strong>
+                    <span class="topup-arrow" aria-hidden="true">›</span>
+                </button>
+            </section>
 
-            <div class="donate-card promo-card">
-                <div class="promo-row">
-                    <div class="promo-icon-box" aria-hidden="true">
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M10 10V7.5A1.5 1.5 0 0 1 11.5 6h9A1.5 1.5 0 0 1 22 7.5V10h2.5A2.5 2.5 0 0 1 27 12.5v12A2.5 2.5 0 0 1 24.5 27h-17A2.5 2.5 0 0 1 5 24.5v-12A2.5 2.5 0 0 1 7.5 10H10Zm2 0h8V8h-8v2Zm-4 4v10.5c0 .28.22.5.5.5h17a.5.5 0 0 0 .5-.5V14H8Zm5 3.5h6v2h-6v-2Z" fill="currentColor"/></svg>
-                    </div>
-                    <input class="promo-input" type="text" placeholder="Введите промокод" aria-label="Введите промокод">
-                    <button class="promo-btn" type="button">ПРИМЕНИТЬ</button>
-                </div>
-                <p class="promo-note">Промокод можно ввести только один раз</p>
-            </div>
 
-            <div class="donate-card balance-card">
-                <div class="balance-top-row">
-                    <h3>ПОПОЛНИТЬ БАЛАНС</h3>
-                    <button type="button" class="funpay-btn">ПОПОЛНИТЬ ЧЕРЕЗ <span>FUNPAY</span></button>
-                </div>
-
-                <div class="balance-amount-row">
-                    <div class="balance-label">Минимальная сумма пополнения</div>
-                    <div class="balance-sum">50 <span>₽</span></div>
-                </div>
-
-                <div class="secure-row">
-                    <span class="secure-check">✓</span>
-                    <span>Безопасно через гаранта FunPay</span>
-                </div>
-            </div>
-
-            <div class="donate-card history-card">
-                <div class="history-icon-wrap">
-                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16 4a12 12 0 1 1-8.485 3.515A11.94 11.94 0 0 1 16 4Zm0 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-1 3h2v6.586l4.293 4.293-1.414 1.414-5.879-5.879V10Z" fill="currentColor"/></svg>
-                </div>
-                <div class="history-copy">
-                    <h3>ИСТОРИЯ ПОПОЛНЕНИЙ</h3>
-                    <p>Посмотреть все пополнения баланса</p>
-                </div>
-                <div class="history-arrow">›</div>
-            </div>
         </div>
     </section>
 
@@ -943,11 +958,6 @@
             <img src="./data/assets/vitrina.svg" alt="Витрина" class="nav-icon">
             <span class="nav-label">Витрина</span>
         </a>
-
-        <button type="button" class="nav-item nav-item-add" aria-label="Пополнить">
-            <span class="nav-plus">+</span>
-            <span class="nav-label">Пополнить</span>
-        </button>
 
         <a href="#" class="nav-item">
             <img src="./data/assets/top.svg" alt="Топ" class="nav-icon">

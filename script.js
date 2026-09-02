@@ -23,6 +23,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const topupOptions = document.querySelectorAll('.topup-option');
+    topupOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            topupOptions.forEach(item => {
+                item.classList.remove('selected');
+                item.setAttribute('aria-pressed', 'false');
+            });
+
+            this.classList.add('selected');
+            this.setAttribute('aria-pressed', 'true');
+        });
+    });
+
+    const premiumPlans = document.querySelectorAll('.premium-plan');
+    premiumPlans.forEach(plan => {
+        plan.addEventListener('click', function() {
+            premiumPlans.forEach(item => {
+                item.classList.remove('selected');
+                item.setAttribute('aria-pressed', 'false');
+            });
+
+            this.classList.add('selected');
+            this.setAttribute('aria-pressed', 'true');
+        });
+    });
+
     const pages = document.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
 
