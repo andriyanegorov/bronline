@@ -1,5 +1,225 @@
 // JavaScript для Telegram Mini-App
 
+const SUPABASE_CONFIG = {
+    url: 'https://kvtosrmtuhqsoimfbicw.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG9zcm10dWhxc29pbWZiaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTkxNDAsImV4cCI6MjEwNDAzNTE0MH0.3WP0FB4tT0uecJyHpwUQ1PjOWEta8zcsX8b4_hv7ads'
+};
+
+const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !== 'PASTE_SUPABASE_URL_HERE'
+    ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
+    : null;
+
+if (!supabase) {
+    console.warn('Supabase not connected yet. Paste URL and anon key into SUPABASE_CONFIG in script.js');
+}
+
+function getTelegramUser() {
+    const telegramApp = window.Telegram && window.Telegram.WebApp;
+    return telegramApp && telegramApp.initDataUnsafe && telegramApp.initDataUnsafe.user
+        ? telegramApp.initDataUnsafe.user
+        : null;
+}
+
+function normalizeTelegramName(user) {
+    if (!user) return 'Player';
+    if (user.username) return user.username;
+    const parts = [user.first_name, user.last_name].filter(Boolean);
+    return parts.length ? parts.join(' ') : `player_${user.id || 'anon'}`;
+}
+
+function getTelegramAvatar(user) {
+    if (!user) return './data/assets/profile.png';
+    return user.photo_url || './data/assets/profile.png';
+}
+
+function safeText(element, value, fallback = 'Player') {
+    if (!element) return;
+    element.textContent = value || fallback;
+}
+
+function applyTelegramProfileToUI(user) {
+    if (!user) return;
+
+    const headerName = document.querySelector('.player-name');
+    const headerStatus = document.querySelector('.player-status');
+    const headerAvatar = document.querySelector('.header .avatar img');
+    const balanceAmount = document.querySelector('.balance-amount');
+    const profileName = document.querySelector('.profile-player-name');
+    const profileAvatar = document.querySelector('.profile-avatar-circle img');
+    const profileBadge = document.querySelector('.profile-premium-badge');
+    const profileStatusText = document.querySelector('.profile-rating span:last-child');
+    const profileAvatarGlow = document.querySelector('.profile-avatar-glow');
+    const profileElements = document.querySelectorAll('.win-player-name, .seller-name, .top-player-name, .top-list-player-name');
+    const avatarElements = document.querySelectorAll('.win-avatar, .shop-item-seller img, .top-list-avatar img');
+
+    const displayName = normalizeTelegramName(user);
+    const avatarUrl = getTelegramAvatar(user);
+
+    safeText(headerName, displayName);
+    safeText(headerStatus, user.is_bot ? 'Bot account' : 'Обычный игрок');
+    if (balanceAmount) {
+        balanceAmount.textContent = balanceAmount.textContent && Number(balanceAmount.textContent.replace(/\s+/g, '')) ? balanceAmount.textContent : '0';
+    }
+    if (headerAvatar) {
+        headerAvatar.src = avatarUrl;
+        headerAvatar.alt = displayName;
+    }
+
+    profileElements.forEach(element => {
+        element.textContent = displayName;
+    });
+
+    avatarElements.forEach(element => {
+        element.src = avatarUrl;
+        element.alt = displayName;
+    });
+
+    if (profileName) {
+        profileName.textContent = displayName;
+    }
+
+    if (profileAvatar) {
+        profileAvatar.src = avatarUrl;
+        profileAvatar.alt = displayName;
+    }
+
+    if (profileBadge) {
+        profileBadge.textContent = user.is_premium ? 'PREMIUM' : 'PLAYER';
+    }
+
+    if (profileStatusText) {
+        profileStatusText.textContent = 'Онлайн';
+    }
+
+    if (profileAvatarGlow) {
+        profileAvatarGlow.style.boxShadow = user.is_premium
+            ? '0 0 22px rgba(255, 187, 0, 0.4)'
+            : '0 0 18px rgba(255, 255, 255, 0.15)';
+    }
+}
+
+async function syncTelegramProfileToSupabase(user) {
+    if (!supabase || !user) return;
+
+    const telegramId = Number(user.id);
+    const username = normalizeTelegramName(user);
+    const avatarUrl = getTelegramAvatar(user);
+
+    try {
+        const { data: existingProfile, error: selectError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
+
+        if (selectError && !String(selectError.message).includes('does not exist')) {
+            console.error('Supabase select profile error:', selectError);
+            return;
+        }
+
+        if (existingProfile) {
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({
+                    username,
+                    avatar_url: avatarUrl,
+                    first_name: user.first_name || null,
+                    last_name: user.last_name || null,
+                    premium: Boolean(user.is_premium),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('telegram_id', telegramId);
+
+            if (updateError) {
+                console.error('Supabase update profile error:', updateError);
+            }
+
+            const balanceAmount = document.querySelector('.balance-amount');
+            if (balanceAmount && typeof existingProfile.balance === 'number') {
+                balanceAmount.textContent = Number(existingProfile.balance).toLocaleString('ru-RU');
+            }
+            return;
+        }
+
+        const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+                telegram_id: telegramId,
+                username,
+                avatar_url: avatarUrl,
+                first_name: user.first_name || null,
+                last_name: user.last_name || null,
+                balance: 0,
+                premium: Boolean(user.is_premium),
+                created_at: new Date().toISOString()
+            });
+
+        if (insertError) {
+            console.error('Supabase insert profile error:', insertError);
+        }
+
+        const balanceAmount = document.querySelector('.balance-amount');
+        if (balanceAmount) {
+            balanceAmount.textContent = '0';
+        }
+    } catch (error) {
+        console.error('syncTelegramProfileToSupabase failed:', error);
+    }
+}
+
+async function loadCurrentUserProfile() {
+    const telegramUser = getTelegramUser();
+    if (!supabase || !telegramUser) return;
+
+    const telegramId = Number(telegramUser.id);
+
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('balance, username, avatar_url, premium')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Supabase load profile error:', error);
+            return;
+        }
+
+        const balanceAmount = document.querySelector('.balance-amount');
+        if (data && balanceAmount) {
+            balanceAmount.textContent = Number(data.balance || 0).toLocaleString('ru-RU');
+        }
+
+        if (data && data.username) {
+            const displayName = data.username;
+            document.querySelectorAll('.player-name, .profile-player-name, .win-player-name, .seller-name, .top-player-name, .top-list-player-name').forEach(element => {
+                element.textContent = displayName;
+            });
+
+            const avatarUrl = data.avatar_url || getTelegramAvatar(telegramUser);
+            document.querySelectorAll('.header .avatar img, .profile-avatar-circle img, .win-avatar, .shop-item-seller img, .top-list-avatar img').forEach(element => {
+                element.src = avatarUrl;
+                element.alt = displayName;
+            });
+        }
+    } catch (error) {
+        console.error('loadCurrentUserProfile failed:', error);
+    }
+}
+
+async function initTelegramAuth() {
+    const telegramApp = window.Telegram && window.Telegram.WebApp;
+    if (telegramApp) {
+        telegramApp.ready();
+        telegramApp.expand();
+    }
+
+    const telegramUser = getTelegramUser();
+    applyTelegramProfileToUI(telegramUser);
+    await syncTelegramProfileToSupabase(telegramUser);
+    await loadCurrentUserProfile();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const btnAdd = document.querySelector('.btn-add');
     const btnNotification = document.querySelector('.btn-notification');
@@ -338,4 +558,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     showPage('home');
+    initTelegramAuth();
 });
