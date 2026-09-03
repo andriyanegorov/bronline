@@ -116,29 +116,63 @@ async function syncTelegramProfileToSupabase(user) {
     const avatarUrl = getTelegramAvatar(user);
 
     try {
-        const { error } = await supabase
+        const { data: existingProfile, error: selectError } = await supabase
             .from('profiles')
-            .upsert({
-                telegram_id: telegramId,
-                username,
-                avatar_url: avatarUrl,
-                first_name: user.first_name || null,
-                last_name: user.last_name || null,
-                premium: Boolean(user.is_premium),
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'telegram_id', ignoreDuplicates: false });
+            .select('balance, username')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
 
-        if (error) {
-            console.error('Supabase не создал/обновил профиль:', {
-                code: error.code,
-                message: error.message,
-                details: error.details,
-                hint: error.hint
+        if (selectError) {
+            console.error('Supabase не прочитал профиль:', {
+                code: selectError.code,
+                message: selectError.message,
+                details: selectError.details,
+                hint: selectError.hint
             });
             return;
         }
 
-        console.log('Профиль Telegram успешно сохранен:', telegramId);
+        const profileData = {
+            avatar_url: avatarUrl,
+            first_name: user.first_name || null,
+            last_name: user.last_name || null,
+            premium: Boolean(user.is_premium),
+            updated_at: new Date().toISOString()
+        };
+
+        let saveResult;
+        if (existingProfile) {
+            saveResult = await supabase
+                .from('profiles')
+                .update(profileData)
+                .eq('telegram_id', telegramId);
+        } else {
+            saveResult = await supabase
+                .from('profiles')
+                .insert({
+                    telegram_id: telegramId,
+                    username,
+                    balance: 0,
+                    ...profileData,
+                    created_at: new Date().toISOString()
+                });
+        }
+
+        if (saveResult.error) {
+            console.error('Supabase не сохранил профиль:', {
+                code: saveResult.error.code,
+                message: saveResult.error.message,
+                details: saveResult.error.details,
+                hint: saveResult.error.hint
+            });
+            return;
+        }
+
+        const balanceAmount = document.querySelector('.balance-amount');
+        if (balanceAmount) {
+            balanceAmount.textContent = Number(existingProfile ? existingProfile.balance || 0 : 0).toLocaleString('ru-RU');
+        }
+        console.log('Профиль Telegram успешно сохранен:', telegramId, existingProfile ? '(ник из Supabase сохранен)' : '(создан)');
     } catch (error) {
         console.error('syncTelegramProfileToSupabase failed:', error);
     }
