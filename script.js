@@ -101,7 +101,15 @@ function applyTelegramProfileToUI(user) {
 }
 
 async function syncTelegramProfileToSupabase(user) {
-    if (!supabase || !user) return;
+    if (!supabase) {
+        console.error('Профиль не сохранен: Supabase SDK или конфигурация недоступны.');
+        return;
+    }
+
+    if (!user) {
+        console.error('Профиль не сохранен: Telegram user не найден. Откройте приложение через Telegram Mini App, а не через обычную ссылку.');
+        return;
+    }
 
     const telegramId = Number(user.id);
     const username = normalizeTelegramName(user);
@@ -114,8 +122,8 @@ async function syncTelegramProfileToSupabase(user) {
             .eq('telegram_id', telegramId)
             .maybeSingle();
 
-        if (selectError && !String(selectError.message).includes('does not exist')) {
-            console.error('Supabase select profile error:', selectError);
+        if (selectError) {
+            console.error('Supabase не прочитал profiles. Проверьте существование таблицы и RLS-политику SELECT:', selectError);
             return;
         }
 
@@ -133,7 +141,7 @@ async function syncTelegramProfileToSupabase(user) {
                 .eq('telegram_id', telegramId);
 
             if (updateError) {
-                console.error('Supabase update profile error:', updateError);
+                console.error('Supabase не обновил профиль. Проверьте RLS-политику UPDATE:', updateError);
             }
 
             const balanceAmount = document.querySelector('.balance-amount');
@@ -157,7 +165,7 @@ async function syncTelegramProfileToSupabase(user) {
             });
 
         if (insertError) {
-            console.error('Supabase insert profile error:', insertError);
+            console.error('Supabase не создал профиль. Проверьте таблицу profiles и RLS-политику INSERT:', insertError);
         }
 
         const balanceAmount = document.querySelector('.balance-amount');
@@ -214,9 +222,12 @@ async function initTelegramAuth() {
     if (telegramApp) {
         telegramApp.ready();
         telegramApp.expand();
+    } else {
+        console.error('Telegram WebApp SDK не найден. Проверьте подключение telegram-web-app.js.');
     }
 
     const telegramUser = getTelegramUser();
+    console.log('Telegram user:', telegramUser || 'не найден');
     applyTelegramProfileToUI(telegramUser);
     await syncTelegramProfileToSupabase(telegramUser);
     await loadCurrentUserProfile();
