@@ -116,62 +116,29 @@ async function syncTelegramProfileToSupabase(user) {
     const avatarUrl = getTelegramAvatar(user);
 
     try {
-        const { data: existingProfile, error: selectError } = await supabase
+        const { error } = await supabase
             .from('profiles')
-            .select('*')
-            .eq('telegram_id', telegramId)
-            .maybeSingle();
-
-        if (selectError) {
-            console.error('Supabase не прочитал profiles. Проверьте существование таблицы и RLS-политику SELECT:', selectError);
-            return;
-        }
-
-        if (existingProfile) {
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    username,
-                    avatar_url: avatarUrl,
-                    first_name: user.first_name || null,
-                    last_name: user.last_name || null,
-                    premium: Boolean(user.is_premium),
-                    updated_at: new Date().toISOString()
-                })
-                .eq('telegram_id', telegramId);
-
-            if (updateError) {
-                console.error('Supabase не обновил профиль. Проверьте RLS-политику UPDATE:', updateError);
-            }
-
-            const balanceAmount = document.querySelector('.balance-amount');
-            if (balanceAmount && typeof existingProfile.balance === 'number') {
-                balanceAmount.textContent = Number(existingProfile.balance).toLocaleString('ru-RU');
-            }
-            return;
-        }
-
-        const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
+            .upsert({
                 telegram_id: telegramId,
                 username,
                 avatar_url: avatarUrl,
                 first_name: user.first_name || null,
                 last_name: user.last_name || null,
-                balance: 0,
                 premium: Boolean(user.is_premium),
-                created_at: new Date().toISOString()
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'telegram_id', ignoreDuplicates: false });
+
+        if (error) {
+            console.error('Supabase не создал/обновил профиль:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint
             });
-
-        if (insertError) {
-            console.error('Supabase не создал профиль. Проверьте таблицу profiles и RLS-политику INSERT:', insertError);
+            return;
         }
 
-        const balanceAmount = document.querySelector('.balance-amount');
-        if (balanceAmount) {
-            balanceAmount.textContent = '0';
-        }
+        console.log('Профиль Telegram успешно сохранен:', telegramId);
     } catch (error) {
         console.error('syncTelegramProfileToSupabase failed:', error);
     }
