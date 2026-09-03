@@ -1,5 +1,7 @@
 // JavaScript для Telegram Mini-App
 
+(function() {
+
 const SUPABASE_CONFIG = {
     url: 'https://kvtosrmtuhqsoimfbicw.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG9zcm10dWhxc29pbWZiaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTkxNDAsImV4cCI6MjEwNDAzNTE0MH0.3WP0FB4tT0uecJyHpwUQ1PjOWEta8zcsX8b4_hv7ads'
@@ -560,3 +562,5 @@ document.addEventListener('DOMContentLoaded', function() {
     showPage('home');
     initTelegramAuth();
 });
+
+})();
