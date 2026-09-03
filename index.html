@@ -222,6 +222,87 @@
     </div>
     </main>
 
+    <section class="page case-detail-page" data-page="case-detail">
+        <div class="case-detail-toolbar">
+            <button class="case-back-btn" type="button" aria-label="Назад">‹</button>
+            <h1>BLOOD CASE</h1>
+            <button class="case-info-btn" type="button" aria-label="Информация">i</button>
+        </div>
+
+        <div class="case-detail-hero">
+            <img src="./data/case_logo/free.png" alt="Blood Case" class="detail-case-image">
+        </div>
+
+        <div class="open-count-label">Количество открытий</div>
+        <div class="open-counts" role="group" aria-label="Количество открытий">
+            <button class="open-count selected" type="button" aria-pressed="true">x1</button>
+            <button class="open-count" type="button" aria-pressed="false">x2</button>
+            <button class="open-count" type="button" aria-pressed="false">x3</button>
+            <button class="open-count" type="button" aria-pressed="false">x5</button>
+            <button class="open-count" type="button" aria-pressed="false">x10</button>
+        </div>
+
+        <button class="open-case-btn" type="button">ОТКРЫТЬ ЗА 1 250 BC</button>
+
+        <div class="quick-open-row">
+            <span>Быстрое открытие</span>
+            <button class="quick-open-info" type="button" aria-label="Что такое быстрое открытие">?</button>
+            <button class="quick-toggle" type="button" aria-label="Быстрое открытие" aria-pressed="false"><span></span></button>
+        </div>
+
+        <div class="contents-heading">
+            <h2>СОДЕРЖИМОЕ КЕЙСА</h2>
+            <button type="button">Шансы дропа <span>i</span></button>
+        </div>
+
+        <div class="case-contents-grid">
+            <article class="case-content-item rarity-red"><span class="drop-chance">0.10%</span><img src="./data/assets/items/m5f90.png" alt="BMW M5 F90"><strong>BMW M5 F90</strong><em>12 500 BC</em></article>
+            <article class="case-content-item rarity-red"><span class="drop-chance">0.20%</span><img src="./data/assets/items/m5f90.png" alt="M9 Bayonet Crimson Web"><strong>M9 Bayonet<br>Crimson Web</strong><em>8 750 BC</em></article>
+            <article class="case-content-item rarity-red"><span class="drop-chance">0.30%</span><img src="./data/assets/items/m5f90.png" alt="Sport Gloves Blood Pressure"><strong>Sport Gloves<br>Blood Pressure</strong><em>7 250 BC</em></article>
+            <article class="case-content-item rarity-orange"><span class="drop-chance">0.50%</span><img src="./data/assets/items/m5f90.png" alt="AK-47 Bloodsport"><strong>AK-47<br>Bloodsport</strong><em>3 250 BC</em></article>
+            <article class="case-content-item rarity-orange"><span class="drop-chance">1.00%</span><img src="./data/assets/items/m5f90.png" alt="AWP Redline"><strong>AWP<br>Redline</strong><em>2 750 BC</em></article>
+            <article class="case-content-item rarity-purple"><span class="drop-chance">2.00%</span><img src="./data/assets/items/m5f90.png" alt="M4A4 The Emperor"><strong>M4A4<br>The Emperor</strong><em>1 750 BC</em></article>
+            <article class="case-content-item rarity-purple"><span class="drop-chance">3.00%</span><img src="./data/assets/items/m5f90.png" alt="USP-S Kill Confirmed"><strong>USP-S<br>Kill Confirmed</strong><em>1 250 BC</em></article>
+            <article class="case-content-item rarity-purple"><span class="drop-chance">5.00%</span><img src="./data/assets/items/m5f90.png" alt="P90 Cold Blooded"><strong>P90<br>Cold Blooded</strong><em>950 BC</em></article>
+            <article class="case-content-item rarity-blue"><span class="drop-chance">8.00%</span><img src="./data/assets/items/m5f90.png" alt="Glock-18 Candy Apple"><strong>Glock-18<br>Candy Apple</strong><em>650 BC</em></article>
+        </div>
+    </section>
+
+    <div class="case-opening-overlay" aria-hidden="true">
+        <div class="case-opening-modal" role="dialog" aria-modal="true" aria-labelledby="opening-title">
+            <div class="reel-window">
+                <div class="reel-pointer"></div>
+                <div class="reel-track">
+                    <article class="reel-item rarity-red"><span>0.30%</span><img src="./data/assets/items/m5f90.png" alt="Sport Gloves"><strong>Sport Gloves</strong><small>7 250 BC</small></article>
+                    <article class="reel-item rarity-red"><span>0.20%</span><img src="./data/assets/items/m5f90.png" alt="M9 Bayonet"><strong>M9 Bayonet<br>Crimson Web</strong><small>8 750 BC</small></article>
+                    <article class="reel-item reel-winner rarity-red"><span>0.10%</span><img src="./data/assets/items/m5f90.png" alt="BMW M5 F90"><strong>BMW M5 F90</strong><small>12 500 BC</small></article>
+                    <article class="reel-item rarity-purple"><span>0.20%</span><img src="./data/assets/items/m5f90.png" alt="AWP Redline"><strong>AWP<br>Redline</strong><small>2 750 BC</small></article>
+                    <article class="reel-item rarity-orange"><span>0.50%</span><img src="./data/assets/items/m5f90.png" alt="AK-47"><strong>AK-47<br>Bloodsport</strong><small>3 250 BC</small></article>
+                </div>
+            </div>
+        </div>
+
+        <div class="drop-result-modal" aria-hidden="true">
+            <div class="drop-result-card" role="dialog" aria-modal="true" aria-labelledby="drop-result-title">
+                <button class="drop-result-close" type="button" aria-label="Закрыть">×</button>
+                <h2 id="drop-result-title">ВАШ ВЫИГРЫШ!</h2>
+
+                <div class="drop-result-body">
+                    <div class="drop-result-image-wrap">
+                        <img id="drop-result-image" src="./data/assets/items/m5f90.png" alt="BMW M5 F90">
+                    </div>
+                    <div class="drop-result-name" id="drop-result-name">BMW M5 F90</div>
+                    <div class="drop-result-price" id="drop-result-price">12 500 BC</div>
+                </div>
+
+                <div class="drop-result-actions">
+                    <button class="drop-save-btn" type="button">СОХРАНИТЬ</button>
+                    <button class="drop-sell-btn" type="button">ПРОДАТЬ ЗА 12 500 BC</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <section class="page shop-screen" data-page="shop">
         <div class="shop-header">
             <div class="shop-title-group">
@@ -914,33 +995,19 @@
                         <h2 id="premium-title">PREMIUM</h2>
                         <p>Получай больше с Premium статусом</p>
                         <ul>
-                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>+10% к шансу на редкие предметы</span></li>
-                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Ежедневный бонус 100 <small class="benefit-currency">BC</small></span></li>
-                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Открытие кейсов без задержки</span></li>
-                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Эксклюзивный значок в профиле</span></li>
-                            <li><img class="benefit-icon" src="./data/assets/coin.png" alt=""><span>Доступ к premium кейсам</span></li>
+                            <li><span class="benefit-icon">—</span><span>Уникальный бейдж «PREMIUM»</span></li>
+                            <li><span class="benefit-icon">—</span><span>Скидка на все платные кейсы - 15%</span></li>
+                            <li><span class="benefit-icon">—</span><span>Бесплатный PREMIUM кейс раз в 12 часов</span></li>
+                            <li><span class="benefit-icon">—</span><span>Неограниченное количество выставки витри</span></li>
                         </ul>
                     </div>
 
                     <div class="premium-crown-art" aria-hidden="true">♛</div>
-
-                    <div class="premium-plans" role="group" aria-label="Срок Premium">
-                        <button class="premium-plan selected" type="button" aria-pressed="true">
-                            <strong>30 ДНЕЙ</strong><em>299 ₽</em>
-                        </button>
-                        <button class="premium-plan" type="button" aria-pressed="false">
-                            <strong>90 ДНЕЙ</strong><em>699 ₽</em>
-                        </button>
-                        <button class="premium-plan" type="button" aria-pressed="false">
-                            <strong>180 ДНЕЙ</strong><em>1 199 ₽</em>
-                        </button>
-                    </div>
                 </div>
 
                 <button class="premium-submit" type="button">
-                    <span class="premium-submit-icon">♕</span>
+                    <img class="topup-submit-logo" src="./data/assets/funpaybw_logo.png" alt="FunPay">
                     <strong>КУПИТЬ PREMIUM</strong>
-                    <span class="topup-arrow" aria-hidden="true">›</span>
                 </button>
             </section>
 
