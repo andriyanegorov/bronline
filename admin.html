@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BR Online | Админ-панель</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="index.html" aria-label="BR Online">
+                <span class="brand-mark">BR</span>
+                <span><strong>BR ONLINE</strong><small>CONTROL CENTER</small></span>
+            </a>
+
+            <nav class="main-nav" aria-label="Навигация админ-панели">
+                <a class="nav-link active" href="#items"><span class="nav-icon">▦</span>Предметы</a>
+                <a class="nav-link" href="#cases"><span class="nav-icon">◈</span>Кейсы</a>
+                <a class="nav-link" href="#users"><span class="nav-icon">♙</span>Пользователи</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="status-dot" id="connection-dot"></span>
+                <span><strong id="connection-title">Проверка системы</strong><small id="connection-detail">Supabase подключается...</small></span>
+            </div>
+        </aside>
+
+        <main class="content" id="items">
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">УПРАВЛЕНИЕ КОНТЕНТОМ / 01</p>
+                    <h1>Предметы</h1>
+                    <p class="page-description">Создавайте предметы для витрины и выпадения из кейсов.</p>
+                </div>
+                <div class="admin-user"><span class="admin-avatar">A</span><span><strong>Admin</strong><small>Администратор</small></span></div>
+            </header>
+
+            <section class="panel case-create-panel" id="cases">
+                <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ КЕЙСОВ</p><h2>Создать кейс</h2></div><span class="step-badge">00</span></div>
+                <form class="case-form" id="case-form">
+                    <label class="field">Название кейса <input id="case-name" type="text" placeholder="Например, BLOOD CASE" maxlength="80" required></label>
+                    <label class="field">Цена открытия <span class="input-with-suffix"><input id="case-price" type="number" min="0" step="1" placeholder="1000" required><b>BC</b></span></label>
+                    <label class="field">Изображение <input id="case-image" type="text" value="./data/case_logo/free.png" placeholder="./data/case_logo/free.png" required></label>
+                    <button class="button primary" type="submit"><span>+</span>Создать кейс</button>
+                </form>
+                <p class="form-status" id="case-status" role="status"></p>
+            </section>
+
+            <section class="workspace-grid">
+                <form class="panel item-form" id="item-form">
+                    <div class="panel-heading">
+                        <div><p class="section-kicker">НОВЫЙ ОБЪЕКТ</p><h2>Создать предмет</h2></div>
+                        <span class="step-badge">01</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <label class="field field-wide">Название предмета <input id="item-name" name="name" type="text" placeholder="Например, BMW M5 F90" required maxlength="120"></label>
+                        <label class="field">Кейс <span class="field-hint">необязательно</span> <select id="item-case" name="case_id"><option value="">Без привязки к кейсу</option></select></label>
+                        <label class="field">Стоимость предмета <span class="input-with-suffix"><input id="item-price" name="price" type="number" min="0" step="1" placeholder="12500" required><b>BC</b></span></label>
+                        <label class="field">Редкость <select id="item-rarity" name="rarity" required><option value="common">Ширп</option><option value="uncommon">Обычный</option><option value="rare">Редкий</option><option value="epic">Эпичный</option><option value="legendary">Золотой</option><option value="mythical">Красный</option></select></label>
+                        <label class="field field-wide">Изображение <input id="item-image" name="image_url" type="text" placeholder="./data/assets/items/m5f90.png" value="./data/assets/items/m5f90.png" required></label>
+                        <label class="field">Шанс выпадения <span class="input-with-suffix"><input id="item-chance" name="drop_chance" type="number" min="0" max="100" step="0.01" placeholder="0.10"><b>%</b></span></label>
+                    </div>
+
+                    <div class="form-actions"><button class="button secondary" type="reset">Очистить</button><button class="button primary" type="submit"><span>+</span>Создать предмет</button></div>
+                    <p class="form-status" id="form-status" role="status"></p>
+                </form>
+
+                <aside class="panel preview-panel">
+                    <div class="panel-heading"><div><p class="section-kicker">ПРЕДПРОСМОТР</p><h2>Карточка предмета</h2></div><span class="live-badge">LIVE</span></div>
+                    <div class="preview-card" id="preview-card">
+                        <div class="preview-glow"></div><span class="rarity-label" id="preview-rarity">КРАСНЫЙ</span>
+                        <img id="preview-image" src="./data/assets/items/m5f90.png" alt="Предпросмотр предмета">
+                        <div class="preview-info"><strong id="preview-name">Название предмета</strong><span><b id="preview-price">0</b> BC</span></div>
+                    </div>
+                    <p class="preview-note">Изображение можно указать как локальный путь или публичный URL.</p>
+                </aside>
+            </section>
+
+            <section class="panel recent-panel">
+                <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ</p><h2>Последние предметы</h2></div><button class="refresh-button" id="refresh-items" type="button" title="Обновить список">↻ Обновить</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Предмет</th><th>Кейс</th><th>Редкость</th><th>Стоимость</th><th>Шанс</th><th>Создан</th></tr></thead><tbody id="items-list"><tr><td colspan="6" class="empty-state">Загрузка каталога...</td></tr></tbody></table></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_CONFIG = {
+            url: 'https://kvtosrmtuhqsoimfbicw.supabase.co',
+            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG9zcm10dWhxc29pbWZiaWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTkxNDAsImV4cCI6MjEwNDAzNTE0MH0.3WP0FB4tT0uecJyHpwUQ1PjOWEta8zcsX8b4_hv7ads'
+        };
+        const supabaseClient = window.supabase?.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        const rarityNames = { common: 'ШИРП', uncommon: 'ОБЫЧНЫЙ', rare: 'РЕДКИЙ', epic: 'ЭПИЧНЫЙ', legendary: 'ЗОЛОТОЙ', mythical: 'КРАСНЫЙ' };
+        const form = document.querySelector('#item-form');
+        const caseForm = document.querySelector('#case-form');
+        const status = document.querySelector('#form-status');
+        const caseStatus = document.querySelector('#case-status');
+        const fields = { name: document.querySelector('#item-name'), caseId: document.querySelector('#item-case'), price: document.querySelector('#item-price'), rarity: document.querySelector('#item-rarity'), image: document.querySelector('#item-image'), chance: document.querySelector('#item-chance') };
+
+        function updatePreview() {
+            document.querySelector('#preview-name').textContent = fields.name.value.trim() || 'Название предмета';
+            document.querySelector('#preview-price').textContent = Number(fields.price.value || 0).toLocaleString('ru-RU');
+            const rarity = fields.rarity.value;
+            document.querySelector('#preview-rarity').textContent = rarityNames[rarity];
+            document.querySelector('#preview-card').className = `preview-card rarity-${rarity}`;
+            document.querySelector('#preview-image').src = fields.image.value.trim() || './data/assets/items/m5f90.png';
+        }
+        Object.values(fields).forEach(field => field.addEventListener('input', updatePreview));
+        fields.rarity.addEventListener('change', updatePreview);
+
+        function showStatus(message, type) { status.textContent = message; status.className = `form-status ${type}`; }
+        function formatDate(value) { return value ? new Date(value).toLocaleDateString('ru-RU') : '—'; }
+        function renderItems(items) {
+            const list = document.querySelector('#items-list');
+            if (!items?.length) { list.innerHTML = '<tr><td colspan="6" class="empty-state">Предметов пока нет</td></tr>'; return; }
+            list.innerHTML = items.map(item => { const link = item.case_items?.[0]; return `<tr><td><div class="table-item"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${link?.cases?.name || '—'}</td><td><span class="table-rarity rarity-${item.rarity || 'common'}">${rarityNames[item.rarity] || item.rarity || '—'}</span></td><td>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</td><td>${link?.chance ?? '—'}%</td><td>${formatDate(item.created_at)}</td></tr>`; }).join('');
+        }
+        async function loadCases() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('cases').select('id, name').eq('active', true).order('name');
+            if (error) { fields.caseId.innerHTML = '<option value="">Не удалось загрузить кейсы</option>'; return; }
+            fields.caseId.innerHTML = data?.length ? data.map(item => `<option value="${item.id}">${item.name}</option>`).join('') : '<option value="">Сначала создайте кейс</option>';
+        }
+        caseForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!supabaseClient) { caseStatus.textContent = 'Supabase SDK не подключен.'; caseStatus.className = 'form-status error'; return; }
+            const button = caseForm.querySelector('[type="submit"]');
+            button.disabled = true;
+            caseStatus.textContent = 'Отправка на сервер...';
+            caseStatus.className = 'form-status loading';
+            const payload = { name: document.querySelector('#case-name').value.trim(), price: Number(document.querySelector('#case-price').value), image_url: document.querySelector('#case-image').value.trim(), active: true };
+            const { data, error } = await supabaseClient.from('cases').insert(payload).select('id, name').single();
+            button.disabled = false;
+            if (error) { caseStatus.textContent = `Ошибка: ${error.message}`; caseStatus.className = 'form-status error'; return; }
+            caseStatus.textContent = 'Кейс создан. Теперь его можно выбрать для предмета.';
+            caseStatus.className = 'form-status success';
+            caseForm.reset();
+            document.querySelector('#case-image').value = './data/case_logo/free.png';
+            await loadCases();
+            fields.caseId.value = String(data.id);
+        });
+        async function loadItems() {
+            const list = document.querySelector('#items-list');
+            if (!supabaseClient) { list.innerHTML = '<tr><td colspan="6" class="empty-state">Supabase SDK не загрузился</td></tr>'; setConnectionState(false, 'SDK не загрузился'); return; }
+            const { data, error } = await supabaseClient.from('items').select('id, name, rarity, item_value, image_url, created_at, case_items(chance, cases(name))').order('created_at', { ascending: false }).limit(8);
+            if (error) { const missingTable = error.message.includes("Could not find the table"); const message = missingTable ? 'Таблица items не найдена в Supabase.' : `Не удалось загрузить items: ${error.message}`; list.innerHTML = `<tr><td colspan="6" class="empty-state error-text">${message}</td></tr>`; setConnectionState(false, missingTable ? 'Таблица items не найдена' : error.message); return; }
+            setConnectionState(true, 'Supabase подключен');
+            renderItems(data);
+        }
+        function setConnectionState(online, detail) { document.querySelector('#connection-title').textContent = online ? 'Система онлайн' : 'Требуется настройка'; document.querySelector('#connection-detail').textContent = detail; document.querySelector('#connection-dot').classList.toggle('offline', !online); }
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!supabaseClient) { showStatus('Supabase SDK не подключен.', 'error'); return; }
+            const submitButton = form.querySelector('[type="submit"]'); submitButton.disabled = true; showStatus('Отправка на сервер...', 'loading');
+            const itemPayload = { name: fields.name.value.trim(), rarity: fields.rarity.value, item_value: Number(fields.price.value), image_url: fields.image.value.trim() };
+            const { data: existingItem, error: lookupError } = await supabaseClient.from('items').select('id').eq('name', itemPayload.name).maybeSingle();
+            if (lookupError) { submitButton.disabled = false; showStatus(`Ошибка каталога: ${lookupError.message}`, 'error'); return; }
+            let item = existingItem;
+            if (!item) {
+                const { data: createdItem, error: insertError } = await supabaseClient.from('items').insert(itemPayload).select('id').single();
+                if (insertError) { submitButton.disabled = false; showStatus(`Ошибка каталога: ${insertError.message}`, 'error'); return; }
+                item = createdItem;
+            }
+            let error = null;
+            if (fields.caseId.value) {
+                const caseItemPayload = { case_id: Number(fields.caseId.value), item_id: item.id, item_name: itemPayload.name, rarity: itemPayload.rarity, item_value: itemPayload.item_value, image_url: itemPayload.image_url, chance: fields.chance.value ? Number(fields.chance.value) : 0 };
+                ({ error } = await supabaseClient.from('case_items').insert(caseItemPayload));
+            }
+            submitButton.disabled = false;
+            if (error) { showStatus(`Ошибка: ${error.message}`, 'error'); return; }
+            showStatus(fields.caseId.value ? 'Предмет создан и привязан к кейсу.' : 'Предмет создан в общем каталоге.', 'success'); form.reset(); fields.image.value = './data/assets/items/m5f90.png'; updatePreview(); loadItems();
+        });
+        document.querySelector('#refresh-items').addEventListener('click', loadItems);
+        form.addEventListener('reset', () => setTimeout(updatePreview));
+        updatePreview(); loadCases(); loadItems();
+    </script>
+</body>
+</html>
