@@ -1,5 +1,62 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+.nickname-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(3, 4, 6, 0.82);
+    backdrop-filter: blur(10px);
+}
+
+.nickname-modal.open { display: flex; }
+
+.nickname-dialog {
+    width: min(390px, 100%);
+    padding: 30px 24px 24px;
+    border: 1px solid rgba(255, 68, 68, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #17191d, #0c0d0f);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 35px rgba(255, 45, 45, 0.12);
+    text-align: center;
+}
+
+.nickname-mark {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 18px;
+    border-radius: 12px;
+    background: #f04444;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.nickname-kicker {
+    margin: 0 0 8px;
+    color: #f04444;
+    font: 10px 'DM Mono', monospace;
+    letter-spacing: 0.14em;
+}
+
+.nickname-dialog h2 { margin: 0; color: #f3f3f0; font-size: 24px; }
+.nickname-description { margin: 10px auto 24px; max-width: 290px; color: #8b909b; font-size: 12px; line-height: 1.5; }
+.nickname-field { display: block; text-align: left; }
+.nickname-field span { display: block; margin-bottom: 8px; color: #c5c7cc; font-size: 12px; font-weight: 600; }
+.nickname-field input { width: 100%; border: 1px solid #3a3e45; border-radius: 4px; background: #090a0c; color: #f3f3f0; outline: 0; padding: 13px 14px; font-size: 15px; }
+.nickname-field input:focus { border-color: #f04444; box-shadow: 0 0 0 3px rgba(240, 68, 68, 0.12); }
+.nickname-field small { display: block; margin-top: 7px; color: #777d87; text-align: right; font-size: 10px; }
+.nickname-field small b { color: #c5c7cc; font-weight: 600; }
+.nickname-status { min-height: 17px; margin: 12px 0 10px; color: #ff7777; font-size: 11px; }
+.nickname-submit { width: 100%; border: 0; border-radius: 4px; background: #f04444; color: #fff; padding: 13px 16px; cursor: pointer; font-weight: 700; }
+.nickname-submit:hover { background: #d93838; }
+.nickname-submit:disabled { opacity: 0.55; cursor: wait; }
+
 :root {
     --font-regular: 400;
     --font-medium: 500;
@@ -3083,6 +3140,7 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 }
 
 .top-player-card.first {
+    order: 2;
     min-height: 210px;
     border-color: rgba(255, 85, 85, 0.9);
     box-shadow: inset 0 0 0 1px rgba(255, 102, 102, 0.3);
@@ -3090,10 +3148,12 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 }
 
 .top-player-card.second {
+    order: 1;
     border-color: rgba(174, 178, 186, 0.8);
 }
 
 .top-player-card.third {
+    order: 3;
     border-color: rgba(255, 142, 36, 0.9);
 }
 
@@ -3848,4 +3908,21 @@ background: rgb(12 13 14);
     color: #7a7a7a;
     text-align: center;
     font-size: var(--text-13);
+}
+
+.top-loading {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 36px 16px;
+    color: #7a7a7a;
+    text-align: center;
+    font-size: var(--text-13);
+}
+
+.top-avatar img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }

@@ -11,6 +11,7 @@ const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !
     ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
     : null;
 let currentProfileId = null;
+let currentProfileUsername = '';
 
 if (!supabase) {
     console.warn('Supabase not connected yet. Paste URL and anon key into SUPABASE_CONFIG in script.js');
@@ -144,6 +145,7 @@ async function syncTelegramProfileToSupabase(user) {
         let saveResult;
         if (existingProfile) {
             currentProfileId = existingProfile.id;
+            currentProfileUsername = existingProfile.username || '';
             saveResult = await supabase
                 .from('profiles')
                 .update(profileData)
@@ -161,6 +163,7 @@ async function syncTelegramProfileToSupabase(user) {
                 .select('id')
                 .single();
             currentProfileId = saveResult.data?.id || null;
+            currentProfileUsername = username;
         }
 
         if (saveResult.error) {
@@ -202,6 +205,7 @@ async function loadCurrentUserProfile() {
         }
 
         currentProfileId = data?.id || currentProfileId;
+        currentProfileUsername = data?.username || currentProfileUsername;
 
         const balanceAmount = document.querySelector('.balance-amount');
         if (data && balanceAmount) {
@@ -223,6 +227,54 @@ async function loadCurrentUserProfile() {
     } catch (error) {
         console.error('loadCurrentUserProfile failed:', error);
     }
+}
+
+function updateDisplayedUsername(username) {
+    document.querySelectorAll('.player-name, .profile-player-name, .win-player-name, .seller-name, .top-player-name, .top-list-player-name').forEach(element => {
+        element.textContent = username;
+    });
+}
+
+function openNicknameModal() {
+    const modal = document.querySelector('#nickname-modal');
+    const input = document.querySelector('#nickname-input');
+    if (!modal || !input) return;
+    input.value = currentProfileUsername.slice(0, 12);
+    document.querySelector('#nickname-counter').textContent = input.value.length;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => input.focus(), 0);
+}
+
+function setupNicknamePrompt(telegramUser) {
+    const modal = document.querySelector('#nickname-modal');
+    const form = document.querySelector('#nickname-form');
+    const input = document.querySelector('#nickname-input');
+    const counter = document.querySelector('#nickname-counter');
+    const status = document.querySelector('#nickname-status');
+    if (!modal || !form || !input || !telegramUser || !currentProfileId) return;
+    const storageKey = `nickname-created-${telegramUser.id}`;
+    let alreadyCompleted = false;
+    try { alreadyCompleted = localStorage.getItem(storageKey) === 'true'; } catch (error) { console.warn('Не удалось проверить первый вход:', error); }
+    if (alreadyCompleted) return;
+    openNicknameModal();
+    input.addEventListener('input', () => { input.value = input.value.slice(0, 12); counter.textContent = input.value.length; });
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const nickname = input.value.trim();
+        if (nickname.length < 2 || nickname.length > 12) { status.textContent = 'Ник должен содержать от 2 до 12 символов.'; return; }
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        status.textContent = 'Сохраняем...';
+        const { error } = await supabase.from('profiles').update({ username: nickname, updated_at: new Date().toISOString() }).eq('id', currentProfileId);
+        button.disabled = false;
+        if (error) { status.textContent = `Не удалось сохранить ник: ${error.message}`; return; }
+        currentProfileUsername = nickname;
+        updateDisplayedUsername(nickname);
+        try { localStorage.setItem(storageKey, 'true'); } catch (storageError) { console.warn('Не удалось запомнить первый вход:', storageError); }
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+    });
 }
 
 function inventoryRarityClass(rarity) {
@@ -271,6 +323,49 @@ async function saveDropToInventory(drop) {
     return { error };
 }
 
+function escapeLeaderboardText(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+}
+
+function renderLeaderboard(profiles) {
+    const podium = document.querySelector('.top-ranking-grid');
+    const list = document.querySelector('.top-players-list');
+    if (!podium || !list) return;
+    if (!profiles.length) {
+        podium.innerHTML = '<p class="top-loading">Игроков в рейтинге пока нет</p>';
+        list.innerHTML = '';
+        return;
+    }
+    const podiumClasses = { 1: 'first', 2: 'second', 3: 'third' };
+    podium.innerHTML = profiles.slice(0, 3).map((profile, index) => {
+        const place = index + 1;
+        const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
+        const avatar = profile.avatar_url || './data/assets/profile.png';
+        return `<article class="top-player-card ${podiumClasses[place]}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name">${escapeLeaderboardText(name)}</div><div class="top-player-balance">${Number(profile.balance || 0).toLocaleString('ru-RU')} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
+    }).join('');
+    list.innerHTML = profiles.slice(3).map((profile, index) => {
+        const place = index + 4;
+        const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
+        const avatar = profile.avatar_url || './data/assets/profile.png';
+        return `<div class="top-list-item"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${profile.premium ? 'PREMIUM' : 'PLAYER'}</div></div><div class="top-list-score"><span>${Number(profile.balance || 0).toLocaleString('ru-RU')}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
+    }).join('');
+}
+
+async function loadLeaderboard() {
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, first_name, last_name, avatar_url, balance, premium')
+        .order('balance', { ascending: false })
+        .limit(10);
+    if (error) {
+        console.error('Supabase leaderboard load error:', error);
+        renderLeaderboard([]);
+        return;
+    }
+    renderLeaderboard(data || []);
+}
+
 async function initTelegramAuth() {
     const telegramApp = window.Telegram && window.Telegram.WebApp;
     if (telegramApp) {
@@ -286,6 +381,8 @@ async function initTelegramAuth() {
     await syncTelegramProfileToSupabase(telegramUser);
     await loadCurrentUserProfile();
     await loadInventory();
+    await loadLeaderboard();
+    setupNicknamePrompt(telegramUser);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
