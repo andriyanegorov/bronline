@@ -10,6 +10,7 @@ const SUPABASE_CONFIG = {
 const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !== 'PASTE_SUPABASE_URL_HERE'
     ? window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
     : null;
+let currentProfileId = null;
 
 if (!supabase) {
     console.warn('Supabase not connected yet. Paste URL and anon key into SUPABASE_CONFIG in script.js');
@@ -118,7 +119,7 @@ async function syncTelegramProfileToSupabase(user) {
     try {
         const { data: existingProfile, error: selectError } = await supabase
             .from('profiles')
-            .select('balance, username')
+            .select('id, balance, username')
             .eq('telegram_id', telegramId)
             .maybeSingle();
 
@@ -142,6 +143,7 @@ async function syncTelegramProfileToSupabase(user) {
 
         let saveResult;
         if (existingProfile) {
+            currentProfileId = existingProfile.id;
             saveResult = await supabase
                 .from('profiles')
                 .update(profileData)
@@ -155,7 +157,10 @@ async function syncTelegramProfileToSupabase(user) {
                     balance: 0,
                     ...profileData,
                     created_at: new Date().toISOString()
-                });
+                })
+                .select('id')
+                .single();
+            currentProfileId = saveResult.data?.id || null;
         }
 
         if (saveResult.error) {
@@ -187,7 +192,7 @@ async function loadCurrentUserProfile() {
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .select('balance, username, avatar_url, premium')
+            .select('id, balance, username, avatar_url, premium')
             .eq('telegram_id', telegramId)
             .maybeSingle();
 
@@ -195,6 +200,8 @@ async function loadCurrentUserProfile() {
             console.error('Supabase load profile error:', error);
             return;
         }
+
+        currentProfileId = data?.id || currentProfileId;
 
         const balanceAmount = document.querySelector('.balance-amount');
         if (data && balanceAmount) {
@@ -218,6 +225,52 @@ async function loadCurrentUserProfile() {
     }
 }
 
+function inventoryRarityClass(rarity) {
+    return ({ mythical: 'red', legendary: 'gold', epic: 'purple', rare: 'blue', uncommon: 'green', common: 'deepblue' })[rarity] || 'deepblue';
+}
+
+function renderInventory(items) {
+    const container = document.querySelector('.profile-collection-grid');
+    if (!container) return;
+    if (!items?.length) {
+        container.innerHTML = '<p class="profile-inventory-status">Инвентарь пока пуст</p>';
+        return;
+    }
+    const rarityNames = { common: 'ШИРП', uncommon: 'ОБЫЧНЫЙ', rare: 'РЕДКИЙ', epic: 'ЭПИЧНЫЙ', legendary: 'ЗОЛОТОЙ', mythical: 'КРАСНЫЙ' };
+    container.innerHTML = items.map(item => `<article class="profile-item-card profile-item-card--${inventoryRarityClass(item.rarity)}"><button class="profile-item-sell" type="button" aria-label="Продать предмет"><img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon"></button><div class="profile-item-price"><span>${Number(item.item_value || 0).toLocaleString('ru-RU')}</span><span class="profile-item-coin">◌</span></div><div class="profile-item-visual profile-item-visual--${inventoryRarityClass(item.rarity)}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt="${item.item_name || 'Предмет'}" class="profile-item-image"></div><div class="profile-item-info"><div class="profile-item-name">${item.item_name || 'Без названия'}</div><span class="profile-item-badge rarity-badge ${item.rarity || 'common'}">${rarityNames[item.rarity] || item.rarity || 'ПРЕДМЕТ'}</span></div></article>`).join('');
+}
+
+async function loadInventory() {
+    if (!supabase || !currentProfileId) return;
+    const { data, error } = await supabase
+        .from('inventory')
+        .select('id, item_name, rarity, item_value, image_url, quantity, created_at')
+        .eq('user_id', currentProfileId)
+        .order('created_at', { ascending: false });
+    if (error) {
+        console.error('Supabase inventory load error:', error);
+        renderInventory([]);
+        return;
+    }
+    renderInventory(data);
+}
+
+async function saveDropToInventory(drop) {
+    if (!supabase || !currentProfileId || !drop) {
+        return { error: new Error('Профиль игрока не найден. Откройте приложение через Telegram.') };
+    }
+    const { error } = await supabase.from('inventory').insert({
+        user_id: currentProfileId,
+        item_name: drop.name,
+        rarity: drop.rarity,
+        item_value: Number(drop.price) || 0,
+        image_url: drop.image || null,
+        quantity: 1
+    });
+    if (!error) await loadInventory();
+    return { error };
+}
+
 async function initTelegramAuth() {
     const telegramApp = window.Telegram && window.Telegram.WebApp;
     if (telegramApp) {
@@ -232,6 +285,7 @@ async function initTelegramAuth() {
     applyTelegramProfileToUI(telegramUser);
     await syncTelegramProfileToSupabase(telegramUser);
     await loadCurrentUserProfile();
+    await loadInventory();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -283,6 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    const casesContainer = document.querySelector('.cases-container');
     const caseCards = document.querySelectorAll('.case-card');
     const openCaseButtons = document.querySelectorAll('.btn-open');
     const caseDetailBack = document.querySelector('.case-back-btn');
@@ -305,6 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let reelTargetPosition = 0;
     let reelIsRunning = false;
     let reelPrepared = false;
+    let reelInertiaFrame;
     const openingProgress = document.querySelector('.opening-progress span');
     const openingStatus = document.querySelector('.opening-status');
     const dropResultModal = document.querySelector('.drop-result-modal');
@@ -313,17 +369,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropResultName = document.getElementById('drop-result-name');
     const dropResultPrice = document.getElementById('drop-result-price');
     const dropResultSell = document.querySelector('.drop-sell-btn');
-    const reelDrops = [
-        { name: 'BMW M5 F90', price: 12500, image: './data/assets/items/m5f90.png', alt: 'BMW M5 F90', rarity: 'red' },
-        { name: 'M9 Bayonet Crimson Web', price: 8750, image: './data/assets/items/m5f90.png', alt: 'M9 Bayonet Crimson Web', rarity: 'red' },
-        { name: 'Sport Gloves Blood Pressure', price: 7250, image: './data/assets/items/m5f90.png', alt: 'Sport Gloves Blood Pressure', rarity: 'red' },
-        { name: 'AK-47 Bloodsport', price: 3250, image: './data/assets/items/m5f90.png', alt: 'AK-47 Bloodsport', rarity: 'orange' },
-        { name: 'AWP Redline', price: 2750, image: './data/assets/items/m5f90.png', alt: 'AWP Redline', rarity: 'purple' }
-    ];
+    let reelDrops = [];
+    const casesById = new Map();
+    let selectedCase = null;
     let resultDrop = null;
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+    const rarityClass = rarity => ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(rarity) ? rarity : 'common';
+    const rarityLabel = rarity => ({ common: 'ШИРП', uncommon: 'ОБЫЧНЫЙ', rare: 'РЕДКИЙ', epic: 'ЭПИЧНЫЙ', legendary: 'ЗОЛОТОЙ', mythical: 'КРАСНЫЙ' }[rarity] || rarity || 'ПРЕДМЕТ');
+
+    function renderCases(cases) {
+        if (!casesContainer) return;
+        if (!cases.length) { casesContainer.innerHTML = '<p class="cases-loading">Активных кейсов пока нет</p>'; return; }
+        casesContainer.innerHTML = cases.map(item => `<article class="case-card" data-case-id="${item.id}"><h3 class="case-card-title">${escapeHtml(item.name)}</h3><div class="case-card-image"><img src="${escapeHtml(item.image_url || './data/case_logo/free.png')}" alt="${escapeHtml(item.name)}"></div><div class="case-card-price"><img src="./data/assets/coin.png" alt="Монеты" class="price-coin"><span>${Number(item.price || 0).toLocaleString('ru-RU')}</span></div><button class="btn-open" type="button">ОТКРЫТЬ</button></article>`).join('');
+        casesContainer.querySelectorAll('.case-card').forEach(card => card.addEventListener('click', openCaseDetail));
+    }
+
+    async function loadCases() {
+        if (!supabase || !casesContainer) return;
+        const { data, error } = await supabase.from('cases').select('id, name, price, image_url, active, case_items(id, item_name, rarity, chance, item_value, image_url)').eq('active', true).order('created_at', { ascending: false });
+        if (error) { casesContainer.innerHTML = '<p class="cases-loading">Не удалось загрузить кейсы</p>'; console.error('Не удалось загрузить кейсы:', error); return; }
+        casesById.clear();
+        data.forEach(item => casesById.set(String(item.id), item));
+        renderCases(data);
+    }
+
+    function renderCaseDetail(caseData) {
+        const items = caseData.case_items || [];
+        document.querySelector('.case-detail-toolbar h1').textContent = caseData.name;
+        const detailImage = document.querySelector('.detail-case-image');
+        detailImage.src = caseData.image_url || './data/case_logo/free.png';
+        detailImage.alt = caseData.name;
+        document.querySelector('.open-case-btn').textContent = `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC`;
+        const contents = document.querySelector('.case-contents-grid');
+        contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><span class="drop-chance">${Number(item.chance || 0).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
+        reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: Number(item.chance) || 0 }));
+        const openButton = document.querySelector('.open-case-btn');
+        openButton.disabled = !reelDrops.length;
+        openButton.textContent = reelDrops.length ? `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC` : 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
+    }
 
     function openCaseDetail(event) {
         event.preventDefault();
+        const card = event.currentTarget.closest('.case-card');
+        selectedCase = card && casesById.get(card.dataset.caseId);
+        if (!selectedCase) return;
+        renderCaseDetail(selectedCase);
         showPage('case-detail');
     }
 
@@ -383,70 +474,125 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function prepareReel() {
-        const sourceItems = Array.from(reelTrack.children).map(item => item.cloneNode(true));
+        if (!reelDrops.length) return false;
+        const sourceItems = reelDrops.map(drop => {
+            const item = document.createElement('article');
+            item.className = `reel-item rarity-${drop.rarity}`;
+            item.innerHTML = `<span>${Number(drop.chance).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small>`;
+            return item;
+        });
         reelTrack.replaceChildren();
 
-        const winnerIndex = Math.floor(Math.random() * Math.min(sourceItems.length, reelDrops.length));
+        const totalChance = reelDrops.reduce((total, drop) => total + drop.chance, 0);
+        let randomChance = Math.random() * (totalChance || reelDrops.length);
+        let winnerIndex = reelDrops.findIndex(drop => { randomChance -= drop.chance || (totalChance ? 0 : 1); return randomChance <= 0; });
+        if (winnerIndex < 0) winnerIndex = reelDrops.length - 1;
         resultDrop = reelDrops[winnerIndex];
 
-        for (let repeat = 0; repeat < 5; repeat += 1) {
+        const winnerRepeat = 14;
+        const repeatCount = 18;
+        for (let repeat = 0; repeat < repeatCount; repeat += 1) {
             sourceItems.forEach((sourceItem, itemIndex) => {
                 const item = sourceItem.cloneNode(true);
                 item.classList.remove('reel-winner');
-                if (repeat === 2 && itemIndex === winnerIndex) item.classList.add('reel-winner');
+                if (repeat === winnerRepeat && itemIndex === winnerIndex) item.classList.add('reel-winner');
                 reelTrack.appendChild(item);
             });
         }
 
         reelPrepared = true;
+        return true;
     }
 
-    function animateReel(time) {
-        const elapsed = Math.min((time - reelStartTime) / 1000, 9.8);
-        const accelerationTime = 0.9;
-        const cruiseTime = 3.1;
-        const decelerationTime = 4.2;
-        const distance = reelStartPosition - reelTargetPosition;
-        const maxVelocity = distance / (accelerationTime * 0.55 + cruiseTime + decelerationTime * 0.5);
+    function reelEase(progress) {
+        const clampedProgress = Math.max(0, Math.min(progress, 1));
+        const accelerationEnd = 2.8 / 6.8;
+        const cruiseEnd = 5.1 / 6.8;
+        const accelerationLength = accelerationEnd;
+        const cruiseLength = cruiseEnd - accelerationEnd;
+        const decelerationLength = 1 - cruiseEnd;
+        const totalDistance = (accelerationLength + decelerationLength) / 2 + cruiseLength;
+        const rampIntegral = value => value ** 3 - value ** 4 / 2;
         let travelled;
 
-        if (elapsed < accelerationTime) {
-            travelled = 0.5 * (maxVelocity / accelerationTime) * elapsed ** 2;
-        } else if (elapsed < accelerationTime + cruiseTime) {
-            travelled = maxVelocity * (accelerationTime * 0.55 + elapsed - accelerationTime);
+        if (clampedProgress <= accelerationEnd) {
+            const rampProgress = clampedProgress / accelerationLength;
+            travelled = accelerationLength * rampIntegral(rampProgress);
+        } else if (clampedProgress <= cruiseEnd) {
+            travelled = accelerationLength / 2 + clampedProgress - accelerationEnd;
         } else {
-            const slowingTime = Math.min(elapsed - accelerationTime - cruiseTime, decelerationTime);
-            travelled = maxVelocity * (accelerationTime * 0.55 + cruiseTime + slowingTime - (slowingTime ** 2 / (2 * decelerationTime)));
+            const rampProgress = (clampedProgress - cruiseEnd) / decelerationLength;
+            travelled = accelerationLength / 2 + cruiseLength + decelerationLength * (rampProgress - rampIntegral(rampProgress));
         }
 
-        reelVelocity = elapsed < accelerationTime ? maxVelocity * elapsed / accelerationTime : maxVelocity;
-        setReelPosition(reelStartPosition - travelled);
+        return travelled / totalDistance;
+    }
 
-        if (elapsed < 9.8) {
+    async function animateReel(time) {
+        const duration = 6800;
+        const progress = Math.min((time - reelStartTime) / duration, 1);
+        const easedProgress = reelEase(progress);
+        const position = reelStartPosition + (reelTargetPosition - reelStartPosition) * easedProgress;
+        const previousPosition = reelPosition;
+        setReelPosition(position);
+        reelVelocity = (position - previousPosition) / Math.max((time - (reelLastTime || time - 16)) / 1000, 0.001);
+        reelLastTime = time;
+
+        if (progress < 1) {
             reelAnimationFrame = requestAnimationFrame(animateReel);
             return;
         }
 
         reelIsRunning = false;
         reelVelocity = 0;
-        setReelPosition(reelTargetPosition);
-        if (openingStatus) openingStatus.textContent = 'Открытие завершено';
+        const { error: inventoryError } = await saveDropToInventory(resultDrop);
+        if (openingStatus) openingStatus.textContent = inventoryError ? 'Предмет выпал, но не сохранён' : 'Открытие завершено';
         showResultModal(resultDrop);
+    }
+
+    function clampReelPosition(position) {
+        const minPosition = Math.min(0, reelWindow.clientWidth - reelTrack.scrollWidth);
+        return Math.min(0, Math.max(minPosition, position));
+    }
+
+    function animateReelInertia(time) {
+        const elapsed = Math.max(time - reelLastTime, 0);
+        reelLastTime = time;
+        const decay = Math.exp(-elapsed / 430);
+        const nextVelocity = reelVelocity * decay;
+        const nextPosition = clampReelPosition(reelPosition + reelVelocity * (elapsed / 1000));
+        setReelPosition(nextPosition);
+        reelVelocity = nextVelocity;
+
+        if (Math.abs(reelVelocity) > 8 && nextPosition !== 0 && nextPosition !== Math.min(0, reelWindow.clientWidth - reelTrack.scrollWidth)) {
+            reelInertiaFrame = requestAnimationFrame(animateReelInertia);
+            return;
+        }
+        reelVelocity = 0;
     }
 
     function startReelOpening() {
         if (!openingOverlay || !reelWindow) return;
         hideResultModal();
         reelPrepared = false;
-        prepareReel();
+        if (!prepareReel()) return;
         const winner = reelTrack.querySelector('.reel-winner');
+        if (!winner) return;
+        void reelTrack.offsetWidth;
         reelTargetPosition = reelWindow.clientWidth / 2 - (winner.offsetLeft + winner.offsetWidth / 2);
-
-        const trackWidth = reelTrack.scrollWidth || 0;
-        const startOffset = Math.min(Math.max(trackWidth * 0.75, 2600), 4300);
-        reelStartPosition = reelTargetPosition + startOffset;
+        const reelItems = [...reelTrack.children];
+        const winnerIndex = reelItems.indexOf(winner);
+        const cyclesBeforeWinner = 10;
+        const leadIndex = Math.max(0, winnerIndex - (reelDrops.length * cyclesBeforeWinner) - 4);
+        const leadItem = reelItems[leadIndex];
+        const leadCenter = leadItem.offsetLeft + leadItem.offsetWidth / 2;
+        const winnerCenter = winner.offsetLeft + winner.offsetWidth / 2;
+        const visibleCardDistance = winnerCenter - leadCenter;
+        reelStartPosition = Math.min(0, reelTargetPosition + visibleCardDistance);
+        reelStartPosition = clampReelPosition(reelStartPosition);
 
         cancelAnimationFrame(reelAnimationFrame);
+        cancelAnimationFrame(reelInertiaFrame);
         if (openingProgress) {
             openingProgress.style.animation = 'none';
             void openingProgress.offsetWidth;
@@ -455,6 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (openingStatus) openingStatus.textContent = 'Открывается...';
         setReelPosition(reelStartPosition);
         reelStartTime = performance.now();
+        reelLastTime = reelStartTime;
         reelIsRunning = true;
         reelAnimationFrame = requestAnimationFrame(animateReel);
     }
@@ -475,6 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('case-opening-active');
             hideResultModal();
             cancelAnimationFrame(reelAnimationFrame);
+            cancelAnimationFrame(reelInertiaFrame);
             reelIsRunning = false;
         });
     }
@@ -486,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
             openingOverlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('case-opening-active');
             cancelAnimationFrame(reelAnimationFrame);
+            cancelAnimationFrame(reelInertiaFrame);
             reelIsRunning = false;
         });
     }
@@ -497,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
             reelPointerX = event.clientX;
             reelPointerTime = performance.now();
             reelVelocity = 0;
+            cancelAnimationFrame(reelInertiaFrame);
             cancelAnimationFrame(reelAnimationFrame);
             reelWindow.setPointerCapture(event.pointerId);
         });
@@ -516,10 +666,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!reelDragging) return;
             reelDragging = false;
             reelWindow.releasePointerCapture(event.pointerId);
-            reelLastTime = 0;
-            requestAnimationFrame(animateReel);
+            reelLastTime = performance.now();
+            if (Math.abs(reelVelocity) > 8) reelInertiaFrame = requestAnimationFrame(animateReelInertia);
         });
     }
+
+    loadCases();
 
     const pages = document.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');

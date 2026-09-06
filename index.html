@@ -30,41 +30,6 @@
 
     <main class="page home-page active" data-page="home">
 
-        <div class="free-case-section">
-            <div class="free-case-block">
-                <div class="free-case-top">
-                    <div class="free-case-left">
-                        <h2 class="free-case-title">FREE <span class="case-word">CASE</span></h2>
-                        <p class="free-case-subtitle">Успей забрать бесплатный кейс!</p>
-                        
-                        <div class="case-info">
-                            <img src="./data/assets/free-case.svg" alt="Free Case" class="gift-icon">
-                            <div class="case-counter">
-                                <span class="counter-number">27 / 50</span>
-                                <span class="counter-text">кейсов осталось</span>
-                            </div>
-                        </div>
-
-                        <div class="case-timer">
-                            <svg class="clock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            <span class="timer-text">Сегодня в 18:30</span>
-                        </div>
-                    </div>
-
-                    <div class="free-case-right">
-                        <div class="case-image">
-                            <img src="./data/case_logo/free.png" alt="Free Case" class="case-img">
-                        </div>
-                    </div>
-                </div>
-
-                <button class="btn-grab-case">ЗАБРАТЬ КЕЙС</button>
-            </div>
-        </div>
-
         <div class="regular-cases-section">
             <div class="regular-cases-header">
                 <h2 class="regular-cases-title">Обычные кейсы</h2>
@@ -72,41 +37,7 @@
             </div>
 
             <div class="cases-container">
-                <div class="case-card">
-                    <h3 class="case-card-title">STARTER CASE</h3>
-                    <div class="case-card-image">
-                        <img src="./data/case_logo/free.png" alt="Starter Case">
-                    </div>
-                    <div class="case-card-price">
-                        <img src="./data/assets/coin.png" alt="Coin" class="price-coin">
-                        <span>1 000</span>
-                    </div>
-                    <button class="btn-open">ОТКРЫТЬ</button>
-                </div>
-
-                <div class="case-card">
-                    <h3 class="case-card-title">STREET CASE</h3>
-                    <div class="case-card-image">
-                        <img src="./data/case_logo/free.png" alt="Street Case">
-                    </div>
-                    <div class="case-card-price">
-                        <img src="./data/assets/coin.png" alt="Coin" class="price-coin">
-                        <span>5 000</span>
-                    </div>
-                    <button class="btn-open">ОТКРЫТЬ</button>
-                </div>
-
-                <div class="case-card">
-                    <h3 class="case-card-title">LEGEND CASE</h3>
-                    <div class="case-card-image">
-                        <img src="./data/case_logo/free.png" alt="Legend Case">
-                    </div>
-                    <div class="case-card-price">
-                        <img src="./data/assets/coin.png" alt="Coin" class="price-coin">
-                        <span>50 000</span>
-                    </div>
-                    <button class="btn-open">ОТКРЫТЬ</button>
-                </div>
+                <p class="cases-loading">Загрузка кейсов...</p>
             </div>
         </div>
 
@@ -225,12 +156,12 @@
     <section class="page case-detail-page" data-page="case-detail">
         <div class="case-detail-toolbar">
             <button class="case-back-btn" type="button" aria-label="Назад">‹</button>
-            <h1>BLOOD CASE</h1>
+            <h1>КЕЙС</h1>
             <button class="case-info-btn" type="button" aria-label="Информация">i</button>
         </div>
 
         <div class="case-detail-hero">
-            <img src="./data/case_logo/free.png" alt="Blood Case" class="detail-case-image">
+            <img src="./data/case_logo/free.png" alt="Кейс" class="detail-case-image">
         </div>
 
         <div class="open-count-label">Количество открытий</div>
@@ -242,7 +173,7 @@
             <button class="open-count" type="button" aria-pressed="false">x10</button>
         </div>
 
-        <button class="open-case-btn" type="button">ОТКРЫТЬ ЗА 1 250 BC</button>
+        <button class="open-case-btn" type="button">ОТКРЫТЬ</button>
 
         <div class="quick-open-row">
             <span>Быстрое открытие</span>
@@ -256,15 +187,6 @@
         </div>
 
         <div class="case-contents-grid">
-            <article class="case-content-item rarity-red"><span class="drop-chance">0.10%</span><img src="./data/assets/items/m5f90.png" alt="BMW M5 F90"><strong>BMW M5 F90</strong><em>12 500 BC</em></article>
-            <article class="case-content-item rarity-red"><span class="drop-chance">0.20%</span><img src="./data/assets/items/m5f90.png" alt="M9 Bayonet Crimson Web"><strong>M9 Bayonet<br>Crimson Web</strong><em>8 750 BC</em></article>
-            <article class="case-content-item rarity-red"><span class="drop-chance">0.30%</span><img src="./data/assets/items/m5f90.png" alt="Sport Gloves Blood Pressure"><strong>Sport Gloves<br>Blood Pressure</strong><em>7 250 BC</em></article>
-            <article class="case-content-item rarity-orange"><span class="drop-chance">0.50%</span><img src="./data/assets/items/m5f90.png" alt="AK-47 Bloodsport"><strong>AK-47<br>Bloodsport</strong><em>3 250 BC</em></article>
-            <article class="case-content-item rarity-orange"><span class="drop-chance">1.00%</span><img src="./data/assets/items/m5f90.png" alt="AWP Redline"><strong>AWP<br>Redline</strong><em>2 750 BC</em></article>
-            <article class="case-content-item rarity-purple"><span class="drop-chance">2.00%</span><img src="./data/assets/items/m5f90.png" alt="M4A4 The Emperor"><strong>M4A4<br>The Emperor</strong><em>1 750 BC</em></article>
-            <article class="case-content-item rarity-purple"><span class="drop-chance">3.00%</span><img src="./data/assets/items/m5f90.png" alt="USP-S Kill Confirmed"><strong>USP-S<br>Kill Confirmed</strong><em>1 250 BC</em></article>
-            <article class="case-content-item rarity-purple"><span class="drop-chance">5.00%</span><img src="./data/assets/items/m5f90.png" alt="P90 Cold Blooded"><strong>P90<br>Cold Blooded</strong><em>950 BC</em></article>
-            <article class="case-content-item rarity-blue"><span class="drop-chance">8.00%</span><img src="./data/assets/items/m5f90.png" alt="Glock-18 Candy Apple"><strong>Glock-18<br>Candy Apple</strong><em>650 BC</em></article>
         </div>
     </section>
 
@@ -273,11 +195,6 @@
             <div class="reel-window">
                 <div class="reel-pointer"></div>
                 <div class="reel-track">
-                    <article class="reel-item rarity-red"><span>0.30%</span><img src="./data/assets/items/m5f90.png" alt="Sport Gloves"><strong>Sport Gloves</strong><small>7 250 BC</small></article>
-                    <article class="reel-item rarity-red"><span>0.20%</span><img src="./data/assets/items/m5f90.png" alt="M9 Bayonet"><strong>M9 Bayonet<br>Crimson Web</strong><small>8 750 BC</small></article>
-                    <article class="reel-item reel-winner rarity-red"><span>0.10%</span><img src="./data/assets/items/m5f90.png" alt="BMW M5 F90"><strong>BMW M5 F90</strong><small>12 500 BC</small></article>
-                    <article class="reel-item rarity-purple"><span>0.20%</span><img src="./data/assets/items/m5f90.png" alt="AWP Redline"><strong>AWP<br>Redline</strong><small>2 750 BC</small></article>
-                    <article class="reel-item rarity-orange"><span>0.50%</span><img src="./data/assets/items/m5f90.png" alt="AK-47"><strong>AK-47<br>Bloodsport</strong><small>3 250 BC</small></article>
                 </div>
             </div>
         </div>
@@ -815,107 +732,7 @@
                 </div>
 
                 <div class="profile-collection-grid">
-                    <article class="profile-item-card profile-item-card--gold">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>152 450</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--knife">
-                            <img src="./data/assets/items/m5f90.png" alt="M9 Bayonet" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name"><span class="profile-item-star">★</span> M9 Bayonet</div>
-                            <span class="profile-item-badge rarity-badge legendary">ЗОЛОТОЙ</span>
-                        </div>
-                    </article>
-
-                    <article class="profile-item-card profile-item-card--purple">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>68 900</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--purple">
-                            <img src="./data/assets/items/m5f90.png" alt="AK-47" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name">AK-47</div>
-                            <span class="profile-item-badge rarity-badge epic">ЭПИЧНЫЙ</span>
-                        </div>
-                    </article>
-
-                    <article class="profile-item-card profile-item-card--blue">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>32 850</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--blue">
-                            <img src="./data/assets/items/m5f90.png" alt="M4A4" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name">M4A4</div>
-                            <span class="profile-item-badge rarity-badge rare">РЕДКИЙ</span>
-                        </div>
-                    </article>
-
-                    <article class="profile-item-card profile-item-card--red">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>27 600</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--red">
-                            <img src="./data/assets/items/m5f90.png" alt="AWP" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name">AWP</div>
-                            <span class="profile-item-badge rarity-badge mythical">КРАСНЫЙ</span>
-                        </div>
-                    </article>
-
-                    <article class="profile-item-card profile-item-card--green">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>14 380</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--green">
-                            <img src="./data/assets/items/m5f90.png" alt="USP-S" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name">USP-S</div>
-                            <span class="profile-item-badge rarity-badge uncommon">ОБЫЧНЫЙ</span>
-                        </div>
-                    </article>
-
-                    <article class="profile-item-card profile-item-card--deepblue">
-                        <button class="profile-item-sell" type="button" aria-label="Продать предмет">
-                            <img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon">
-                        </button>
-                        <div class="profile-item-price">
-                            <span>11 250</span>
-                            <span class="profile-item-coin">◌</span>
-                        </div>
-                        <div class="profile-item-visual profile-item-visual--deepblue">
-                            <img src="./data/assets/items/m5f90.png" alt="Glock-18" class="profile-item-image">
-                        </div>
-                        <div class="profile-item-info">
-                            <div class="profile-item-name">Glock-18</div>
-                            <span class="profile-item-badge rarity-badge rare">РЕДКИЙ</span>
-                        </div>
-                    </article>
+                    <p class="profile-inventory-status">Загрузка инвентаря...</p>
                 </div>
             </div>
         </div>

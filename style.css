@@ -598,39 +598,39 @@ select {
 }
 
 .rarity-badge.mythical {
-    background: #ff000040;
-    border: 0.5px solid rgb(217 0 0);
+    background: rgba(255, 48, 48, 0.18);
+    border: 1px solid #ff3030;
     color: #ff6565;
 }
 
 .rarity-badge.legendary {
-    background: #593a0069;
-    border: 0.5px solid rgb(149 154 1);
-    color: #c9da00;
+    background: rgba(224, 173, 50, 0.18);
+    border: 1px solid #e0ad32;
+    color: #f1ca5a;
 }
 
 .rarity-badge.epic {
-    background: #9d4edd3d;
-    border: 0.5px solid rgb(194 6 255);
-    color: rgb(218 106 255);
+    background: rgba(180, 75, 224, 0.18);
+    border: 1px solid #b44be0;
+    color: #d58af0;
 }
 
 .rarity-badge.rare {
-    background: #3a86ff42;
-    border: 0.5px solid rgb(114 82 255);
-    color: #6eb3ff;
+    background: rgba(50, 142, 230, 0.18);
+    border: 1px solid #328ee6;
+    color: #75baff;
 }
 
 .rarity-badge.uncommon {
-    background: #23840047;
-    border: 0.5px solid rgb(0 130 5);
-    color: #01ff30;
+    background: rgba(37, 184, 90, 0.18);
+    border: 1px solid #25b85a;
+    color: #62db8a;
 }
 
 .rarity-badge.common {
-    background: #6c757d40;
-    border: 0.5px solid rgb(97 97 97);
-    color: #bdbdbd;
+    background: rgba(115, 123, 133, 0.18);
+    border: 1px solid #737b85;
+    color: #c4cbd3;
 }
 
 .win-time {
@@ -928,10 +928,12 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
     text-align: center;
 }
 
-.case-content-item.rarity-red { border-color: #ff2727; box-shadow: inset 0 0 20px rgba(255, 22, 22, 0.08); }
-.case-content-item.rarity-orange { border-color: #ff8700; }
-.case-content-item.rarity-purple { border-color: #be34da; }
-.case-content-item.rarity-blue { border-color: #258add; }
+.case-content-item.rarity-common { border-color: #737b85; box-shadow: inset 0 0 20px rgba(115, 123, 133, 0.08); }
+.case-content-item.rarity-uncommon { border-color: #25b85a; box-shadow: inset 0 0 20px rgba(37, 184, 90, 0.08); }
+.case-content-item.rarity-rare { border-color: #328ee6; box-shadow: inset 0 0 20px rgba(50, 142, 230, 0.08); }
+.case-content-item.rarity-epic { border-color: #b44be0; box-shadow: inset 0 0 20px rgba(180, 75, 224, 0.08); }
+.case-content-item.rarity-legendary { border-color: #e0ad32; box-shadow: inset 0 0 20px rgba(224, 173, 50, 0.08); }
+.case-content-item.rarity-mythical { border-color: #ff3030; box-shadow: inset 0 0 20px rgba(255, 48, 48, 0.08); }
 
 .case-content-item img {
     width: 92%;
@@ -1031,9 +1033,12 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
     text-align: center;
 }
 
-.reel-item.rarity-red { border-color: #ff2929; box-shadow: 0 0 13px rgba(255, 30, 30, 0.36); }
-.reel-item.rarity-purple { border-color: #bd39d6; }
-.reel-item.rarity-orange { border-color: #ff8700; }
+.reel-item.rarity-common { border-color: #737b85; box-shadow: 0 0 13px rgba(115, 123, 133, 0.22); }
+.reel-item.rarity-uncommon { border-color: #25b85a; box-shadow: 0 0 13px rgba(37, 184, 90, 0.22); }
+.reel-item.rarity-rare { border-color: #328ee6; box-shadow: 0 0 13px rgba(50, 142, 230, 0.22); }
+.reel-item.rarity-epic { border-color: #b44be0; box-shadow: 0 0 13px rgba(180, 75, 224, 0.22); }
+.reel-item.rarity-legendary { border-color: #e0ad32; box-shadow: 0 0 13px rgba(224, 173, 50, 0.22); }
+.reel-item.rarity-mythical { border-color: #ff3030; box-shadow: 0 0 13px rgba(255, 48, 48, 0.36); }
 
 .reel-item > span {
     position: absolute;
@@ -3569,16 +3574,20 @@ background: rgb(12 13 14);
     min-height: 290px;
 }
 
+.shop-item-card.mythical {
+    box-shadow: inset 0 0 30px rgba(255, 48, 48, 0.08);
+}
+
 .shop-item-card.legendary {
-    box-shadow: inset 0 0 30px rgba(255,255,255,0.03);
+    box-shadow: inset 0 0 30px rgba(224, 173, 50, 0.08);
 }
 
 .shop-item-card.epic {
-    box-shadow: inset 0 0 30px rgba(153,92,255,0.08);
+    box-shadow: inset 0 0 30px rgba(180, 75, 224, 0.08);
 }
 
 .shop-item-card.rare {
-    box-shadow: inset 0 0 30px rgba(63,149,255,0.06);
+    box-shadow: inset 0 0 30px rgba(50, 142, 230, 0.06);
 }
 
 .shop-item-price {
@@ -3646,7 +3655,7 @@ background: rgb(12 13 14);
     --smoke-url: url('./data/assets/rarity/common_smoke.png');
 }
 
-.shop-item-card.mythic .shop-item-visual {
+.shop-item-card.mythical .shop-item-visual {
     --smoke-url: url('./data/assets/rarity/mythic_smoke.png');
 }
 
@@ -3716,40 +3725,40 @@ background: rgb(12 13 14);
     white-space: nowrap;
 }
 
-.shop-item-card.mythic .shop-item-rarity {
-    background: #ff000040;
-    border: 0.5px solid rgb(217 0 0);
+.shop-item-card.mythical .shop-item-rarity {
+    background: rgba(255, 48, 48, 0.18);
+    border: 1px solid #ff3030;
     color: #ff6565;
 }
 
 .shop-item-card.legendary .shop-item-rarity {
-    background: #593a0069;
-    border: 0.5px solid rgb(149 154 1);
-    color: #c9da00;
+    background: rgba(224, 173, 50, 0.18);
+    border: 1px solid #e0ad32;
+    color: #f1ca5a;
 }
 
 .shop-item-card.epic .shop-item-rarity {
-    background: #9d4edd3d;
-    border: 0.5px solid rgb(194 6 255);
-    color: rgb(218 106 255);
+    background: rgba(180, 75, 224, 0.18);
+    border: 1px solid #b44be0;
+    color: #d58af0;
 }
 
 .shop-item-card.rare .shop-item-rarity {
-    background: #3a86ff42;
-    border: 0.5px solid rgb(114 82 255);
-    color: #6eb3ff;
+    background: rgba(50, 142, 230, 0.18);
+    border: 1px solid #328ee6;
+    color: #75baff;
 }
 
 .shop-item-card.uncommon .shop-item-rarity {
-    background: #23840047;
-    border: 0.5px solid rgb(0 130 5);
-    color: #01ff30;
+    background: rgba(37, 184, 90, 0.18);
+    border: 1px solid #25b85a;
+    color: #62db8a;
 }
 
 .shop-item-card.common .shop-item-rarity {
-    background: #6c757d40;
-    border: 0.5px solid rgb(97 97 97);
-    color: #bdbdbd;
+    background: rgba(115, 123, 133, 0.18);
+    border: 1px solid #737b85;
+    color: #c4cbd3;
 }
 
 .shop-item-name {
@@ -3822,4 +3831,21 @@ background: rgb(12 13 14);
     color: #a4a8ad;
     white-space: nowrap;
     text-align: left;
+}
+
+.cases-loading {
+    width: 100%;
+    padding: 48px 20px;
+    color: #777;
+    text-align: center;
+    font-size: var(--text-14);
+}
+
+.profile-inventory-status {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 42px 16px;
+    color: #7a7a7a;
+    text-align: center;
+    font-size: var(--text-13);
 }

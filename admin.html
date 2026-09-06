@@ -37,14 +37,38 @@
             </header>
 
             <section class="panel case-create-panel" id="cases">
-                <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ КЕЙСОВ</p><h2>Создать кейс</h2></div><span class="step-badge">00</span></div>
+                <div class="panel-heading"><div><p class="section-kicker">КОНСТРУКТОР КЕЙСА</p><h2 id="case-form-title">Создать кейс</h2></div><span class="step-badge">00</span></div>
                 <form class="case-form" id="case-form">
                     <label class="field">Название кейса <input id="case-name" type="text" placeholder="Например, BLOOD CASE" maxlength="80" required></label>
                     <label class="field">Цена открытия <span class="input-with-suffix"><input id="case-price" type="number" min="0" step="1" placeholder="1000" required><b>BC</b></span></label>
-                    <label class="field">Изображение <input id="case-image" type="text" value="./data/case_logo/free.png" placeholder="./data/case_logo/free.png" required></label>
-                    <button class="button primary" type="submit"><span>+</span>Создать кейс</button>
+                    <label class="field">Изображение <input id="case-image" type="text" value="./data/case_logo/free.png" placeholder="./data/case_logo/free.png"></label>
+                    <div class="case-form-action"><label class="case-active-toggle"><input id="case-active" type="checkbox" checked><span></span>Кейс активен</label><span class="field-hint">Выбрано предметов: <b id="selected-items-count">0</b></span><div class="case-actions"><button class="button secondary hidden" id="cancel-case-edit" type="button">Отмена</button><button class="button primary" id="case-submit" type="submit"><span>+</span>Создать кейс</button></div></div>
+                    <div class="case-items-builder">
+                        <div class="builder-heading"><div><strong>Предметы в кейсе</strong><span class="field-hint">Добавьте предметы из общего каталога</span></div><button class="button secondary" id="open-item-picker" type="button"><span>+</span>Выбрать предметы</button></div>
+                        <div class="selected-items" id="selected-items"><p class="empty-state">Предметы пока не выбраны</p></div>
+                    </div>
                 </form>
                 <p class="form-status" id="case-status" role="status"></p>
+            </section>
+
+            <div class="modal-backdrop" id="item-picker-modal" aria-hidden="true">
+                <section class="item-picker-modal" role="dialog" aria-modal="true" aria-labelledby="item-picker-title">
+                    <div class="modal-header"><div><p class="section-kicker">КАТАЛОГ ПРЕДМЕТОВ</p><h2 id="item-picker-title">Выберите награды</h2><p class="modal-subtitle">Отметьте предметы, которые должны выпадать из кейса</p></div><button class="modal-close" id="close-item-picker" type="button" aria-label="Закрыть">×</button></div>
+                    <div class="picker-toolbar">
+                        <label class="picker-search"><span>⌕</span><input id="case-item-search" type="search" placeholder="Поиск по названию"></label>
+                        <label class="picker-filter"><span>Редкость</span><select id="case-item-rarity-filter"><option value="all">Все редкости</option><option value="common">Ширп</option><option value="uncommon">Обычный</option><option value="rare">Редкий</option><option value="epic">Эпичный</option><option value="legendary">Золотой</option><option value="mythical">Красный</option></select></label>
+                        <label class="picker-filter"><span>Цена до</span><input id="case-item-price-filter" type="number" min="0" placeholder="Без лимита"></label>
+                        <label class="picker-filter"><span>Сортировка</span><select id="case-item-sort"><option value="name">По названию</option><option value="price-asc">Цена: сначала дешевле</option><option value="price-desc">Цена: сначала дороже</option><option value="rarity">По редкости</option></select></label>
+                    </div>
+                    <div class="picker-summary"><span id="picker-results-count">0 предметов</span><button class="text-button" id="clear-picked-items" type="button">Снять выбор</button></div>
+                    <div class="picker-items" id="case-items-builder"><p class="empty-state">Загрузка предметов...</p></div>
+                    <div class="modal-footer"><span class="modal-selection" id="modal-selection-count">Выбрано: 0</span><button class="button primary" id="apply-item-picker" type="button">Готово</button></div>
+                </section>
+            </div>
+
+            <section class="panel cases-list-panel">
+                <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ</p><h2>Последние кейсы</h2></div><button class="refresh-button" id="refresh-cases" type="button" title="Обновить список">↻ Обновить</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th></th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
             </section>
 
             <section class="workspace-grid">
@@ -97,6 +121,14 @@
         const caseForm = document.querySelector('#case-form');
         const status = document.querySelector('#form-status');
         const caseStatus = document.querySelector('#case-status');
+        const caseFields = { name: document.querySelector('#case-name'), price: document.querySelector('#case-price'), image: document.querySelector('#case-image') };
+        const caseActive = document.querySelector('#case-active');
+        const caseFormTitle = document.querySelector('#case-form-title');
+        const caseSubmit = document.querySelector('#case-submit');
+        const cancelCaseEdit = document.querySelector('#cancel-case-edit');
+        const selectedCaseItems = new Map();
+        const availableItems = new Map();
+        let editingCaseId = null;
         const fields = { name: document.querySelector('#item-name'), caseId: document.querySelector('#item-case'), price: document.querySelector('#item-price'), rarity: document.querySelector('#item-rarity'), image: document.querySelector('#item-image'), chance: document.querySelector('#item-chance') };
 
         function updatePreview() {
@@ -112,6 +144,49 @@
 
         function showStatus(message, type) { status.textContent = message; status.className = `form-status ${type}`; }
         function formatDate(value) { return value ? new Date(value).toLocaleDateString('ru-RU') : '—'; }
+        function updateSelectedItemsCount() { document.querySelector('#selected-items-count').textContent = selectedCaseItems.size; }
+        function renderSelectedItems() {
+            const list = document.querySelector('#selected-items');
+            if (!selectedCaseItems.size) { list.innerHTML = '<p class="empty-state">Предметы пока не выбраны</p>'; return; }
+            list.innerHTML = [...selectedCaseItems].map(([id, selection]) => `<div class="selected-item"><img src="${selection.item.image_url || './data/assets/items/m5f90.png'}" alt=""><div><strong>${selection.item.name}</strong><small>${Number(selection.item.item_value || 0).toLocaleString('ru-RU')} BC</small></div><label class="selected-rarity"><span>Редкость в кейсе</span><select data-selected-rarity-id="${id}" aria-label="Редкость ${selection.item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selection.rarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select></label><label class="selected-chance input-with-suffix"><input type="number" min="0" max="100" step="0.01" value="${selection.chance}" data-selected-chance-id="${id}" aria-label="Шанс для ${selection.item.name}"><b>%</b></label><button class="remove-selected" type="button" data-remove-item-id="${id}" aria-label="Удалить ${selection.item.name}">×</button></div>`).join('');
+        }
+        function updateModalSelection() { document.querySelector('#modal-selection-count').textContent = `Выбрано: ${selectedCaseItems.size}`; updateSelectedItemsCount(); renderSelectedItems(); }
+        function resetCaseForm() { editingCaseId = null; caseForm.reset(); caseFields.image.value = './data/case_logo/free.png'; caseActive.checked = true; selectedCaseItems.clear(); caseFormTitle.textContent = 'Создать кейс'; caseSubmit.innerHTML = '<span>+</span>Создать кейс'; cancelCaseEdit.classList.add('hidden'); updateModalSelection(); }
+        function startCaseEdit(caseData) { editingCaseId = caseData.id; caseFields.name.value = caseData.name || ''; caseFields.price.value = caseData.price ?? 0; caseFields.image.value = caseData.image_url || './data/case_logo/free.png'; caseActive.checked = Boolean(caseData.active); selectedCaseItems.clear(); (caseData.case_items || []).forEach(item => { const catalogItem = availableItems.get(String(item.item_id)) || { id: item.item_id, name: item.item_name, rarity: item.rarity, item_value: item.item_value, image_url: item.image_url }; selectedCaseItems.set(String(item.item_id), { item: catalogItem, rarity: item.rarity || catalogItem.rarity, chance: Number(item.chance) || 0 }); }); caseFormTitle.textContent = 'Редактировать кейс'; caseSubmit.innerHTML = '<span>✓</span>Сохранить изменения'; cancelCaseEdit.classList.remove('hidden'); updateModalSelection(); document.querySelector('#cases').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        function renderBuilderItems(items) {
+            const list = document.querySelector('#case-items-builder');
+            if (!items?.length) { list.innerHTML = '<p class="empty-state">В каталоге пока нет предметов</p>'; return; }
+            list.innerHTML = items.map(item => `<label class="picker-item rarity-${item.rarity}" data-name="${item.name.toLowerCase()}" data-price="${item.item_value || 0}" data-rarity="${item.rarity}"><input type="checkbox" data-item-id="${item.id}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="picker-item-info"><strong>${item.name}</strong><small>${rarityNames[item.rarity] || item.rarity}</small></span><span class="picker-item-price">${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</span><span class="picker-check">✓</span></label>`).join('');
+            list.querySelectorAll('[data-item-id]').forEach(checkbox => { checkbox.checked = selectedCaseItems.has(checkbox.dataset.itemId); });
+            filterPickerItems();
+        }
+        function filterPickerItems() {
+            const query = document.querySelector('#case-item-search').value.trim().toLowerCase();
+            const rarity = document.querySelector('#case-item-rarity-filter').value;
+            const maxPrice = Number(document.querySelector('#case-item-price-filter').value);
+            const sort = document.querySelector('#case-item-sort').value;
+            const items = [...document.querySelectorAll('.picker-item')];
+            items.sort((a, b) => sort === 'price-asc' ? Number(a.dataset.price) - Number(b.dataset.price) : sort === 'price-desc' ? Number(b.dataset.price) - Number(a.dataset.price) : sort === 'rarity' ? a.dataset.rarity.localeCompare(b.dataset.rarity) : a.dataset.name.localeCompare(b.dataset.name));
+            const container = document.querySelector('#case-items-builder');
+            items.forEach(item => container.appendChild(item));
+            let visible = 0;
+            items.forEach(item => { const matches = (!query || item.dataset.name.includes(query)) && (rarity === 'all' || item.dataset.rarity === rarity) && (!Number.isFinite(maxPrice) || !document.querySelector('#case-item-price-filter').value || Number(item.dataset.price) <= maxPrice); item.hidden = !matches; if (matches) visible += 1; });
+            document.querySelector('#picker-results-count').textContent = `${visible} ${visible === 1 ? 'предмет' : 'предметов'}`;
+        }
+        async function loadBuilderItems() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('items').select('id, name, rarity, item_value, image_url').order('name');
+            if (error) { document.querySelector('#case-items-builder').innerHTML = `<p class="empty-state error-text">Не удалось загрузить предметы: ${error.message}</p>`; return; }
+            availableItems.clear();
+            data.forEach(item => availableItems.set(String(item.id), item));
+            renderBuilderItems(data);
+        }
+        function renderCases(cases) {
+            const list = document.querySelector('#cases-list');
+            if (!cases?.length) { list.innerHTML = '<tr><td colspan="5" class="empty-state">Кейсов пока нет</td></tr>'; return; }
+            list.innerHTML = cases.map(item => `<tr><td><div class="table-item"><img src="${item.image_url || './data/case_logo/free.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${Number(item.price || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${item.active ? '' : ' inactive'}">${item.active ? 'Активен' : 'Скрыт'}</span></td><td>${formatDate(item.created_at)}</td><td><button class="edit-case-button" type="button" data-case-id="${item.id}">Изменить</button></td></tr>`).join('');
+            list.querySelectorAll('[data-case-id]').forEach(button => button.addEventListener('click', () => { const caseData = cases.find(item => String(item.id) === button.dataset.caseId); if (caseData) startCaseEdit(caseData); }));
+        }
         function renderItems(items) {
             const list = document.querySelector('#items-list');
             if (!items?.length) { list.innerHTML = '<tr><td colspan="6" class="empty-state">Предметов пока нет</td></tr>'; return; }
@@ -119,27 +194,45 @@
         }
         async function loadCases() {
             if (!supabaseClient) return;
-            const { data, error } = await supabaseClient.from('cases').select('id, name').eq('active', true).order('name');
-            if (error) { fields.caseId.innerHTML = '<option value="">Не удалось загрузить кейсы</option>'; return; }
-            fields.caseId.innerHTML = data?.length ? data.map(item => `<option value="${item.id}">${item.name}</option>`).join('') : '<option value="">Сначала создайте кейс</option>';
+            const { data, error } = await supabaseClient.from('cases').select('id, name, price, image_url, active, created_at, case_items(id, item_id, item_name, rarity, chance, item_value, image_url)').order('created_at', { ascending: false });
+            if (error) { fields.caseId.innerHTML = '<option value="">Не удалось загрузить кейсы</option>'; renderCases([]); return; }
+            renderCases(data);
+            const activeCases = data?.filter(item => item.active) || [];
+            fields.caseId.innerHTML = activeCases.length ? activeCases.map(item => `<option value="${item.id}">${item.name}</option>`).join('') : '<option value="">Сначала создайте активный кейс</option>';
         }
         caseForm.addEventListener('submit', async event => {
             event.preventDefault();
             if (!supabaseClient) { caseStatus.textContent = 'Supabase SDK не подключен.'; caseStatus.className = 'form-status error'; return; }
             const button = caseForm.querySelector('[type="submit"]');
+            const name = caseFields.name.value.trim();
+            const price = Number(caseFields.price.value);
+            if (!name || !Number.isFinite(price) || price < 0) { caseStatus.textContent = 'Укажите название и корректную цену кейса.'; caseStatus.className = 'form-status error'; return; }
+            if (!selectedCaseItems.size) { caseStatus.textContent = 'Добавьте хотя бы один предмет в кейс.'; caseStatus.className = 'form-status error'; return; }
             button.disabled = true;
             caseStatus.textContent = 'Отправка на сервер...';
             caseStatus.className = 'form-status loading';
-            const payload = { name: document.querySelector('#case-name').value.trim(), price: Number(document.querySelector('#case-price').value), image_url: document.querySelector('#case-image').value.trim(), active: true };
-            const { data, error } = await supabaseClient.from('cases').insert(payload).select('id, name').single();
-            button.disabled = false;
-            if (error) { caseStatus.textContent = `Ошибка: ${error.message}`; caseStatus.className = 'form-status error'; return; }
-            caseStatus.textContent = 'Кейс создан. Теперь его можно выбрать для предмета.';
-            caseStatus.className = 'form-status success';
-            caseForm.reset();
-            document.querySelector('#case-image').value = './data/case_logo/free.png';
-            await loadCases();
-            fields.caseId.value = String(data.id);
+            try {
+                const payload = { name, price, image_url: caseFields.image.value.trim() || null, active: caseActive.checked };
+                const caseRequest = editingCaseId ? supabaseClient.from('cases').update(payload).eq('id', editingCaseId).select('id, name').single() : supabaseClient.from('cases').insert(payload).select('id, name').single();
+                const { data, error } = await caseRequest;
+                if (error) { caseStatus.textContent = `Ошибка: ${error.message}`; caseStatus.className = 'form-status error'; return; }
+                const caseItemsPayload = [...selectedCaseItems].map(([itemId, selection]) => ({ case_id: data.id, item_id: Number(itemId), item_name: selection.item.name, rarity: selection.rarity || selection.item.rarity, item_value: selection.item.item_value, image_url: selection.item.image_url, chance: selection.chance }));
+                const { error: removeItemsError } = await supabaseClient.from('case_items').delete().eq('case_id', data.id);
+                if (removeItemsError) { caseStatus.textContent = `Кейс сохранён, но старый состав не удалён: ${removeItemsError.message}`; caseStatus.className = 'form-status error'; return; }
+                const { error: caseItemsError } = await supabaseClient.from('case_items').insert(caseItemsPayload);
+                if (caseItemsError) { caseStatus.textContent = `Кейс создан, но предметы не добавлены: ${caseItemsError.message}`; caseStatus.className = 'form-status error'; return; }
+                caseStatus.textContent = editingCaseId ? 'Изменения кейса сохранены.' : 'Кейс создан. Теперь его можно выбрать для предмета.';
+                caseStatus.className = 'form-status success';
+                resetCaseForm();
+                await loadBuilderItems();
+                await loadCases();
+                fields.caseId.value = String(data.id);
+            } catch (error) {
+                caseStatus.textContent = `Ошибка соединения: ${error.message}`;
+                caseStatus.className = 'form-status error';
+            } finally {
+                button.disabled = false;
+            }
         });
         async function loadItems() {
             const list = document.querySelector('#items-list');
@@ -173,8 +266,29 @@
             showStatus(fields.caseId.value ? 'Предмет создан и привязан к кейсу.' : 'Предмет создан в общем каталоге.', 'success'); form.reset(); fields.image.value = './data/assets/items/m5f90.png'; updatePreview(); loadItems();
         });
         document.querySelector('#refresh-items').addEventListener('click', loadItems);
+        document.querySelector('#refresh-cases').addEventListener('click', loadCases);
+        cancelCaseEdit.addEventListener('click', resetCaseForm);
+        ['case-item-search', 'case-item-rarity-filter', 'case-item-price-filter', 'case-item-sort'].forEach(id => document.querySelector(`#${id}`).addEventListener('input', filterPickerItems));
+        document.querySelector('#case-item-rarity-filter').addEventListener('change', filterPickerItems);
+        document.querySelector('#case-items-builder').addEventListener('change', event => {
+            const checkbox = event.target.closest('[data-item-id]');
+            if (checkbox) {
+                const itemData = availableItems.get(checkbox.dataset.itemId);
+                if (checkbox.checked && itemData) selectedCaseItems.set(checkbox.dataset.itemId, { item: itemData, rarity: selectedCaseItems.get(checkbox.dataset.itemId)?.rarity || itemData.rarity, chance: selectedCaseItems.get(checkbox.dataset.itemId)?.chance ?? 0.1 }); else selectedCaseItems.delete(checkbox.dataset.itemId);
+                updateModalSelection();
+            }
+        });
+        document.querySelector('#selected-items').addEventListener('input', event => { const input = event.target.closest('[data-selected-chance-id]'); const selection = input && selectedCaseItems.get(input.dataset.selectedChanceId); if (selection) selection.chance = Number(input.value); });
+        document.querySelector('#selected-items').addEventListener('change', event => { const select = event.target.closest('[data-selected-rarity-id]'); const selection = select && selectedCaseItems.get(select.dataset.selectedRarityId); if (selection) selection.rarity = select.value; });
+        document.querySelector('#selected-items').addEventListener('click', event => { const button = event.target.closest('[data-remove-item-id]'); if (button) { selectedCaseItems.delete(button.dataset.removeItemId); updateModalSelection(); renderBuilderItems([...availableItems.values()]); } });
+        document.querySelector('#open-item-picker').addEventListener('click', () => { document.querySelector('#item-picker-modal').classList.add('open'); document.querySelector('#item-picker-modal').setAttribute('aria-hidden', 'false'); filterPickerItems(); });
+        const closeItemPicker = () => { document.querySelector('#item-picker-modal').classList.remove('open'); document.querySelector('#item-picker-modal').setAttribute('aria-hidden', 'true'); };
+        document.querySelector('#close-item-picker').addEventListener('click', closeItemPicker);
+        document.querySelector('#apply-item-picker').addEventListener('click', closeItemPicker);
+        document.querySelector('#clear-picked-items').addEventListener('click', () => { selectedCaseItems.clear(); updateModalSelection(); renderBuilderItems([...availableItems.values()]); });
+        document.querySelector('#item-picker-modal').addEventListener('click', event => { if (event.target.id === 'item-picker-modal') closeItemPicker(); });
         form.addEventListener('reset', () => setTimeout(updatePreview));
-        updatePreview(); loadCases(); loadItems();
+        updatePreview(); updateModalSelection(); loadCases(); loadItems(); loadBuilderItems();
     </script>
 </body>
 </html>
