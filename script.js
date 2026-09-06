@@ -448,14 +448,17 @@ document.addEventListener('DOMContentLoaded', function() {
     let reelInstances = [];
     let reelIsRunning = false;
     let reelInertiaFrames = [];
+    let openingFinishTimer = null;
     const openingProgress = document.querySelector('.opening-progress span');
     const openingStatus = document.querySelector('.opening-status');
     const dropResultModal = document.querySelector('.drop-result-modal');
     const dropResultClose = document.querySelector('.drop-result-close');
     const dropResultsList = document.getElementById('drop-results-list');
+    const dropResultTotal = document.getElementById('drop-result-total-value');
     const dropSaveButton = document.querySelector('.drop-save-btn');
     const dropResultSell = document.querySelector('.drop-sell-btn');
     let reelDrops = [];
+    let activeResultDrops = [];
     const casesById = new Map();
     let selectedCase = null;
     let resultDrop = null;
@@ -543,7 +546,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showResultModal(drops) {
         if (!drops?.length || !dropResultModal || !dropResultsList) return;
-        dropResultsList.innerHTML = drops.map((drop, index) => `<label class="drop-result-item"><input type="checkbox" checked data-result-index="${index}"><span class="drop-result-check">✓</span><span class="drop-result-image-wrap"><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"></span><span class="drop-result-info"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small></span></label>`).join('');
+        activeResultDrops = drops;
+        dropResultsList.innerHTML = drops.map((drop, index) => `<label class="drop-result-item"><input type="checkbox" checked data-result-index="${index}"><span class="drop-result-check"><img src="./data/assets/check.svg" alt=""></span><span class="drop-result-image-wrap"><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"></span><span class="drop-result-info"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small></span></label>`).join('');
+        const totalValue = drops.reduce((sum, drop) => sum + (Number(drop.price) || 0), 0);
+        if (dropResultTotal) dropResultTotal.textContent = `${totalValue.toLocaleString('ru-RU')} BC`;
         if (dropSaveButton) dropSaveButton.textContent = `СОХРАНИТЬ ВЫБРАННЫЕ (${drops.length})`;
         if (dropResultSell) dropResultSell.textContent = 'ПРОДАТЬ ВЫБРАННЫЕ';
 
@@ -585,7 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         const winnerElement = track.querySelector('.reel-winner');
-        return { window: windowElement, track, drop: selection.drop, winnerElement, position: 0, velocity: 0, startPosition: 0, targetPosition: 0, duration: 5800 + Math.random() * 1400, animationFrame: 0, inertiaFrame: 0, dragging: false, pointerX: 0, pointerTime: 0 };
+        const winnerIndex = Number(winnerElement?.dataset.dropIndex);
+        return { window: windowElement, track, drop: reelDrops[winnerIndex] || selection.drop, winnerElement, winnerIndex, position: 0, velocity: 0, startPosition: 0, targetPosition: 0, duration: 5800 + Math.random() * 1400, animationFrame: 0, inertiaFrame: 0, dragging: false, pointerX: 0, pointerTime: 0 };
     }
 
     function reelEase(progress) {
@@ -656,12 +663,14 @@ document.addEventListener('DOMContentLoaded', function() {
     async function finishMultiOpening() {
         reelIsRunning = false;
         const results = reelInstances.map(instance => {
-            const winnerIndex = Number(instance.winnerElement?.dataset.dropIndex);
+            const winner = instance.track.querySelector('.reel-winner');
+            const winnerIndex = Number(winner?.dataset.dropIndex);
             return reelDrops[winnerIndex] || instance.drop;
         });
         resultDrop = results[0];
         if (openingStatus) openingStatus.textContent = 'Открытие завершено';
-        showResultModal(results);
+        clearTimeout(openingFinishTimer);
+        openingFinishTimer = setTimeout(() => showResultModal(results), 750);
     }
 
     function attachReelDrag(instance) {
@@ -709,12 +718,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const winner = instance.track.querySelector('.reel-winner');
             const windowWidth = instance.window.clientWidth;
             const winnerWidth = winner.offsetWidth;
-            const centerTarget = windowWidth / 2 - (winner.offsetLeft + winnerWidth / 2);
-            const edgePadding = Math.min(18, windowWidth * 0.08);
-            const minimumTarget = windowWidth - edgePadding - winner.offsetLeft - winnerWidth;
-            const maximumTarget = edgePadding - winner.offsetLeft;
-            const randomOffset = (Math.random() - 0.5) * windowWidth * 0.45;
-            instance.targetPosition = Math.max(minimumTarget, Math.min(maximumTarget, centerTarget + randomOffset));
+            instance.targetPosition = windowWidth / 2 - (winner.offsetLeft + winnerWidth / 2);
             const reelItems = [...instance.track.children];
             const winnerIndex = reelItems.indexOf(winner);
         const cyclesBeforeWinner = 10;
@@ -752,13 +756,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('case-opening-active');
             hideResultModal();
             reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
+            clearTimeout(openingFinishTimer);
             reelIsRunning = false;
         });
     }
 
     function getSelectedResultDrops() {
         return [...(dropResultsList?.querySelectorAll('[data-result-index]:checked') || [])]
-            .map(input => reelInstances[Number(input.dataset.resultIndex)]?.drop)
+            .map(input => activeResultDrops[Number(input.dataset.resultIndex)])
             .filter(Boolean);
     }
 
@@ -816,6 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
             openingOverlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('case-opening-active');
             reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
+            clearTimeout(openingFinishTimer);
             reelIsRunning = false;
         });
     }

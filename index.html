@@ -30,6 +30,30 @@
 
     <main class="page home-page active" data-page="home">
 
+        <div class="free-case-section">
+            <div class="free-case-block">
+                <div class="free-case-top">
+                    <div class="free-case-left">
+                        <h2 class="free-case-title">FREE <span class="case-word">CASE</span></h2>
+                        <p class="free-case-subtitle">Успей забрать бесплатный кейс!</p>
+                        <div class="case-info">
+                            <img src="./data/assets/free-case.svg" alt="Free Case" class="gift-icon">
+                            <div class="case-counter">
+                                <span class="counter-number">27 / 50</span>
+                                <span class="counter-text">кейсов осталось</span>
+                            </div>
+                        </div>
+                        <div class="case-timer">
+                            <svg class="clock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="timer-text">Сегодня в 18:30</span>
+                        </div>
+                    </div>
+                    <div class="free-case-right"><div class="case-image"><img src="./data/case_logo/free.png" alt="Free Case" class="case-img"></div></div>
+                </div>
+                <button class="btn-grab-case" type="button">ЗАБРАТЬ КЕЙС</button>
+            </div>
+        </div>
+
         <div class="regular-cases-section">
             <div class="regular-cases-header">
                 <h2 class="regular-cases-title">Обычные кейсы</h2>
@@ -206,6 +230,7 @@
                 <h2 id="drop-result-title">ВАШ ВЫИГРЫШ!</h2>
 
                 <div class="drop-results-list" id="drop-results-list"></div>
+                <div class="drop-result-total"><span>Общая стоимость дропа</span><strong id="drop-result-total-value">0 BC</strong></div>
 
                 <div class="drop-result-actions">
                     <button class="drop-save-btn" type="button">СОХРАНИТЬ ВЫБРАННЫЕ</button>

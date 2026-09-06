@@ -873,14 +873,13 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
     height: 70px;
     display: block;
     margin: 0 auto;
-    border: 1px solid #ff3636;
+    border: 1px solid #9e1312;
     border-radius: 10px;
-    background: linear-gradient(180deg, #df2525, #b7191b);
+    background: rgb(158 19 18);
     color: #fff;
     font-size: 20px;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: 0 0 15px rgba(255, 26, 26, 0.33);
 }
 
 .quick-open-row {
@@ -1194,6 +1193,7 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 .drop-result-modal {
     position: absolute;
     inset: 0;
+    z-index: 20;
     display: none;
     align-items: center;
     justify-content: center;
@@ -1418,9 +1418,8 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 }
 
 .drop-sell-btn {
-    background: linear-gradient(180deg, #ff2d2d, #c71414);
-    border-color: rgba(255, 95, 95, 0.9);
-    box-shadow: 0 0 16px rgba(255, 53, 53, 0.25);
+background: rgb(158 19 18);
+    border-color: rgb(158 19 18);
 }
 
 @keyframes opening-progress {
@@ -2894,8 +2893,8 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 }
 
 .profile-item-card--deepblue .profile-item-visual {
-    --smoke-url: url('./data/assets/rarity/rare_smoke.png');
-    background: var(--smoke-url) center/cover no-repeat, linear-gradient(180deg, rgba(6, 18, 24, 0.25), rgba(0, 0, 0, 0.74));
+    --smoke-url: url('./data/assets/rarity/common_smoke.png');
+    background: var(--smoke-url) center/cover no-repeat, linear-gradient(180deg, rgba(18, 19, 21, 0.25), rgba(0, 0, 0, 0.74));
 }
 
 .item-art {
@@ -4043,6 +4042,55 @@ background: rgb(12 13 14);
     object-fit: cover;
 }
 
+.drop-result-check img {
+    width: 12px;
+    height: 12px;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.drop-result-item input:checked + .drop-result-check img {
+    opacity: 1;
+}
+
+.drop-result-card .drop-result-check img {
+    display: block !important;
+    width: 12px !important;
+    height: 12px !important;
+    margin: auto;
+    object-fit: contain;
+    opacity: 0 !important;
+    filter: brightness(0) invert(1);
+}
+
+.drop-result-card .drop-result-item input:checked + .drop-result-check img {
+    opacity: 1 !important;
+}
+
+.drop-result-check {
+    font-size: 0 !important;
+    line-height: 0;
+}
+
+.drop-result-check::before,
+.drop-result-check::after {
+    content: none !important;
+    display: none !important;
+}
+
+.drop-result-check img {
+    display: block;
+    width: 12px !important;
+    height: 12px !important;
+    margin: auto;
+    opacity: 0;
+}
+
+.drop-result-item input:checked + .drop-result-check img {
+    opacity: 1;
+}
+
 /* Final result-card layout overrides. */
 .drop-result-card .drop-results-list {
     display: grid;
@@ -4102,6 +4150,24 @@ background: rgb(12 13 14);
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-top: 16px;
+}
+
+.drop-result-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 3px 0;
+    padding: 12px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aeb2ba;
+    font-size: 12px;
+}
+
+.drop-result-total strong {
+    color: #ff7777;
+    font: 14px 'DM Mono', monospace;
 }
 
 @media (max-width: 600px) {
