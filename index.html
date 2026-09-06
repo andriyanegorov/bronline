@@ -192,9 +192,10 @@
 
     <div class="case-opening-overlay" aria-hidden="true">
         <div class="case-opening-modal" role="dialog" aria-modal="true" aria-labelledby="opening-title">
-            <div class="reel-window">
-                <div class="reel-pointer"></div>
-                <div class="reel-track">
+            <div class="reel-stage" id="reel-stage">
+                <div class="reel-window">
+                    <div class="reel-pointer"></div>
+                    <div class="reel-track"></div>
                 </div>
             </div>
         </div>
@@ -204,17 +205,11 @@
                 <button class="drop-result-close" type="button" aria-label="Закрыть">×</button>
                 <h2 id="drop-result-title">ВАШ ВЫИГРЫШ!</h2>
 
-                <div class="drop-result-body">
-                    <div class="drop-result-image-wrap">
-                        <img id="drop-result-image" src="./data/assets/items/m5f90.png" alt="BMW M5 F90">
-                    </div>
-                    <div class="drop-result-name" id="drop-result-name">BMW M5 F90</div>
-                    <div class="drop-result-price" id="drop-result-price">12 500 BC</div>
-                </div>
+                <div class="drop-results-list" id="drop-results-list"></div>
 
                 <div class="drop-result-actions">
-                    <button class="drop-save-btn" type="button">СОХРАНИТЬ</button>
-                    <button class="drop-sell-btn" type="button">ПРОДАТЬ ЗА 12 500 BC</button>
+                    <button class="drop-save-btn" type="button">СОХРАНИТЬ ВЫБРАННЫЕ</button>
+                    <button class="drop-sell-btn" type="button">ПРОДАТЬ ВЫБРАННЫЕ</button>
                 </div>
             </div>
         </div>

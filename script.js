@@ -443,28 +443,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const openingOverlay = document.querySelector('.case-opening-overlay');
     const openCaseButton = document.querySelector('.open-case-btn');
     const openingClose = document.querySelector('.opening-close');
-    const reelWindow = document.querySelector('.reel-window');
-    const reelTrack = document.querySelector('.reel-track');
+    const reelStage = document.querySelector('#reel-stage');
     let reelAnimationFrame;
-    let reelPosition = 0;
-    let reelVelocity = 0;
-    let reelLastTime = 0;
-    let reelDragging = false;
-    let reelPointerX = 0;
-    let reelPointerTime = 0;
-    let reelStartTime = 0;
-    let reelStartPosition = 0;
-    let reelTargetPosition = 0;
+    let reelInstances = [];
     let reelIsRunning = false;
-    let reelPrepared = false;
-    let reelInertiaFrame;
+    let reelInertiaFrames = [];
     const openingProgress = document.querySelector('.opening-progress span');
     const openingStatus = document.querySelector('.opening-status');
     const dropResultModal = document.querySelector('.drop-result-modal');
     const dropResultClose = document.querySelector('.drop-result-close');
-    const dropResultImage = document.getElementById('drop-result-image');
-    const dropResultName = document.getElementById('drop-result-name');
-    const dropResultPrice = document.getElementById('drop-result-price');
+    const dropResultsList = document.getElementById('drop-results-list');
+    const dropSaveButton = document.querySelector('.drop-save-btn');
     const dropResultSell = document.querySelector('.drop-sell-btn');
     let reelDrops = [];
     const casesById = new Map();
@@ -515,6 +504,14 @@ document.addEventListener('DOMContentLoaded', function() {
         showPage('case-detail');
     }
 
+    function updateOpenCasePrice() {
+        if (!openCaseButton || !selectedCase) return;
+        const count = Number(document.querySelector('.open-count.selected')?.textContent.replace('x', '')) || 1;
+        openCaseButton.textContent = reelDrops.length
+            ? `ОТКРЫТЬ ЗА ${(Number(selectedCase.price || 0) * count).toLocaleString('ru-RU')} BC`
+            : 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
+    }
+
     caseCards.forEach(card => card.addEventListener('click', openCaseDetail));
     openCaseButtons.forEach(button => button.addEventListener('click', openCaseDetail));
 
@@ -533,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             this.classList.add('selected');
             this.setAttribute('aria-pressed', 'true');
+            updateOpenCasePrice();
         });
     });
 
@@ -543,22 +541,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function setReelPosition(position) {
-        reelPosition = position;
-        reelTrack.style.transform = `translate3d(${position}px, 0, 0)`;
-    }
-
-    function showResultModal(drop) {
-        if (!drop || !dropResultModal || !dropResultImage || !dropResultName || !dropResultPrice) return;
-
-        dropResultImage.src = drop.image;
-        dropResultImage.alt = drop.alt;
-        dropResultName.textContent = drop.name;
-        dropResultPrice.textContent = `${Number(drop.price).toLocaleString('ru-RU')} BC`;
-
-        if (dropResultSell) {
-            dropResultSell.textContent = `ПРОДАТЬ ЗА ${Number(drop.price).toLocaleString('ru-RU')} BC`;
-        }
+    function showResultModal(drops) {
+        if (!drops?.length || !dropResultModal || !dropResultsList) return;
+        dropResultsList.innerHTML = drops.map((drop, index) => `<label class="drop-result-item"><input type="checkbox" checked data-result-index="${index}"><span class="drop-result-check">✓</span><span class="drop-result-image-wrap"><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"></span><span class="drop-result-info"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small></span></label>`).join('');
+        if (dropSaveButton) dropSaveButton.textContent = `СОХРАНИТЬ ВЫБРАННЫЕ (${drops.length})`;
+        if (dropResultSell) dropResultSell.textContent = 'ПРОДАТЬ ВЫБРАННЫЕ';
 
         dropResultModal.classList.add('active');
         dropResultModal.setAttribute('aria-hidden', 'false');
@@ -570,35 +557,35 @@ document.addEventListener('DOMContentLoaded', function() {
         dropResultModal.setAttribute('aria-hidden', 'true');
     }
 
-    function prepareReel() {
-        if (!reelDrops.length) return false;
+    function chooseDrop() {
+        const totalChance = reelDrops.reduce((total, drop) => total + drop.chance, 0);
+        let randomChance = Math.random() * (totalChance || reelDrops.length);
+        let winnerIndex = reelDrops.findIndex(drop => { randomChance -= drop.chance || (totalChance ? 0 : 1); return randomChance <= 0; });
+        if (winnerIndex < 0) winnerIndex = reelDrops.length - 1;
+        return { drop: reelDrops[winnerIndex], winnerIndex };
+    }
+
+    function createReelInstance(windowElement) {
+        const track = windowElement.querySelector('.reel-track');
         const sourceItems = reelDrops.map(drop => {
             const item = document.createElement('article');
             item.className = `reel-item rarity-${drop.rarity}`;
             item.innerHTML = `<span>${Number(drop.chance).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small>`;
             return item;
         });
-        reelTrack.replaceChildren();
-
-        const totalChance = reelDrops.reduce((total, drop) => total + drop.chance, 0);
-        let randomChance = Math.random() * (totalChance || reelDrops.length);
-        let winnerIndex = reelDrops.findIndex(drop => { randomChance -= drop.chance || (totalChance ? 0 : 1); return randomChance <= 0; });
-        if (winnerIndex < 0) winnerIndex = reelDrops.length - 1;
-        resultDrop = reelDrops[winnerIndex];
-
+        track.replaceChildren();
+        const selection = chooseDrop();
         const winnerRepeat = 14;
-        const repeatCount = 18;
-        for (let repeat = 0; repeat < repeatCount; repeat += 1) {
+        for (let repeat = 0; repeat < 18; repeat += 1) {
             sourceItems.forEach((sourceItem, itemIndex) => {
                 const item = sourceItem.cloneNode(true);
-                item.classList.remove('reel-winner');
-                if (repeat === winnerRepeat && itemIndex === winnerIndex) item.classList.add('reel-winner');
-                reelTrack.appendChild(item);
+                item.dataset.dropIndex = String(itemIndex);
+                if (repeat === winnerRepeat && itemIndex === selection.winnerIndex) item.classList.add('reel-winner');
+                track.appendChild(item);
             });
         }
-
-        reelPrepared = true;
-        return true;
+        const winnerElement = track.querySelector('.reel-winner');
+        return { window: windowElement, track, drop: selection.drop, winnerElement, position: 0, velocity: 0, startPosition: 0, targetPosition: 0, duration: 5800 + Math.random() * 1400, animationFrame: 0, inertiaFrame: 0, dragging: false, pointerX: 0, pointerTime: 0 };
     }
 
     function reelEase(progress) {
@@ -625,82 +612,128 @@ document.addEventListener('DOMContentLoaded', function() {
         return travelled / totalDistance;
     }
 
-    async function animateReel(time) {
-        const duration = 6800;
-        const progress = Math.min((time - reelStartTime) / duration, 1);
+    function animateReel(instance, time) {
+        const progress = Math.min((time - instance.startTime) / instance.duration, 1);
         const easedProgress = reelEase(progress);
-        const position = reelStartPosition + (reelTargetPosition - reelStartPosition) * easedProgress;
-        const previousPosition = reelPosition;
-        setReelPosition(position);
-        reelVelocity = (position - previousPosition) / Math.max((time - (reelLastTime || time - 16)) / 1000, 0.001);
-        reelLastTime = time;
+        const position = instance.startPosition + (instance.targetPosition - instance.startPosition) * easedProgress;
+        const previousPosition = instance.position;
+        instance.position = position;
+        instance.track.style.transform = `translate3d(${position}px, 0, 0)`;
+        instance.velocity = (position - previousPosition) / Math.max((time - (instance.lastTime || time - 16)) / 1000, 0.001);
+        instance.lastTime = time;
 
         if (progress < 1) {
-            reelAnimationFrame = requestAnimationFrame(animateReel);
+            instance.animationFrame = requestAnimationFrame(nextTime => animateReel(instance, nextTime));
             return;
         }
-
-        reelIsRunning = false;
-        reelVelocity = 0;
-        const { error: inventoryError } = await saveDropToInventory(resultDrop);
-        if (openingStatus) openingStatus.textContent = inventoryError ? 'Предмет выпал, но не сохранён' : 'Открытие завершено';
-        showResultModal(resultDrop);
+        instance.velocity = 0;
+        instance.finished = true;
+        if (reelInstances.every(item => item.finished)) finishMultiOpening();
     }
 
-    function clampReelPosition(position) {
-        const minPosition = Math.min(0, reelWindow.clientWidth - reelTrack.scrollWidth);
+    function clampReelPosition(instance, position) {
+        const minPosition = Math.min(0, instance.window.clientWidth - instance.track.scrollWidth);
         return Math.min(0, Math.max(minPosition, position));
     }
 
-    function animateReelInertia(time) {
-        const elapsed = Math.max(time - reelLastTime, 0);
-        reelLastTime = time;
+    function animateReelInertia(instance, time) {
+        const elapsed = Math.max(time - instance.lastTime, 0);
+        instance.lastTime = time;
         const decay = Math.exp(-elapsed / 430);
-        const nextVelocity = reelVelocity * decay;
-        const nextPosition = clampReelPosition(reelPosition + reelVelocity * (elapsed / 1000));
-        setReelPosition(nextPosition);
-        reelVelocity = nextVelocity;
+        const nextVelocity = instance.velocity * decay;
+        const nextPosition = clampReelPosition(instance, instance.position + instance.velocity * (elapsed / 1000));
+        instance.position = nextPosition;
+        instance.track.style.transform = `translate3d(${nextPosition}px, 0, 0)`;
+        instance.velocity = nextVelocity;
 
-        if (Math.abs(reelVelocity) > 8 && nextPosition !== 0 && nextPosition !== Math.min(0, reelWindow.clientWidth - reelTrack.scrollWidth)) {
-            reelInertiaFrame = requestAnimationFrame(animateReelInertia);
+        if (Math.abs(instance.velocity) > 8 && nextPosition !== 0 && nextPosition !== Math.min(0, instance.window.clientWidth - instance.track.scrollWidth)) {
+            instance.inertiaFrame = requestAnimationFrame(nextTime => animateReelInertia(instance, nextTime));
             return;
         }
-        reelVelocity = 0;
+        instance.velocity = 0;
+    }
+
+    async function finishMultiOpening() {
+        reelIsRunning = false;
+        const results = reelInstances.map(instance => {
+            const winnerIndex = Number(instance.winnerElement?.dataset.dropIndex);
+            return reelDrops[winnerIndex] || instance.drop;
+        });
+        resultDrop = results[0];
+        if (openingStatus) openingStatus.textContent = 'Открытие завершено';
+        showResultModal(results);
+    }
+
+    function attachReelDrag(instance) {
+        instance.window.addEventListener('pointerdown', event => {
+            if (reelIsRunning) return;
+            instance.dragging = true;
+            instance.pointerX = event.clientX;
+            instance.pointerTime = performance.now();
+            instance.velocity = 0;
+            cancelAnimationFrame(instance.inertiaFrame);
+            instance.window.setPointerCapture(event.pointerId);
+        });
+        instance.window.addEventListener('pointermove', event => {
+            if (!instance.dragging) return;
+            const now = performance.now();
+            const elapsed = Math.max(now - instance.pointerTime, 1);
+            const movement = event.clientX - instance.pointerX;
+            instance.velocity = movement / (elapsed / 1000);
+            instance.position = clampReelPosition(instance, instance.position + movement);
+            instance.track.style.transform = `translate3d(${instance.position}px, 0, 0)`;
+            instance.pointerX = event.clientX;
+            instance.pointerTime = now;
+        });
+        instance.window.addEventListener('pointerup', event => {
+            if (!instance.dragging) return;
+            instance.dragging = false;
+            instance.window.releasePointerCapture(event.pointerId);
+            instance.lastTime = performance.now();
+            if (Math.abs(instance.velocity) > 8) instance.inertiaFrame = requestAnimationFrame(time => animateReelInertia(instance, time));
+        });
     }
 
     function startReelOpening() {
-        if (!openingOverlay || !reelWindow) return;
+        if (!openingOverlay || !reelStage || !reelDrops.length) return;
         hideResultModal();
-        reelPrepared = false;
-        if (!prepareReel()) return;
-        const winner = reelTrack.querySelector('.reel-winner');
-        if (!winner) return;
-        void reelTrack.offsetWidth;
-        reelTargetPosition = reelWindow.clientWidth / 2 - (winner.offsetLeft + winner.offsetWidth / 2);
-        const reelItems = [...reelTrack.children];
-        const winnerIndex = reelItems.indexOf(winner);
+        const selectedCount = Number(document.querySelector('.open-count.selected')?.textContent.replace('x', '')) || 1;
+        reelStage.replaceChildren();
+        const compact = selectedCount >= 5;
+        const rows = selectedCount === 1 ? [1] : selectedCount === 2 ? [1, 1] : selectedCount === 3 ? [1, 1, 1] : selectedCount === 5 ? [2, 2, 1] : [2, 2, 2, 2, 2];
+        reelStage.className = `reel-stage opening-count-${selectedCount}`;
+        reelInstances = [];
+        rows.forEach(width => { const row = document.createElement('div'); row.className = `reel-row${width === 2 ? ' compact-row' : ''}`; reelStage.appendChild(row); for (let index = 0; index < width; index += 1) { const windowElement = document.createElement('div'); windowElement.className = `reel-window${width === 2 ? ' compact-reel' : ''}`; windowElement.innerHTML = '<div class="reel-pointer"></div><div class="reel-track"></div>'; row.appendChild(windowElement); const instance = createReelInstance(windowElement); reelInstances.push(instance); attachReelDrag(instance); } });
+        reelInstances.forEach(instance => {
+            void instance.track.offsetWidth;
+            const winner = instance.track.querySelector('.reel-winner');
+            const windowWidth = instance.window.clientWidth;
+            const winnerWidth = winner.offsetWidth;
+            const centerTarget = windowWidth / 2 - (winner.offsetLeft + winnerWidth / 2);
+            const edgePadding = Math.min(18, windowWidth * 0.08);
+            const minimumTarget = windowWidth - edgePadding - winner.offsetLeft - winnerWidth;
+            const maximumTarget = edgePadding - winner.offsetLeft;
+            const randomOffset = (Math.random() - 0.5) * windowWidth * 0.45;
+            instance.targetPosition = Math.max(minimumTarget, Math.min(maximumTarget, centerTarget + randomOffset));
+            const reelItems = [...instance.track.children];
+            const winnerIndex = reelItems.indexOf(winner);
         const cyclesBeforeWinner = 10;
         const leadIndex = Math.max(0, winnerIndex - (reelDrops.length * cyclesBeforeWinner) - 4);
         const leadItem = reelItems[leadIndex];
         const leadCenter = leadItem.offsetLeft + leadItem.offsetWidth / 2;
         const winnerCenter = winner.offsetLeft + winner.offsetWidth / 2;
         const visibleCardDistance = winnerCenter - leadCenter;
-        reelStartPosition = Math.min(0, reelTargetPosition + visibleCardDistance);
-        reelStartPosition = clampReelPosition(reelStartPosition);
-
-        cancelAnimationFrame(reelAnimationFrame);
-        cancelAnimationFrame(reelInertiaFrame);
+            instance.startPosition = clampReelPosition(instance, Math.min(0, instance.targetPosition + visibleCardDistance));
+        });
+        reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); instance.position = instance.startPosition; instance.track.style.transform = `translate3d(${instance.startPosition}px, 0, 0)`; instance.startTime = performance.now(); instance.lastTime = instance.startTime; instance.finished = false; });
         if (openingProgress) {
             openingProgress.style.animation = 'none';
             void openingProgress.offsetWidth;
             openingProgress.style.animation = '';
         }
         if (openingStatus) openingStatus.textContent = 'Открывается...';
-        setReelPosition(reelStartPosition);
-        reelStartTime = performance.now();
-        reelLastTime = reelStartTime;
         reelIsRunning = true;
-        reelAnimationFrame = requestAnimationFrame(animateReel);
+        reelInstances.forEach(instance => { instance.animationFrame = requestAnimationFrame(time => animateReel(instance, time)); });
     }
 
     if (openCaseButton) {
@@ -718,9 +751,61 @@ document.addEventListener('DOMContentLoaded', function() {
             openingOverlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('case-opening-active');
             hideResultModal();
-            cancelAnimationFrame(reelAnimationFrame);
-            cancelAnimationFrame(reelInertiaFrame);
+            reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
             reelIsRunning = false;
+        });
+    }
+
+    function getSelectedResultDrops() {
+        return [...(dropResultsList?.querySelectorAll('[data-result-index]:checked') || [])]
+            .map(input => reelInstances[Number(input.dataset.resultIndex)]?.drop)
+            .filter(Boolean);
+    }
+
+    function closeResultFlow() {
+        hideResultModal();
+        openingOverlay.classList.remove('active');
+        openingOverlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('case-opening-active');
+    }
+
+    async function sellResultDrops(drops) {
+        if (!supabase || !currentProfileId || !drops.length) return new Error('Не выбраны предметы или профиль не найден.');
+        const total = drops.reduce((sum, drop) => sum + (Number(drop.price) || 0), 0);
+        const { data: profile, error: readError } = await supabase.from('profiles').select('balance').eq('id', currentProfileId).single();
+        if (readError) return readError;
+        const { error } = await supabase.from('profiles').update({ balance: Number(profile.balance || 0) + total, updated_at: new Date().toISOString() }).eq('id', currentProfileId);
+        if (!error) {
+            const balanceAmount = document.querySelector('.balance-amount');
+            if (balanceAmount) balanceAmount.textContent = (Number(profile.balance || 0) + total).toLocaleString('ru-RU');
+        }
+        return error;
+    }
+
+    if (dropSaveButton) {
+        dropSaveButton.addEventListener('click', async () => {
+            const drops = getSelectedResultDrops();
+            if (!drops.length) return;
+            dropSaveButton.disabled = true;
+            const results = await Promise.all(drops.map(drop => saveDropToInventory(drop)));
+            const error = results.find(result => result.error)?.error;
+            dropSaveButton.disabled = false;
+            if (error) { dropSaveButton.textContent = `Ошибка сохранения: ${error.message}`; return; }
+            dropSaveButton.textContent = 'СОХРАНЕНО';
+            closeResultFlow();
+        });
+    }
+
+    if (dropResultSell) {
+        dropResultSell.addEventListener('click', async () => {
+            const drops = getSelectedResultDrops();
+            if (!drops.length) return;
+            dropResultSell.disabled = true;
+            const error = await sellResultDrops(drops);
+            dropResultSell.disabled = false;
+            if (error) { dropResultSell.textContent = `Ошибка продажи: ${error.message}`; return; }
+            dropResultSell.textContent = 'ПРОДАНО';
+            closeResultFlow();
         });
     }
 
@@ -730,41 +815,8 @@ document.addEventListener('DOMContentLoaded', function() {
             openingOverlay.classList.remove('active');
             openingOverlay.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('case-opening-active');
-            cancelAnimationFrame(reelAnimationFrame);
-            cancelAnimationFrame(reelInertiaFrame);
+            reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
             reelIsRunning = false;
-        });
-    }
-
-    if (reelWindow) {
-        reelWindow.addEventListener('pointerdown', function(event) {
-            if (reelIsRunning) return;
-            reelDragging = true;
-            reelPointerX = event.clientX;
-            reelPointerTime = performance.now();
-            reelVelocity = 0;
-            cancelAnimationFrame(reelInertiaFrame);
-            cancelAnimationFrame(reelAnimationFrame);
-            reelWindow.setPointerCapture(event.pointerId);
-        });
-
-        reelWindow.addEventListener('pointermove', function(event) {
-            if (!reelDragging) return;
-            const now = performance.now();
-            const elapsed = Math.max(now - reelPointerTime, 1);
-            const movement = event.clientX - reelPointerX;
-            reelVelocity = movement / (elapsed / 1000);
-            setReelPosition(reelPosition + movement);
-            reelPointerX = event.clientX;
-            reelPointerTime = now;
-        });
-
-        reelWindow.addEventListener('pointerup', function(event) {
-            if (!reelDragging) return;
-            reelDragging = false;
-            reelWindow.releasePointerCapture(event.pointerId);
-            reelLastTime = performance.now();
-            if (Math.abs(reelVelocity) > 8) reelInertiaFrame = requestAnimationFrame(animateReelInertia);
         });
     }
 

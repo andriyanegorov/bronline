@@ -46,6 +46,17 @@
                     <div class="case-items-builder">
                         <div class="builder-heading"><div><strong>Предметы в кейсе</strong><span class="field-hint">Добавьте предметы из общего каталога</span></div><button class="button secondary" id="open-item-picker" type="button"><span>+</span>Выбрать предметы</button></div>
                         <div class="selected-items" id="selected-items"><p class="empty-state">Предметы пока не выбраны</p></div>
+                        <div class="case-analytics" aria-live="polite">
+                            <div class="analytics-heading"><div><p class="section-kicker">SMART ANALYTICS</p><strong>Экономика кейса</strong></div><span class="analytics-health" id="analytics-health">Ожидание данных</span></div>
+                            <div class="analytics-grid">
+                                <div class="analytics-metric"><span>Ожидаемая награда</span><strong id="analytics-expected">—</strong><small>среднее за открытие</small></div>
+                                <div class="analytics-metric"><span>Ожидаемый ROI</span><strong id="analytics-roi">—</strong><small>на основе цены кейса</small></div>
+                                <div class="analytics-metric"><span>Диапазон наград</span><strong id="analytics-range">—</strong><small>минимум — максимум</small></div>
+                                <div class="analytics-metric"><span>Сумма шансов</span><strong id="analytics-chance-total">—</strong><small>для нормализации выпадения</small></div>
+                            </div>
+                            <div class="analytics-bar"><span id="analytics-bar-fill"></span></div>
+                            <p class="analytics-note" id="analytics-note">Добавьте предметы, чтобы увидеть расчёт окупаемости.</p>
+                        </div>
                     </div>
                 </form>
                 <p class="form-status" id="case-status" role="status"></p>
@@ -68,7 +79,7 @@
 
             <section class="panel cases-list-panel">
                 <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ</p><h2>Последние кейсы</h2></div><button class="refresh-button" id="refresh-cases" type="button" title="Обновить список">↻ Обновить</button></div>
-                <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th></th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
+                <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
             </section>
 
             <section class="workspace-grid">
@@ -141,16 +152,51 @@
         }
         Object.values(fields).forEach(field => field.addEventListener('input', updatePreview));
         fields.rarity.addEventListener('change', updatePreview);
+        caseFields.price.addEventListener('input', updateCaseAnalytics);
 
         function showStatus(message, type) { status.textContent = message; status.className = `form-status ${type}`; }
         function formatDate(value) { return value ? new Date(value).toLocaleDateString('ru-RU') : '—'; }
         function updateSelectedItemsCount() { document.querySelector('#selected-items-count').textContent = selectedCaseItems.size; }
+        function formatCoins(value) { return `${Math.round(value || 0).toLocaleString('ru-RU')} BC`; }
+        function updateCaseAnalytics() {
+            const metrics = {
+                expected: document.querySelector('#analytics-expected'),
+                roi: document.querySelector('#analytics-roi'),
+                range: document.querySelector('#analytics-range'),
+                chance: document.querySelector('#analytics-chance-total'),
+                fill: document.querySelector('#analytics-bar-fill'),
+                note: document.querySelector('#analytics-note'),
+                health: document.querySelector('#analytics-health')
+            };
+            const entries = [...selectedCaseItems.values()];
+            const price = Number(caseFields.price.value) || 0;
+            const totalChance = entries.reduce((sum, selection) => sum + Math.max(0, Number(selection.chance) || 0), 0);
+            if (!entries.length) {
+                metrics.expected.textContent = '—'; metrics.roi.textContent = '—'; metrics.range.textContent = '—'; metrics.chance.textContent = '—'; metrics.fill.style.width = '0%'; metrics.health.textContent = 'Ожидание данных'; metrics.health.className = 'analytics-health'; metrics.note.textContent = 'Добавьте предметы, чтобы увидеть расчёт окупаемости.'; return;
+            }
+            const weights = totalChance > 0 ? entries.map(selection => Math.max(0, Number(selection.chance) || 0) / totalChance) : entries.map(() => 1 / entries.length);
+            const expected = entries.reduce((sum, selection, index) => sum + (Number(selection.item.item_value) || 0) * weights[index], 0);
+            const values = entries.map(selection => Number(selection.item.item_value) || 0);
+            const roi = price > 0 ? expected / price * 100 : 0;
+            const lossChance = totalChance > 0 ? entries.reduce((sum, selection, index) => sum + (selection.item.item_value < price ? weights[index] : 0), 0) * 100 : 0;
+            const expensiveChance = totalChance > 0 ? entries.reduce((sum, selection, index) => sum + (selection.item.item_value >= price ? weights[index] : 0), 0) * 100 : 100;
+            metrics.expected.textContent = formatCoins(expected); metrics.roi.textContent = price > 0 ? `${roi.toFixed(1)}%` : 'Укажите цену'; metrics.range.textContent = `${formatCoins(Math.min(...values))} — ${formatCoins(Math.max(...values))}`; metrics.chance.textContent = `${totalChance.toFixed(2)}%`; metrics.fill.style.width = `${Math.min(expensiveChance, 100)}%`;
+            const health = roi >= 100 ? 'Плюсовой' : roi >= 70 ? 'Сбалансирован' : 'Рискованный';
+            metrics.health.textContent = health; metrics.health.className = `analytics-health ${roi >= 100 ? 'positive' : roi >= 70 ? 'balanced' : 'negative'}`;
+            const warnings = [];
+            if (price <= 0) warnings.push('Укажите цену кейса для расчёта ROI.');
+            if (totalChance <= 0) warnings.push('Все шансы равны 0: выпадение будет равномерным.');
+            if (totalChance > 100) warnings.push('Сумма шансов больше 100%: система нормализует её пропорционально.');
+            if (lossChance > 70) warnings.push(`${lossChance.toFixed(0)}% выпадений дешевле цены кейса.`);
+            if (!warnings.length) warnings.push(`${expensiveChance.toFixed(0)}% выпадений окупают цену кейса или выше.`);
+            metrics.note.textContent = warnings.join(' ');
+        }
         function renderSelectedItems() {
             const list = document.querySelector('#selected-items');
             if (!selectedCaseItems.size) { list.innerHTML = '<p class="empty-state">Предметы пока не выбраны</p>'; return; }
             list.innerHTML = [...selectedCaseItems].map(([id, selection]) => `<div class="selected-item"><img src="${selection.item.image_url || './data/assets/items/m5f90.png'}" alt=""><div><strong>${selection.item.name}</strong><small>${Number(selection.item.item_value || 0).toLocaleString('ru-RU')} BC</small></div><label class="selected-rarity"><span>Редкость в кейсе</span><select data-selected-rarity-id="${id}" aria-label="Редкость ${selection.item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selection.rarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select></label><label class="selected-chance input-with-suffix"><input type="number" min="0" max="100" step="0.01" value="${selection.chance}" data-selected-chance-id="${id}" aria-label="Шанс для ${selection.item.name}"><b>%</b></label><button class="remove-selected" type="button" data-remove-item-id="${id}" aria-label="Удалить ${selection.item.name}">×</button></div>`).join('');
         }
-        function updateModalSelection() { document.querySelector('#modal-selection-count').textContent = `Выбрано: ${selectedCaseItems.size}`; updateSelectedItemsCount(); renderSelectedItems(); }
+        function updateModalSelection() { document.querySelector('#modal-selection-count').textContent = `Выбрано: ${selectedCaseItems.size}`; updateSelectedItemsCount(); renderSelectedItems(); updateCaseAnalytics(); }
         function resetCaseForm() { editingCaseId = null; caseForm.reset(); caseFields.image.value = './data/case_logo/free.png'; caseActive.checked = true; selectedCaseItems.clear(); caseFormTitle.textContent = 'Создать кейс'; caseSubmit.innerHTML = '<span>+</span>Создать кейс'; cancelCaseEdit.classList.add('hidden'); updateModalSelection(); }
         function startCaseEdit(caseData) { editingCaseId = caseData.id; caseFields.name.value = caseData.name || ''; caseFields.price.value = caseData.price ?? 0; caseFields.image.value = caseData.image_url || './data/case_logo/free.png'; caseActive.checked = Boolean(caseData.active); selectedCaseItems.clear(); (caseData.case_items || []).forEach(item => { const catalogItem = availableItems.get(String(item.item_id)) || { id: item.item_id, name: item.item_name, rarity: item.rarity, item_value: item.item_value, image_url: item.image_url }; selectedCaseItems.set(String(item.item_id), { item: catalogItem, rarity: item.rarity || catalogItem.rarity, chance: Number(item.chance) || 0 }); }); caseFormTitle.textContent = 'Редактировать кейс'; caseSubmit.innerHTML = '<span>✓</span>Сохранить изменения'; cancelCaseEdit.classList.remove('hidden'); updateModalSelection(); document.querySelector('#cases').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
         function renderBuilderItems(items) {
@@ -184,8 +230,29 @@
         function renderCases(cases) {
             const list = document.querySelector('#cases-list');
             if (!cases?.length) { list.innerHTML = '<tr><td colspan="5" class="empty-state">Кейсов пока нет</td></tr>'; return; }
-            list.innerHTML = cases.map(item => `<tr><td><div class="table-item"><img src="${item.image_url || './data/case_logo/free.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${Number(item.price || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${item.active ? '' : ' inactive'}">${item.active ? 'Активен' : 'Скрыт'}</span></td><td>${formatDate(item.created_at)}</td><td><button class="edit-case-button" type="button" data-case-id="${item.id}">Изменить</button></td></tr>`).join('');
+            list.innerHTML = cases.map(item => `<tr><td><div class="table-item"><img src="${item.image_url || './data/case_logo/free.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${Number(item.price || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${item.active ? '' : ' inactive'}">${item.active ? 'Активен' : 'Скрыт'}</span></td><td>${formatDate(item.created_at)}</td><td class="case-row-actions"><button class="edit-case-button" type="button" data-case-id="${item.id}">Изменить</button><button class="delete-case-button" type="button" data-delete-case-id="${item.id}">Удалить</button></td></tr>`).join('');
             list.querySelectorAll('[data-case-id]').forEach(button => button.addEventListener('click', () => { const caseData = cases.find(item => String(item.id) === button.dataset.caseId); if (caseData) startCaseEdit(caseData); }));
+            list.querySelectorAll('[data-delete-case-id]').forEach(button => button.addEventListener('click', () => { const caseData = cases.find(item => String(item.id) === button.dataset.deleteCaseId); if (caseData) deleteCase(caseData, button); }));
+        }
+        async function deleteCase(caseData, button) {
+            if (!confirm(`Удалить кейс «${caseData.name}»? Все его предметы в составе кейса тоже будут удалены.`)) return;
+            button.disabled = true;
+            button.textContent = 'Удаление...';
+            try {
+                const { error: itemsError } = await supabaseClient.from('case_items').delete().eq('case_id', caseData.id);
+                if (itemsError) throw itemsError;
+                const { error: caseError } = await supabaseClient.from('cases').delete().eq('id', caseData.id);
+                if (caseError) throw caseError;
+                if (editingCaseId === caseData.id) resetCaseForm();
+                caseStatus.textContent = 'Кейс удалён.';
+                caseStatus.className = 'form-status success';
+                await loadCases();
+            } catch (error) {
+                button.disabled = false;
+                button.textContent = 'Удалить';
+                caseStatus.textContent = `Не удалось удалить кейс: ${error.message}`;
+                caseStatus.className = 'form-status error';
+            }
         }
         function renderItems(items) {
             const list = document.querySelector('#items-list');
@@ -278,7 +345,7 @@
                 updateModalSelection();
             }
         });
-        document.querySelector('#selected-items').addEventListener('input', event => { const input = event.target.closest('[data-selected-chance-id]'); const selection = input && selectedCaseItems.get(input.dataset.selectedChanceId); if (selection) selection.chance = Number(input.value); });
+        document.querySelector('#selected-items').addEventListener('input', event => { const input = event.target.closest('[data-selected-chance-id]'); const selection = input && selectedCaseItems.get(input.dataset.selectedChanceId); if (selection) { selection.chance = Number(input.value); updateCaseAnalytics(); } });
         document.querySelector('#selected-items').addEventListener('change', event => { const select = event.target.closest('[data-selected-rarity-id]'); const selection = select && selectedCaseItems.get(select.dataset.selectedRarityId); if (selection) selection.rarity = select.value; });
         document.querySelector('#selected-items').addEventListener('click', event => { const button = event.target.closest('[data-remove-item-id]'); if (button) { selectedCaseItems.delete(button.dataset.removeItemId); updateModalSelection(); renderBuilderItems([...availableItems.values()]); } });
         document.querySelector('#open-item-picker').addEventListener('click', () => { document.querySelector('#item-picker-modal').classList.add('open'); document.querySelector('#item-picker-modal').setAttribute('aria-hidden', 'false'); filterPickerItems(); });
