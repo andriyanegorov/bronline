@@ -90,7 +90,7 @@ function applyTelegramProfileToUI(user) {
     if (profileBadge) {
         profileBadge.innerHTML = user.is_premium
             ? '<img src="./data/assets/premium.svg" alt="Premium">'
-            : 'PLAYER';
+            : '';
     }
 
     if (profileStatusText) {
@@ -358,7 +358,7 @@ function renderLeaderboard(profiles, metric = 'balance') {
         const avatar = profile.avatar_url || './data/assets/profile.png';
         const badge = profile.premium
             ? '<img src="./data/assets/premium.svg" alt="Premium">'
-            : 'PLAYER';
+            : '';
         return `<div class="top-list-item"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${badge}</div></div><div class="top-list-score"><span>${formatValue(profile)}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
     }).join('');
     const subtitle = document.querySelector('.top-subtitle');
