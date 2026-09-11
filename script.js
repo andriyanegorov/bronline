@@ -88,7 +88,9 @@ function applyTelegramProfileToUI(user) {
     }
 
     if (profileBadge) {
-        profileBadge.textContent = user.is_premium ? 'PREMIUM' : 'PLAYER';
+        profileBadge.innerHTML = user.is_premium
+            ? '<img src="./data/assets/premium.svg" alt="Premium">'
+            : 'PLAYER';
     }
 
     if (profileStatusText) {
@@ -327,7 +329,7 @@ function escapeLeaderboardText(value) {
     return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
 }
 
-function renderLeaderboard(profiles) {
+function renderLeaderboard(profiles, metric = 'balance') {
     const podium = document.querySelector('.top-ranking-grid');
     const list = document.querySelector('.top-players-list');
     if (!podium || !list) return;
@@ -337,33 +339,70 @@ function renderLeaderboard(profiles) {
         return;
     }
     const podiumClasses = { 1: 'first', 2: 'second', 3: 'third' };
+    const valueLabel = metric === 'total_spent'
+        ? 'Затраты игрока'
+        : metric === 'inventory_value'
+            ? 'Стоимость инвентаря игрока'
+            : 'Баланс игрока';
+    const getValue = profile => Number(profile[metric] || 0);
+    const formatValue = profile => getValue(profile).toLocaleString('ru-RU');
     podium.innerHTML = profiles.slice(0, 3).map((profile, index) => {
         const place = index + 1;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
-        return `<article class="top-player-card ${podiumClasses[place]}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name">${escapeLeaderboardText(name)}</div><div class="top-player-balance">${Number(profile.balance || 0).toLocaleString('ru-RU')} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
+        return `<article class="top-player-card ${podiumClasses[place]}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name">${escapeLeaderboardText(name)}</div><div class="top-player-balance">${formatValue(profile)} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
     }).join('');
     list.innerHTML = profiles.slice(3).map((profile, index) => {
         const place = index + 4;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
-        return `<div class="top-list-item"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${profile.premium ? 'PREMIUM' : 'PLAYER'}</div></div><div class="top-list-score"><span>${Number(profile.balance || 0).toLocaleString('ru-RU')}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
+        const badge = profile.premium
+            ? '<img src="./data/assets/premium.svg" alt="Premium">'
+            : 'PLAYER';
+        return `<div class="top-list-item"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${badge}</div></div><div class="top-list-score"><span>${formatValue(profile)}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
     }).join('');
+    const subtitle = document.querySelector('.top-subtitle');
+    if (subtitle) subtitle.textContent = valueLabel;
 }
 
-async function loadLeaderboard() {
+async function loadLeaderboard(metric = 'balance') {
     if (!supabase) return;
-    const { data, error } = await supabase
+    const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, username, first_name, last_name, avatar_url, balance, premium')
-        .order('balance', { ascending: false })
-        .limit(10);
+        .select('id, username, first_name, last_name, avatar_url, balance, premium, total_spent');
     if (error) {
         console.error('Supabase leaderboard load error:', error);
         renderLeaderboard([]);
         return;
     }
-    renderLeaderboard(data || []);
+
+    const rankedProfiles = (profiles || []).map(profile => ({
+        ...profile,
+        [metric]: metric === 'total_spent' ? Number(profile.total_spent || 0) : Number(profile[metric] || 0)
+    }));
+
+    if (metric === 'inventory_value' && rankedProfiles.length) {
+        const { data: inventory, error: inventoryError } = await supabase
+            .from('inventory')
+            .select('user_id, item_value, quantity');
+        if (inventoryError) {
+            console.error('Supabase inventory leaderboard load error:', inventoryError);
+            renderLeaderboard([]);
+            return;
+        }
+
+        const inventoryTotals = (inventory || []).reduce((totals, item) => {
+            const userId = String(item.user_id);
+            totals[userId] = (totals[userId] || 0) + Number(item.item_value || 0) * Number(item.quantity || 0);
+            return totals;
+        }, {});
+        rankedProfiles.forEach(profile => {
+            profile.inventory_value = inventoryTotals[String(profile.id)] || 0;
+        });
+    }
+
+    rankedProfiles.sort((first, second) => Number(second[metric] || 0) - Number(first[metric] || 0));
+    renderLeaderboard(rankedProfiles.slice(0, 10), metric);
 }
 
 async function initTelegramAuth() {
@@ -875,6 +914,44 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
 
             showPage(pageName);
+        });
+    });
+
+    const settingsModal = document.querySelector('#settings-modal');
+    const settingsButton = document.querySelector('.profile-settings-btn');
+    const settingsCloseButton = document.querySelector('.settings-close-btn');
+
+    function setSettingsModal(open) {
+        if (!settingsModal) return;
+        settingsModal.classList.toggle('open', open);
+        settingsModal.setAttribute('aria-hidden', String(!open));
+    }
+
+    settingsButton?.addEventListener('click', () => setSettingsModal(true));
+    settingsCloseButton?.addEventListener('click', () => setSettingsModal(false));
+    settingsModal?.addEventListener('click', event => {
+        if (event.target === settingsModal) setSettingsModal(false);
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') setSettingsModal(false);
+    });
+
+    document.querySelector('[data-settings-action="nickname"]')?.addEventListener('click', () => {
+        setSettingsModal(false);
+        openNicknameModal();
+    });
+
+    const topTabs = document.querySelectorAll('.top-tab[data-top-metric]');
+    topTabs.forEach(tab => {
+        tab.addEventListener('click', async () => {
+            topTabs.forEach(topTab => topTab.classList.remove('active'));
+            tab.classList.add('active');
+            const topMetric = tab.dataset.topMetric || 'balance';
+            const podium = document.querySelector('.top-ranking-grid');
+            const list = document.querySelector('.top-players-list');
+            if (podium) podium.innerHTML = '<p class="top-loading">Загрузка рейтинга...</p>';
+            if (list) list.innerHTML = '<p class="top-loading">Загрузка рейтинга...</p>';
+            await loadLeaderboard(topMetric);
         });
     });
 
