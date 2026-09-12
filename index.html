@@ -75,106 +75,7 @@
         </div>
 
         <div class="wins-list">
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Player123</div>
-                        <div class="win-item-name">BMW M5 Competition</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="BMW M5" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge mythical">КРАСНЫЙ</span>
-                    <div class="win-time">1 мин. назад</div>
-                </div>
-            </div>
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Player123</div>
-                        <div class="win-item-name">BMW M5 Competition</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="BMW M5" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge legendary">ЗОЛОТОЙ</span>
-                    <div class="win-time">1 мин. назад</div>
-                </div>
-            </div>
-
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Max777</div>
-                        <div class="win-item-name">PREMIUM CASE</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="Premium Case" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge epic">ЭПИЧНЫЙ</span>
-                    <div class="win-time">3 мин. назад</div>
-                </div>
-            </div>
-
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Alex</div>
-                        <div class="win-item-name">AK-47 Буйство краск</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="AK-47" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge rare">РЕДКИЙ</span>
-                    <div class="win-time">5 мин. назад</div>
-                </div>
-            </div>
-
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Max777</div>
-                        <div class="win-item-name">PREMIUM CASE</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="Premium Case" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge uncommon">ОБЫЧНЫЙ</span>
-                    <div class="win-time">3 мин. назад</div>
-                </div>
-            </div>
-
-            <div class="win-item">
-                <div class="win-left">
-                    <img src="./data/assets/profile.png" alt="Player" class="win-avatar">
-                    <div class="win-info">
-                        <div class="win-player-name">Max777</div>
-                        <div class="win-item-name">PREMIUM CASE</div>
-                    </div>
-                </div>
-                <div class="win-middle">
-                    <img src="./data/assets/items/m5f90.png" alt="Premium Case" class="win-item-image">
-                </div>
-                <div class="win-right">
-                    <span class="rarity-badge common">ШИРП</span>
-                    <div class="win-time">3 мин. назад</div>
-                </div>
-            </div>
+            <p class="wins-loading">Загрузка выигрышей...</p>
 
         </div>
     </div>
@@ -247,7 +148,6 @@
         <div class="shop-header">
             <div class="shop-title-group">
                 <h1 class="shop-title">ВИТРИНА</h1>
-                <button class="shop-help" aria-label="Помощь">?</button>
             </div>
 
             <button class="shop-profile-btn" type="button">
@@ -263,10 +163,17 @@
             </p>
 
             <div class="shop-sort-wrap">
-                <button class="shop-sort-btn" type="button">
-                    <span>По ценности</span>
-                    <span class="sort-caret">⌄</span>
+                <button class="shop-sort-btn" id="showcase-sort-btn" type="button" aria-expanded="false" aria-haspopup="listbox">
+                    <span id="showcase-sort-label">По ценности</span>
+                    <span class="sort-caret"></span>
                 </button>
+                <div class="showcase-sort-menu" id="showcase-sort-menu" role="listbox" aria-label="Сортировка витрины" hidden>
+                    <button type="button" data-showcase-sort="value" role="option" aria-selected="true">По ценности</button>
+                    <button type="button" data-showcase-sort="likes" role="option" aria-selected="false">По лайкам</button>
+                    <button type="button" data-showcase-sort="rarity" role="option" aria-selected="false">По редкости</button>
+                    <button type="button" data-showcase-sort="newest" role="option" aria-selected="false">Сначала новые</button>
+                    <button type="button" data-showcase-sort="oldest" role="option" aria-selected="false">Сначала старые</button>
+                </div>
             </div>
         </div>
 
@@ -275,7 +182,7 @@
             <button class="shop-tab" type="button">СВЕЖИЕ</button>
         </div>
 
-        <div class="shop-grid">
+        <div class="shop-grid" id="showcase-grid">
             <article class="shop-item-card legendary">
                 <div class="shop-item-price">
                     <span>312 450</span>
@@ -511,6 +418,62 @@
             </article>
         </div>
     </section>
+
+    <div class="showcase-modal" id="showcase-modal" aria-hidden="true">
+        <section class="showcase-dialog" role="dialog" aria-modal="true" aria-labelledby="showcase-dialog-title">
+            <button class="showcase-dialog-close" type="button" aria-label="Закрыть витрину">×</button>
+            <div id="showcase-dialog-content"></div>
+            <div class="showcase-comments-heading"><strong>Комментарии</strong><span id="showcase-comments-count">0</span></div>
+            <div class="showcase-comments" id="showcase-comments"></div>
+            <form class="showcase-comment-form" id="showcase-comment-form">
+                <input id="showcase-comment-input" type="text" maxlength="500" placeholder="Написать комментарий..." aria-label="Комментарий">
+                <button type="submit" aria-label="Отправить комментарий">➤</button>
+            </form>
+        </section>
+    </div>
+
+    <div class="showcase-manager-modal" id="showcase-manager-modal" aria-hidden="true">
+        <section class="showcase-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="showcase-manager-title">
+            <button class="showcase-manager-close" type="button" aria-label="Закрыть управление витриной">×</button>
+            <h2 id="showcase-manager-title">МОЯ ВИТРИНА</h2>
+            <p id="showcase-manager-limit">Обычный игрок может выставить до 2 предметов. Premium — без ограничений.</p>
+            <div class="showcase-manager-grid" id="showcase-manager-grid">
+                <p class="showcase-state">Загрузка инвентаря...</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="showcase-customization-modal" id="showcase-customization-modal" aria-hidden="true">
+        <section class="showcase-customization-dialog" role="dialog" aria-modal="true" aria-labelledby="showcase-customization-title">
+            <button class="showcase-manager-close" type="button" aria-label="Закрыть кастомизацию">×</button>
+            <h2 id="showcase-customization-title">КАСТОМ ВИТРИНЫ</h2>
+            <p class="showcase-customization-description">Настройте фон и оформление выставленных предметов.</p>
+            <div class="showcase-customization" id="showcase-customization">
+                <div class="showcase-customization-preview" id="showcase-customization-preview"></div>
+                <div class="showcase-customization-tabs" role="tablist" aria-label="Настройки витрины">
+                    <button class="showcase-customization-tab active" type="button" data-customization-panel="background" role="tab" aria-selected="true">ФОН</button>
+                    <button class="showcase-customization-tab" type="button" data-customization-panel="frame" role="tab" aria-selected="false">РАМКИ</button>
+                    <button class="showcase-customization-tab" type="button" data-customization-panel="style" role="tab" aria-selected="false">ОФОРМЛЕНИЕ</button>
+                </div>
+                <div class="showcase-customization-section customization-panel active" data-customization-panel-content="background">
+                    <strong>ФОН ВИТРИНЫ</strong>
+                    <div class="showcase-option-grid" id="showcase-background-options"></div>
+                </div>
+                <div class="showcase-customization-section customization-panel" data-customization-panel-content="frame" hidden>
+                    <strong>КАРТОЧКА ПРЕДМЕТА</strong>
+                    <p class="showcase-customization-hint">Выберите предмет ниже, затем настройте его оформление.</p>
+                    <div class="showcase-option-grid" id="showcase-frame-options"></div>
+                </div>
+                <div class="showcase-customization-section customization-panel" data-customization-panel-content="style" hidden>
+                    <strong>УРОВЕНЬ ОФОРМЛЕНИЯ</strong>
+                    <p class="showcase-customization-hint">Выберите предмет ниже, затем настройте его оформление.</p>
+                    <div class="showcase-level-row" id="showcase-level-options"></div>
+                </div>
+                <div class="showcase-customization-items" id="showcase-customization-items"></div>
+                <button class="showcase-customization-save" id="showcase-customization-save" type="button">ПРИМЕНИТЬ</button>
+            </div>
+        </section>
+    </div>
 
     <section class="page top-page" data-page="top">
         <div class="top-wrap">
@@ -787,6 +750,67 @@
             <span id="premium-toast-message">Подробности статуса можно узнать в разделе «Донат»</span>
         </div>
         <button class="premium-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+    </div>
+
+    <div class="error-toast" id="error-toast" role="alert" aria-live="assertive" aria-hidden="true">
+        <div class="error-toast-icon"><img src="./data/assets/error.svg" alt="Ошибка"></div>
+        <div class="error-toast-copy">
+            <strong id="error-toast-title">Недостаточно средств</strong>
+            <span id="error-toast-message">Пополните баланс, чтобы открыть кейс.</span>
+        </div>
+        <button class="error-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+        <span class="error-toast-progress" aria-hidden="true"></span>
+    </div>
+
+    <div class="promo-result-toast" id="promo-result-toast" role="status" aria-live="polite" aria-hidden="true">
+        <strong id="promo-result-title">Промокод применён</strong>
+        <span id="promo-result-message"></span>
+        <button type="button" id="promo-result-close" aria-label="Закрыть уведомление">×</button>
+    </div>
+
+    <div class="showcase-development-toast" id="showcase-development-toast" role="status" aria-live="polite" aria-hidden="true">
+        <div class="showcase-development-toast-icon">i</div>
+        <div class="showcase-development-toast-copy">
+            <strong>Кастомизация витрин в разработке</strong>
+            <span>Подробности можно узнать в нашем Telegram-канале.</span>
+        </div>
+        <button class="showcase-development-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+    </div>
+
+    <div class="leaderboard-profile-modal" id="leaderboard-profile-modal" aria-hidden="true">
+        <section class="leaderboard-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="leaderboard-profile-name">
+            <button class="leaderboard-profile-close" type="button" aria-label="Закрыть профиль">×</button>
+            <div class="leaderboard-profile-accent" aria-hidden="true"></div>
+            <div class="leaderboard-profile-avatar-wrap">
+                <img id="leaderboard-profile-avatar" src="./data/assets/profile.png" alt="">
+            </div>
+            <div class="leaderboard-profile-heading">
+                <h2 id="leaderboard-profile-name">Игрок</h2>
+                <span id="leaderboard-profile-premium" class="leaderboard-profile-premium" hidden><img src="./data/assets/premium.svg" alt="Premium"></span>
+            </div>
+            <p id="leaderboard-profile-status" class="leaderboard-profile-status">Игрок рейтинга</p>
+            <div class="leaderboard-profile-stats">
+                <div><span>Баланс</span><strong id="leaderboard-profile-balance">0 BC</strong></div>
+                <div><span>Потрачено</span><strong id="leaderboard-profile-spent">0 BC</strong></div>
+            </div>
+            <div class="leaderboard-profile-inventory-heading">
+                <span>Инвентарь</span>
+                <small id="leaderboard-profile-inventory-count">0 предметов</small>
+            </div>
+            <div class="leaderboard-profile-inventory" id="leaderboard-profile-inventory">
+                <p class="leaderboard-profile-inventory-state">Загрузка инвентаря...</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="win-case-modal" id="win-case-modal" aria-hidden="true">
+        <section class="win-case-dialog" role="dialog" aria-modal="true" aria-labelledby="win-case-title">
+            <button class="win-case-close" type="button" aria-label="Закрыть">×</button>
+            <img class="win-case-icon" id="win-case-icon" src="./data/case_logo/free.png" alt="Кейс">
+            <p class="win-case-kicker">ПРЕДМЕТ ВЫИГРАН</p>
+            <h2 id="win-case-title">Название предмета</h2>
+            <p class="win-case-description">Выбито из кейса <strong id="win-case-name">Название кейса</strong></p>
+        </section>
     </div>
 
     <div class="nickname-modal" id="nickname-modal" aria-hidden="true">

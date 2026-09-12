@@ -82,6 +82,20 @@
                 <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
             </section>
 
+            <section class="panel promo-panel" id="promocodes">
+                <div class="panel-heading"><div><p class="section-kicker">НАГРАДЫ</p><h2>Генератор промокодов</h2></div><span class="step-badge">03</span></div>
+                <form class="promo-form" id="promo-form">
+                    <label class="field">Тип награды<select id="promo-reward-type"><option value="coins">Деньги</option><option value="premium">Premium-статус</option></select></label>
+                    <label class="field" id="promo-amount-field">Сумма BC<input id="promo-reward-value" type="number" min="1" step="1" value="1000"></label>
+                    <label class="field">Лимит использований<input id="promo-usage-limit" type="number" min="1" step="1" value="1"></label>
+                    <label class="field">Срок действия <span class="field-hint">необязательно</span><input id="promo-expires-at" type="datetime-local"></label>
+                    <div class="promo-form-actions"><button class="button secondary" id="promo-generate" type="button">Сгенерировать код</button><input class="promo-code-output" id="promo-code-output" type="text" readonly placeholder="Код появится здесь"><button class="button primary" type="submit">Создать промокод</button></div>
+                </form>
+                <p class="form-status" id="promo-status" role="status"></p>
+                <div class="promo-list-heading"><strong>Существующие промокоды</strong><button class="refresh-button" id="refresh-promos" type="button">↻ Обновить</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Код</th><th>Награда</th><th>Использования</th><th>Срок</th><th>Статус</th></tr></thead><tbody id="promos-list"><tr><td colspan="5" class="empty-state">Загрузка промокодов...</td></tr></tbody></table></div>
+            </section>
+
             <section class="workspace-grid">
                 <form class="panel item-form" id="item-form">
                     <div class="panel-heading">
@@ -355,7 +369,67 @@
         document.querySelector('#clear-picked-items').addEventListener('click', () => { selectedCaseItems.clear(); updateModalSelection(); renderBuilderItems([...availableItems.values()]); });
         document.querySelector('#item-picker-modal').addEventListener('click', event => { if (event.target.id === 'item-picker-modal') closeItemPicker(); });
         form.addEventListener('reset', () => setTimeout(updatePreview));
-        updatePreview(); updateModalSelection(); loadCases(); loadItems(); loadBuilderItems();
+        const promoForm = document.querySelector('#promo-form');
+        const promoType = document.querySelector('#promo-reward-type');
+        const promoAmountField = document.querySelector('#promo-amount-field');
+        const promoAmount = document.querySelector('#promo-reward-value');
+        const promoCodeOutput = document.querySelector('#promo-code-output');
+        const promoStatus = document.querySelector('#promo-status');
+        const promoList = document.querySelector('#promos-list');
+        const promoRewardNames = { coins: 'BC', premium: 'Premium' };
+        function renderPromos(promos) {
+            if (!promos?.length) { promoList.innerHTML = '<tr><td colspan="5" class="empty-state">Промокодов пока нет</td></tr>'; return; }
+            promoList.innerHTML = promos.map(promo => {
+                const expired = promo.expires_at && new Date(promo.expires_at) <= new Date();
+                const exhausted = Number(promo.used_count) >= Number(promo.usage_limit);
+                const active = promo.active && !expired && !exhausted;
+                const reward = promo.reward_type === 'coins' ? `${Number(promo.reward_value || 0).toLocaleString('ru-RU')} BC` : 'Premium';
+                const expires = promo.expires_at ? new Date(promo.expires_at).toLocaleString('ru-RU') : 'Без срока';
+                return `<tr><td><strong class="promo-code-cell">${promo.code}</strong></td><td>${reward}</td><td>${promo.used_count || 0} / ${promo.usage_limit}</td><td>${expires}</td><td><span class="status-pill${active ? '' : ' inactive'}">${active ? 'Активен' : expired ? 'Истёк' : exhausted ? 'Исчерпан' : 'Отключён'}</span></td></tr>`;
+            }).join('');
+        }
+        async function loadPromos() {
+            if (!supabaseClient) return;
+            promoList.innerHTML = '<tr><td colspan="5" class="empty-state">Загрузка промокодов...</td></tr>';
+            const { data, error } = await supabaseClient.from('promo_codes').select('code, reward_type, reward_value, usage_limit, used_count, expires_at, active, created_at').order('created_at', { ascending: false });
+            if (error) { promoList.innerHTML = `<tr><td colspan="5" class="empty-state error-text">Не удалось загрузить промокоды: ${error.message}</td></tr>`; return; }
+            renderPromos(data);
+        }
+        const createPromoCode = () => {
+            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            const bytes = new Uint32Array(10);
+            crypto.getRandomValues(bytes);
+            promoCodeOutput.value = `BR-${[...bytes].map(value => alphabet[value % alphabet.length]).join('')}`;
+        };
+        promoType.addEventListener('change', () => {
+            const isCoins = promoType.value === 'coins';
+            promoAmountField.hidden = !isCoins;
+            promoAmount.required = isCoins;
+        });
+        document.querySelector('#promo-generate').addEventListener('click', createPromoCode);
+        promoForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!supabaseClient) return;
+            const code = promoCodeOutput.value.trim().toUpperCase();
+            const rewardType = promoType.value;
+            const rewardValue = rewardType === 'coins' ? Number(promoAmount.value) : 0;
+            const usageLimit = Number(document.querySelector('#promo-usage-limit').value);
+            const expiresInput = document.querySelector('#promo-expires-at').value;
+            if (!code) { promoStatus.textContent = 'Сначала сгенерируйте код.'; promoStatus.className = 'form-status error'; return; }
+            if (rewardType === 'coins' && (!Number.isInteger(rewardValue) || rewardValue < 1)) { promoStatus.textContent = 'Укажите положительную сумму BC.'; promoStatus.className = 'form-status error'; return; }
+            if (!Number.isInteger(usageLimit) || usageLimit < 1) { promoStatus.textContent = 'Укажите корректный лимит.'; promoStatus.className = 'form-status error'; return; }
+            const submit = promoForm.querySelector('[type="submit"]');
+            submit.disabled = true;
+            const { error } = await supabaseClient.from('promo_codes').insert({ code, reward_type: rewardType, reward_value: rewardValue, usage_limit: usageLimit, expires_at: expiresInput ? new Date(expiresInput).toISOString() : null, active: true });
+            submit.disabled = false;
+            if (error) { promoStatus.textContent = `Не удалось создать промокод: ${error.message}`; promoStatus.className = 'form-status error'; return; }
+            promoStatus.textContent = `Промокод ${code} создан.`;
+            promoStatus.className = 'form-status success';
+            promoCodeOutput.value = '';
+            await loadPromos();
+        });
+        document.querySelector('#refresh-promos').addEventListener('click', loadPromos);
+        updatePreview(); updateModalSelection(); loadCases(); loadItems(); loadBuilderItems(); loadPromos();
     </script>
 </body>
 </html>
