@@ -41,11 +41,21 @@ function safeText(element, value, fallback = 'Player') {
     element.textContent = value || fallback;
 }
 
+function updateHeaderPremiumStatus(isPremium) {
+    const headerStatus = document.querySelector('.player-status');
+    const headerBadge = document.querySelector('.header-premium-badge');
+    if (headerStatus) headerStatus.textContent = isPremium ? 'PREMIUM' : 'Обычный игрок';
+    if (headerBadge) {
+        headerBadge.innerHTML = isPremium
+            ? '<img src="./data/assets/premium.svg" alt="Premium">'
+            : '';
+    }
+}
+
 function applyTelegramProfileToUI(user) {
     if (!user) return;
 
     const headerName = document.querySelector('.player-name');
-    const headerStatus = document.querySelector('.player-status');
     const headerAvatar = document.querySelector('.header .avatar img');
     const balanceAmount = document.querySelector('.balance-amount');
     const profileName = document.querySelector('.profile-player-name');
@@ -54,13 +64,13 @@ function applyTelegramProfileToUI(user) {
     const profileStatusText = document.querySelector('.profile-rating span:last-child');
     const profileAvatarGlow = document.querySelector('.profile-avatar-glow');
     const profileElements = document.querySelectorAll('.win-player-name, .seller-name, .top-player-name, .top-list-player-name');
-    const avatarElements = document.querySelectorAll('.win-avatar, .shop-item-seller img, .top-list-avatar img');
+    const avatarElements = document.querySelectorAll('.win-avatar, .top-list-avatar img');
 
     const displayName = normalizeTelegramName(user);
     const avatarUrl = getTelegramAvatar(user);
 
     safeText(headerName, displayName);
-    safeText(headerStatus, user.is_bot ? 'Bot account' : 'Обычный игрок');
+    updateHeaderPremiumStatus(Boolean(user.is_premium));
     if (balanceAmount) {
         balanceAmount.textContent = balanceAmount.textContent && Number(balanceAmount.textContent.replace(/\s+/g, '')) ? balanceAmount.textContent : '0';
     }
@@ -111,7 +121,6 @@ async function syncTelegramProfileToSupabase(user) {
     }
 
     if (!user) {
-        console.error('Профиль не сохранен: Telegram user не найден. Откройте приложение через Telegram Mini App, а не через обычную ссылку.');
         return;
     }
 
@@ -140,7 +149,6 @@ async function syncTelegramProfileToSupabase(user) {
             avatar_url: avatarUrl,
             first_name: user.first_name || null,
             last_name: user.last_name || null,
-            premium: Boolean(user.is_premium),
             updated_at: new Date().toISOString()
         };
 
@@ -190,29 +198,41 @@ async function syncTelegramProfileToSupabase(user) {
 
 async function loadCurrentUserProfile() {
     const telegramUser = getTelegramUser();
-    if (!supabase || !telegramUser) return;
-
-    const telegramId = Number(telegramUser.id);
+    if (!supabase) return;
 
     try {
-        const { data, error } = await supabase
+        let profileQuery = supabase
             .from('profiles')
-            .select('id, balance, username, avatar_url, premium')
-            .eq('telegram_id', telegramId)
-            .maybeSingle();
+            .select('id, balance, username, avatar_url, premium');
+
+        profileQuery = telegramUser
+            ? profileQuery.eq('telegram_id', Number(telegramUser.id))
+            : profileQuery.eq('id', 0);
+
+        const { data, error } = await profileQuery.maybeSingle();
 
         if (error) {
             console.error('Supabase load profile error:', error);
             return;
         }
 
-        currentProfileId = data?.id || currentProfileId;
+        currentProfileId = data?.id ?? currentProfileId;
         currentProfileUsername = data?.username || currentProfileUsername;
 
         const balanceAmount = document.querySelector('.balance-amount');
         if (data && balanceAmount) {
             balanceAmount.textContent = Number(data.balance || 0).toLocaleString('ru-RU');
         }
+
+        await loadProfileStats();
+
+        const profileBadge = document.querySelector('.profile-premium-badge');
+        if (profileBadge) {
+            profileBadge.innerHTML = data?.premium
+                ? '<img src="./data/assets/premium.svg" alt="Premium">'
+                : '';
+        }
+        updateHeaderPremiumStatus(Boolean(data?.premium));
 
         if (data && data.username) {
             const displayName = data.username;
@@ -221,7 +241,7 @@ async function loadCurrentUserProfile() {
             });
 
             const avatarUrl = data.avatar_url || getTelegramAvatar(telegramUser);
-            document.querySelectorAll('.header .avatar img, .profile-avatar-circle img, .win-avatar, .shop-item-seller img, .top-list-avatar img').forEach(element => {
+            document.querySelectorAll('.header .avatar img, .profile-avatar-circle img, .win-avatar, .top-list-avatar img').forEach(element => {
                 element.src = avatarUrl;
                 element.alt = displayName;
             });
@@ -291,11 +311,91 @@ function renderInventory(items) {
         return;
     }
     const rarityNames = { common: 'ШИРП', uncommon: 'ОБЫЧНЫЙ', rare: 'РЕДКИЙ', epic: 'ЭПИЧНЫЙ', legendary: 'ЗОЛОТОЙ', mythical: 'КРАСНЫЙ' };
-    container.innerHTML = items.map(item => `<article class="profile-item-card profile-item-card--${inventoryRarityClass(item.rarity)}"><button class="profile-item-sell" type="button" aria-label="Продать предмет"><img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon"></button><div class="profile-item-price"><span>${Number(item.item_value || 0).toLocaleString('ru-RU')}</span><span class="profile-item-coin">◌</span></div><div class="profile-item-visual profile-item-visual--${inventoryRarityClass(item.rarity)}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt="${item.item_name || 'Предмет'}" class="profile-item-image"></div><div class="profile-item-info"><div class="profile-item-name">${item.item_name || 'Без названия'}</div><span class="profile-item-badge rarity-badge ${item.rarity || 'common'}">${rarityNames[item.rarity] || item.rarity || 'ПРЕДМЕТ'}</span></div></article>`).join('');
+    container.innerHTML = items.map(item => `<article class="profile-item-card profile-item-card--${inventoryRarityClass(item.rarity)}"><button class="profile-item-sell" type="button" data-inventory-id="${item.id}" aria-label="Продать предмет"><img src="./data/assets/sell.svg" alt="Продать" class="profile-item-sell-icon"></button><div class="profile-item-price"><span>${Number(item.item_value || 0).toLocaleString('ru-RU')}</span><span class="profile-item-coin">◌</span></div><div class="profile-item-visual profile-item-visual--${inventoryRarityClass(item.rarity)}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt="${item.item_name || 'Предмет'}" class="profile-item-image"></div><div class="profile-item-info"><div class="profile-item-name">${item.item_name || 'Без названия'}</div><span class="profile-item-badge rarity-badge ${item.rarity || 'common'}">${rarityNames[item.rarity] || item.rarity || 'ПРЕДМЕТ'}</span></div></article>`).join('');
 }
 
+async function sellInventoryItem(inventoryId, button) {
+    if (!supabase || currentProfileId === null) return;
+    button.disabled = true;
+    const { data, error } = await supabase.rpc('sell_inventory_item', {
+        p_inventory_id: Number(inventoryId),
+        p_user_id: currentProfileId
+    });
+    if (error) {
+        console.error('Supabase inventory sell error:', error);
+        button.disabled = false;
+        return;
+    }
+
+    const balanceAmount = document.querySelector('.balance-amount');
+    if (balanceAmount) balanceAmount.textContent = Number(data || 0).toLocaleString('ru-RU');
+    await loadInventory();
+    await loadProfileStats();
+    showSaleToast();
+}
+
+let saleToastTimer = null;
+let premiumToastTimer = null;
+
+function showSaleToast() {
+    const toast = document.querySelector('#sale-toast');
+    const closeButton = toast?.querySelector('.sale-toast-close');
+    const progress = toast?.querySelector('.sale-toast-progress');
+    if (!toast) return;
+
+    clearTimeout(saleToastTimer);
+    toast.classList.remove('open');
+    void toast.offsetWidth;
+    if (progress) progress.style.animation = 'none';
+    void toast.offsetWidth;
+    if (progress) progress.style.animation = '';
+    toast.classList.add('open');
+    toast.setAttribute('aria-hidden', 'false');
+
+    const closeToast = () => {
+        toast.classList.remove('open');
+        toast.setAttribute('aria-hidden', 'true');
+    };
+
+    if (closeButton) closeButton.onclick = closeToast;
+    saleToastTimer = setTimeout(closeToast, 3000);
+}
+
+function showPremiumToast(playerName = '') {
+    const toast = document.querySelector('#premium-toast');
+    const closeButton = toast?.querySelector('.premium-toast-close');
+    const title = toast?.querySelector('#premium-toast-title');
+    const message = toast?.querySelector('#premium-toast-message');
+    if (!toast) return;
+
+    clearTimeout(premiumToastTimer);
+    if (title) title.textContent = playerName ? `Игрок ${playerName} — обладатель PREMIUM` : 'Вы обладатель PREMIUM';
+    if (message) message.textContent = 'Чтобы приобрести или узнать подробнее о статусе, перейдите в раздел «Донат»';
+    toast.classList.add('open');
+    toast.setAttribute('aria-hidden', 'false');
+
+    const closeToast = () => {
+        toast.classList.remove('open');
+        toast.setAttribute('aria-hidden', 'true');
+    };
+
+    if (closeButton) closeButton.onclick = closeToast;
+    premiumToastTimer = setTimeout(closeToast, 4000);
+}
+
+document.addEventListener('click', event => {
+    const sellButton = event.target.closest('.profile-item-sell');
+    if (sellButton && !sellButton.disabled) {
+        sellInventoryItem(sellButton.dataset.inventoryId, sellButton);
+        return;
+    }
+
+    const premiumBadge = event.target.closest('.top-player-badge');
+    if (premiumBadge) showPremiumToast(premiumBadge.dataset.premiumPlayer || 'Игрок');
+});
+
 async function loadInventory() {
-    if (!supabase || !currentProfileId) return;
+    if (!supabase || currentProfileId === null) return;
     const { data, error } = await supabase
         .from('inventory')
         .select('id, item_name, rarity, item_value, image_url, quantity, created_at')
@@ -309,8 +409,43 @@ async function loadInventory() {
     renderInventory(data);
 }
 
+async function loadProfileStats() {
+    if (!supabase || currentProfileId === null) return;
+
+    const [inventoryResult, openingsResult] = await Promise.all([
+        supabase
+            .from('inventory')
+            .select('item_value, quantity')
+            .eq('user_id', currentProfileId),
+        supabase
+            .from('case_openings')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', currentProfileId)
+    ]);
+
+    if (inventoryResult.error) {
+        console.error('Supabase profile stats inventory error:', inventoryResult.error);
+        return;
+    }
+    if (openingsResult.error) {
+        console.error('Supabase profile stats openings error:', openingsResult.error);
+        return;
+    }
+
+    const inventoryItems = inventoryResult.data || [];
+    const totalValue = inventoryItems.reduce((sum, item) => sum + Number(item.item_value || 0) * Number(item.quantity || 0), 0);
+    const itemCount = inventoryItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    const totalValueElement = document.querySelector('#profile-total-value');
+    const itemCountElement = document.querySelector('#profile-item-count');
+    const caseCountElement = document.querySelector('#profile-case-count');
+
+    if (totalValueElement) totalValueElement.textContent = totalValue.toLocaleString('ru-RU');
+    if (itemCountElement) itemCountElement.textContent = itemCount.toLocaleString('ru-RU');
+    if (caseCountElement) caseCountElement.textContent = Number(openingsResult.count || 0).toLocaleString('ru-RU');
+}
+
 async function saveDropToInventory(drop) {
-    if (!supabase || !currentProfileId || !drop) {
+    if (!supabase || currentProfileId === null || !drop) {
         return { error: new Error('Профиль игрока не найден. Откройте приложение через Telegram.') };
     }
     const { error } = await supabase.from('inventory').insert({
@@ -321,7 +456,10 @@ async function saveDropToInventory(drop) {
         image_url: drop.image || null,
         quantity: 1
     });
-    if (!error) await loadInventory();
+    if (!error) {
+        await loadInventory();
+        await loadProfileStats();
+    }
     return { error };
 }
 
@@ -346,19 +484,20 @@ function renderLeaderboard(profiles, metric = 'balance') {
             : 'Баланс игрока';
     const getValue = profile => Number(profile[metric] || 0);
     const formatValue = profile => getValue(profile).toLocaleString('ru-RU');
+    const premiumBadge = profile => profile.premium
+        ? `<span class="top-player-badge" data-premium-player="${escapeLeaderboardText(profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок')}" role="button" tabindex="0" aria-label="Premium игрок"><img src="./data/assets/premium.svg" alt="Premium"></span>`
+        : '';
     podium.innerHTML = profiles.slice(0, 3).map((profile, index) => {
         const place = index + 1;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
-        return `<article class="top-player-card ${podiumClasses[place]}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name">${escapeLeaderboardText(name)}</div><div class="top-player-balance">${formatValue(profile)} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
+        return `<article class="top-player-card ${podiumClasses[place]}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name-row"><div class="top-player-name">${escapeLeaderboardText(name)}</div>${premiumBadge(profile)}</div><div class="top-player-balance">${formatValue(profile)} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
     }).join('');
     list.innerHTML = profiles.slice(3).map((profile, index) => {
         const place = index + 4;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
-        const badge = profile.premium
-            ? '<img src="./data/assets/premium.svg" alt="Premium">'
-            : '';
+        const badge = premiumBadge(profile);
         return `<div class="top-list-item"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${badge}</div></div><div class="top-list-score"><span>${formatValue(profile)}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
     }).join('');
     const subtitle = document.querySelector('.top-subtitle');
@@ -531,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.open-case-btn').textContent = `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC`;
         const contents = document.querySelector('.case-contents-grid');
         contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><span class="drop-chance">${Number(item.chance || 0).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
-        reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: Number(item.chance) || 0 }));
+        reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: Number(item.chance) || 0, caseId: caseData.id }));
         const openButton = document.querySelector('.open-case-btn');
         openButton.disabled = !reelDrops.length;
         openButton.textContent = reelDrops.length ? `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC` : 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
@@ -707,9 +846,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return reelDrops[winnerIndex] || instance.drop;
         });
         resultDrop = results[0];
+        await recordCaseOpenings(results);
         if (openingStatus) openingStatus.textContent = 'Открытие завершено';
         clearTimeout(openingFinishTimer);
         openingFinishTimer = setTimeout(() => showResultModal(results), 750);
+    }
+
+    async function recordCaseOpenings(drops) {
+        if (!supabase || currentProfileId === null || !selectedCase || !drops.length) return;
+        const { error } = await supabase.from('case_openings').insert(drops.map(drop => ({
+            user_id: currentProfileId,
+            case_id: selectedCase.id,
+            item_name: drop.name,
+            rarity: drop.rarity,
+            item_value: Number(drop.price) || 0
+        })));
+        if (error) {
+            console.error('Supabase case opening save error:', error);
+            return;
+        }
+        await loadProfileStats();
     }
 
     function attachReelDrag(instance) {
@@ -814,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function sellResultDrops(drops) {
-        if (!supabase || !currentProfileId || !drops.length) return new Error('Не выбраны предметы или профиль не найден.');
+        if (!supabase || currentProfileId === null || !drops.length) return new Error('Не выбраны предметы или профиль не найден.');
         const total = drops.reduce((sum, drop) => sum + (Number(drop.price) || 0), 0);
         const { data: profile, error: readError } = await supabase.from('profiles').select('balance').eq('id', currentProfileId).single();
         if (readError) return readError;
@@ -897,6 +1053,21 @@ document.addEventListener('DOMContentLoaded', function() {
         'Топ': 'top',
         'Профиль': 'profile'
     };
+
+    document.querySelector('.btn-add')?.addEventListener('click', () => showPage('donate'));
+
+    document.querySelectorAll('.header-premium-badge, .profile-premium-badge').forEach(badge => {
+        const openPremiumToast = () => {
+            if (badge.querySelector('img')) showPremiumToast();
+        };
+        badge.addEventListener('click', openPremiumToast);
+        badge.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openPremiumToast();
+            }
+        });
+    });
 
     navItems.forEach(item => {
         if (item.classList.contains('nav-item-add')) return;

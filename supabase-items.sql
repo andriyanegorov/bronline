@@ -54,3 +54,57 @@ create policy "Case items can be updated from admin panel"
 
 create index if not exists case_items_item_id_idx on public.case_items(item_id);
 create index if not exists case_items_case_id_idx on public.case_items(case_id);
+
+alter table public.case_openings enable row level security;
+
+drop policy if exists "Case openings are readable by the app" on public.case_openings;
+create policy "Case openings are readable by the app"
+    on public.case_openings for select
+    using (true);
+
+drop policy if exists "Case openings can be created by the app" on public.case_openings;
+create policy "Case openings can be created by the app"
+    on public.case_openings for insert
+    with check (
+        exists (
+            select 1
+            from public.profiles
+            where public.profiles.id = case_openings.user_id
+        )
+    );
+
+create or replace function public.sell_inventory_item(p_inventory_id integer, p_user_id integer)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    inventory_item public.inventory%rowtype;
+    updated_balance integer;
+begin
+    select * into inventory_item
+    from public.inventory
+    where id = p_inventory_id and user_id = p_user_id
+    for update;
+
+    if not found then
+        raise exception 'Предмет не найден в инвентаре игрока';
+    end if;
+
+    update public.profiles
+    set balance = balance + (inventory_item.item_value * inventory_item.quantity),
+        updated_at = now()
+    where id = p_user_id
+    returning balance into updated_balance;
+
+    if not found then
+        raise exception 'Профиль игрока не найден';
+    end if;
+
+    delete from public.inventory where id = p_inventory_id;
+    return updated_balance;
+end;
+$$;
+
+grant execute on function public.sell_inventory_item(integer, integer) to anon, authenticated;

@@ -13,7 +13,10 @@
                 <img src="./data/assets/profile.png">
             </div>
             <div class="player-info">
-                <div class="player-name">Player</div>
+                <div class="player-name-row">
+                    <div class="player-name">Player</div>
+                    <span class="header-premium-badge" role="button" tabindex="0" aria-label="Premium статус"></span>
+                </div>
                 <div class="player-status">Обычный игрок</div>
             </div>
         </div>
@@ -23,7 +26,7 @@
                 <span class="balance-amount">0</span>
                 <img src="./data/assets/coin.png" alt="Coin" class="coin-icon">
             </div>
-            <button class="btn-add">+</button>
+            <button class="btn-add" type="button" aria-label="Открыть донат">+</button>
             </button>
         </div>
     </div>
@@ -565,7 +568,7 @@
                     <div class="profile-name-row">
                         <div class="profile-name-content">
                             <div class="profile-player-name">PlayerName</div>
-                            <span class="profile-premium-badge"><img src="./data/assets/premium.svg" alt="Premium"></span>
+                            <span class="profile-premium-badge" role="button" tabindex="0" aria-label="Premium статус"><img src="./data/assets/premium.svg" alt="Premium"></span>
                         </div>
                     </div>
                     <div class="profile-rating">
@@ -583,7 +586,7 @@
                     <div class="stat-text">
                         <div class="stat-label">Общая стоимость</div>
                         <div class="stat-amount">
-                            <span>2 450 680</span>
+                            <span id="profile-total-value">0</span>
                             <img src="./data/assets/coin.png" alt="Coin" class="stat-coin">
                         </div>
                     </div>
@@ -595,7 +598,7 @@
                     </div>
                     <div class="stat-text">
                         <div class="stat-label">Предметов</div>
-                        <div class="stat-amount">1 250</div>
+                        <div class="stat-amount" id="profile-item-count">0</div>
                     </div>
                 </div>
 
@@ -605,7 +608,7 @@
                     </div>
                     <div class="stat-text">
                         <div class="stat-label">Открыто кейсов</div>
-                        <div class="stat-amount">3 420</div>
+                        <div class="stat-amount" id="profile-case-count">0</div>
                     </div>
                 </div>
             </div>
@@ -766,6 +769,25 @@
             <span class="nav-label">Профиль</span>
         </a>
     </nav>
+
+    <div class="sale-toast" id="sale-toast" role="status" aria-live="polite" aria-hidden="true">
+        <div class="sale-toast-icon"><img src="./data/assets/sell.svg" alt="Продажа"></div>
+        <div class="sale-toast-copy">
+            <strong>Предмет продан</strong>
+            <span>Деньги зачислены на баланс</span>
+        </div>
+        <button class="sale-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+        <span class="sale-toast-progress" aria-hidden="true"></span>
+    </div>
+
+    <div class="premium-toast" id="premium-toast" role="status" aria-live="polite" aria-hidden="true">
+        <div class="premium-toast-icon"><img src="./data/assets/premium.svg" alt="Premium"></div>
+        <div class="premium-toast-copy">
+            <strong id="premium-toast-title">Вы обладатель PREMIUM</strong>
+            <span id="premium-toast-message">Подробности статуса можно узнать в разделе «Донат»</span>
+        </div>
+        <button class="premium-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+    </div>
 
     <div class="nickname-modal" id="nickname-modal" aria-hidden="true">
         <section class="nickname-dialog" role="dialog" aria-modal="true" aria-labelledby="nickname-title">
