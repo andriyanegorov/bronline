@@ -71,7 +71,6 @@
         <div class="recent-wins-section">
         <div class="recent-wins-header">
             <h2 class="recent-wins-title">Последние выигрыши</h2>
-            <a href="#" class="view-all">Смотреть все ></a>
         </div>
 
         <div class="wins-list">
@@ -482,19 +481,19 @@
             <div class="top-tabs">
                 <button type="button" class="top-tab active" data-top-metric="balance">
                     <span class="top-tab-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c3.9 0 7 3.1 7 7 0 3.3-2.1 5.8-5.4 7.2L13.5 20h-3l-.1-3.3C7.1 15.3 5 12.8 5 9.5c0-3.9 3.1-7 7-7Zm-1.1 5.7V15h2.2V8.2h-2.2Zm1.1 9.1a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"/></svg>
+                        <img src="./data/assets/money.svg" alt="" />
                     </span>
                     Баланс
                 </button>
                 <button type="button" class="top-tab" data-top-metric="total_spent">
                     <span class="top-tab-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 4.5 8v8L12 20.5 19.5 16V8L12 3.5Zm0 3.2 4.2 2.4-4.2 2.4-4.2-2.4L12 6.7Zm-4.5 3.8 3.5 2v4.1l-3.5-2V10.5Zm5 6.1v-4.1l3.5-2v4.1l-3.5 2Z"/></svg>
+                        <img src="./data/assets/consumption.svg" alt="" />
                     </span>
                     Затраты
                 </button>
                 <button type="button" class="top-tab" data-top-metric="inventory_value">
                     <span class="top-tab-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Zm2.2 1.4h11.6v8.2H6.2V8.9Zm2.3-2.2V6h7.1v.7H8.5Z"/></svg>
+                        <img src="./data/assets/inventory.svg" alt="" />
                     </span>
                     Инвентарь
                 </button>
@@ -579,7 +578,9 @@
             <div class="profile-collection">
                 <div class="profile-collection-header">
                     <h2>Мои предметы</h2>
-                    <button type="button">Смотреть все <span>›</span></button>
+                    <div class="profile-collection-actions">
+                        <button class="profile-sell-all-btn" type="button">Продать все</button>
+                    </div>
                 </div>
 
                 <div class="profile-collection-grid">
@@ -741,6 +742,17 @@
         </div>
         <button class="sale-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
         <span class="sale-toast-progress" aria-hidden="true"></span>
+    </div>
+
+    <div class="sell-all-confirm" id="sell-all-confirm" role="alertdialog" aria-labelledby="sell-all-confirm-title" aria-hidden="true">
+        <div class="sell-all-confirm-copy">
+            <strong id="sell-all-confirm-title">Подтвердите продажу всех предметов</strong>
+            <span>Предметы на витрине не будут проданы</span>
+        </div>
+        <div class="sell-all-confirm-actions">
+            <button class="sell-all-cancel" type="button">Отмена</button>
+            <button class="sell-all-submit" type="button">Продать</button>
+        </div>
     </div>
 
     <div class="premium-toast" id="premium-toast" role="status" aria-live="polite" aria-hidden="true">

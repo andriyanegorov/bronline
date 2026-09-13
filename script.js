@@ -554,6 +554,59 @@ async function sellInventoryItem(inventoryId, button) {
     showSaleToast();
 }
 
+function closeSellAllConfirmation() {
+    const confirmation = document.querySelector('#sell-all-confirm');
+    if (!confirmation) return;
+    confirmation.classList.remove('open');
+    confirmation.setAttribute('aria-hidden', 'true');
+}
+
+function showSellAllConfirmation() {
+    const confirmation = document.querySelector('#sell-all-confirm');
+    if (!confirmation) return;
+    confirmation.classList.add('open');
+    confirmation.setAttribute('aria-hidden', 'false');
+}
+
+async function sellAllInventory() {
+    if (!supabase || currentProfileId === null) return;
+    const submitButton = document.querySelector('.sell-all-submit');
+    if (submitButton) submitButton.disabled = true;
+
+    const [inventoryResult, showcaseResult] = await Promise.all([
+        supabase.from('inventory').select('id').eq('user_id', currentProfileId),
+        supabase.from('showcase_items').select('inventory_id').eq('user_id', currentProfileId)
+    ]);
+    if (inventoryResult.error || showcaseResult.error) {
+        console.error('Supabase sell all inventory load error:', inventoryResult.error || showcaseResult.error);
+        if (submitButton) submitButton.disabled = false;
+        return;
+    }
+
+    const showcasedIds = new Set((showcaseResult.data || []).map(item => String(item.inventory_id)));
+    const inventoryToSell = (inventoryResult.data || []).filter(item => !showcasedIds.has(String(item.id)));
+    let balance = null;
+    for (const item of inventoryToSell) {
+        const { data, error } = await supabase.rpc('sell_inventory_item', {
+            p_inventory_id: Number(item.id),
+            p_user_id: currentProfileId
+        });
+        if (error) {
+            console.error('Supabase sell all inventory error:', error);
+            continue;
+        }
+        balance = data;
+    }
+
+    const balanceAmount = document.querySelector('.balance-amount');
+    if (balanceAmount && balance !== null) balanceAmount.textContent = Number(balance).toLocaleString('ru-RU');
+    closeSellAllConfirmation();
+    await loadInventory();
+    await loadProfileStats();
+    if (inventoryToSell.length) showSaleToast();
+    if (submitButton) submitButton.disabled = false;
+}
+
 let saleToastTimer = null;
 let premiumToastTimer = null;
 let errorToastTimer = null;
@@ -667,6 +720,22 @@ function showPromoResultToast(title, message, isError = false) {
 }
 
 document.addEventListener('click', event => {
+    const sellAllButton = event.target.closest('.profile-sell-all-btn');
+    if (sellAllButton) {
+        showSellAllConfirmation();
+        return;
+    }
+
+    if (event.target.closest('.sell-all-cancel')) {
+        closeSellAllConfirmation();
+        return;
+    }
+
+    if (event.target.closest('.sell-all-submit')) {
+        sellAllInventory();
+        return;
+    }
+
     const sortButton = event.target.closest('#showcase-sort-btn');
     if (sortButton) {
         const menu = document.querySelector('#showcase-sort-menu');
@@ -1462,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderCaseDetail(caseData) {
-        const items = caseData.case_items || [];
+        const items = [...(caseData.case_items || [])].sort((first, second) => Number(second.item_value || 0) - Number(first.item_value || 0));
         document.querySelector('.case-detail-toolbar h1').textContent = caseData.name;
         const detailImage = document.querySelector('.detail-case-image');
         detailImage.src = caseData.image_url || './data/case_logo/free.png';

@@ -71,7 +71,7 @@
                         <label class="picker-filter"><span>Цена до</span><input id="case-item-price-filter" type="number" min="0" placeholder="Без лимита"></label>
                         <label class="picker-filter"><span>Сортировка</span><select id="case-item-sort"><option value="name">По названию</option><option value="price-asc">Цена: сначала дешевле</option><option value="price-desc">Цена: сначала дороже</option><option value="rarity">По редкости</option></select></label>
                     </div>
-                    <div class="picker-summary"><span id="picker-results-count">0 предметов</span><button class="text-button" id="clear-picked-items" type="button">Снять выбор</button></div>
+                    <div class="picker-summary"><span id="picker-results-count">0 предметов</span><div class="picker-summary-actions"><button class="text-button" id="select-all-items" type="button">Выбрать все из БД</button><button class="text-button" id="clear-picked-items" type="button">Снять выбор</button></div></div>
                     <div class="picker-items" id="case-items-builder"><p class="empty-state">Загрузка предметов...</p></div>
                     <div class="modal-footer"><span class="modal-selection" id="modal-selection-count">Выбрано: 0</span><button class="button primary" id="apply-item-picker" type="button">Готово</button></div>
                 </section>
@@ -233,6 +233,15 @@
             items.forEach(item => { const matches = (!query || item.dataset.name.includes(query)) && (rarity === 'all' || item.dataset.rarity === rarity) && (!Number.isFinite(maxPrice) || !document.querySelector('#case-item-price-filter').value || Number(item.dataset.price) <= maxPrice); item.hidden = !matches; if (matches) visible += 1; });
             document.querySelector('#picker-results-count').textContent = `${visible} ${visible === 1 ? 'предмет' : 'предметов'}`;
         }
+        function selectAllItems() {
+            availableItems.forEach((item, itemId) => {
+                const currentSelection = selectedCaseItems.get(itemId);
+                selectedCaseItems.set(itemId, { item, rarity: currentSelection?.rarity || item.rarity, chance: currentSelection?.chance ?? 0.1 });
+            });
+            document.querySelectorAll('#case-items-builder [data-item-id]').forEach(checkbox => { checkbox.checked = true; });
+            updateModalSelection();
+            filterPickerItems();
+        }
         async function loadBuilderItems() {
             if (!supabaseClient) return;
             const { data, error } = await supabaseClient.from('items').select('id, name, rarity, item_value, image_url').order('name');
@@ -366,6 +375,7 @@
         const closeItemPicker = () => { document.querySelector('#item-picker-modal').classList.remove('open'); document.querySelector('#item-picker-modal').setAttribute('aria-hidden', 'true'); };
         document.querySelector('#close-item-picker').addEventListener('click', closeItemPicker);
         document.querySelector('#apply-item-picker').addEventListener('click', closeItemPicker);
+        document.querySelector('#select-all-items').addEventListener('click', selectAllItems);
         document.querySelector('#clear-picked-items').addEventListener('click', () => { selectedCaseItems.clear(); updateModalSelection(); renderBuilderItems([...availableItems.values()]); });
         document.querySelector('#item-picker-modal').addEventListener('click', event => { if (event.target.id === 'item-picker-modal') closeItemPicker(); });
         form.addEventListener('reset', () => setTimeout(updatePreview));
