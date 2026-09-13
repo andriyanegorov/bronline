@@ -13,6 +13,9 @@ const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !
 let currentProfileId = null;
 let currentProfileUsername = '';
 let currentProfilePremium = false;
+let currentProfileBanned = false;
+let profileBanChannel = null;
+let profileBanPollTimer = null;
 const leaderboardProfiles = new Map();
 let leaderboardInventoryRequest = 0;
 let showcaseRecords = [];
@@ -21,6 +24,32 @@ let showcaseManagerItems = [];
 let showcaseSort = 'value';
 let showcaseSettings = { background: 'standard', frame: 'standard', styleLevel: 1 };
 let selectedShowcaseInventoryId = null;
+
+function setBanState(value) {
+    currentProfileBanned = value === true || value === 'true';
+    const banScreen = document.querySelector('#ban-screen');
+    if (!banScreen) return;
+    banScreen.classList.toggle('active', currentProfileBanned);
+    banScreen.setAttribute('aria-hidden', String(!currentProfileBanned));
+}
+
+function subscribeToProfileBan() {
+    if (!supabase || currentProfileId === null) return;
+    if (profileBanChannel) supabase.removeChannel(profileBanChannel);
+    if (profileBanPollTimer) clearInterval(profileBanPollTimer);
+    profileBanChannel = supabase
+        .channel(`profile-ban-${currentProfileId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${currentProfileId}` }, payload => {
+            setBanState(payload.new?.ban);
+        })
+        .subscribe(status => {
+            if (status === 'CHANNEL_ERROR') console.error('Не удалось подписаться на изменения бана профиля.');
+        });
+    profileBanPollTimer = setInterval(async () => {
+        const { data, error } = await supabase.from('profiles').select('ban').eq('id', currentProfileId).maybeSingle();
+        if (!error && data) setBanState(data.ban);
+    }, 3000);
+}
 
 const showcaseCustomizationOptions = {
     backgrounds: [
@@ -232,7 +261,7 @@ async function loadCurrentUserProfile() {
     try {
         let profileQuery = supabase
             .from('profiles')
-            .select('id, balance, username, avatar_url, premium, showcase_background');
+            .select('id, balance, username, avatar_url, premium, showcase_background, ban');
 
         profileQuery = telegramUser
             ? profileQuery.eq('telegram_id', Number(telegramUser.id))
@@ -248,6 +277,8 @@ async function loadCurrentUserProfile() {
         currentProfileId = data?.id ?? currentProfileId;
         currentProfileUsername = data?.username || currentProfileUsername;
         currentProfilePremium = Boolean(data?.premium);
+        setBanState(data?.ban);
+        subscribeToProfileBan();
         showcaseSettings.background = data?.showcase_background || 'standard';
 
         const balanceAmount = document.querySelector('.balance-amount');
