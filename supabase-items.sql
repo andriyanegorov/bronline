@@ -112,6 +112,8 @@ create table if not exists public.free_case_claims (
 	constraint free_case_claims_user_cycle_unique unique (cycle_started_at, user_id)
 );
 
+alter table public.free_case_claims add column if not exists inventory_id integer references public.inventory(id);
+
 insert into public.free_case_events (id) values (1) on conflict (id) do nothing;
 alter table public.free_case_events enable row level security;
 alter table public.free_case_items enable row level security;
@@ -201,10 +203,42 @@ begin
 	returning id into claim_id;
 	update public.free_case_events set claimed_count = claimed_count + 1, updated_at = now() where id = 1;
 	insert into public.inventory (user_id, item_name, rarity, item_value, image_url, quantity)
-	values (p_user_id, selected_item.name, selected_rarity, selected_item.item_value, selected_item.image_url, 1);
+	values (p_user_id, selected_item.name, selected_rarity, selected_item.item_value, selected_item.image_url, 1)
+	returning id into selected_item_id;
+	update public.free_case_claims set inventory_id = selected_item_id where id = claim_id;
 	return jsonb_build_object('claimed', true, 'claim_id', claim_id, 'item_id', selected_item.id, 'item_name', selected_item.name, 'rarity', selected_rarity, 'item_value', selected_item.item_value, 'image_url', selected_item.image_url, 'reset_at', event_row.reset_at);
 end;
 $$;
+
+	create or replace function public.sell_free_case_claim(p_claim_id bigint, p_user_id integer)
+	returns jsonb
+	language plpgsql
+	security definer
+	set search_path = public
+	as $$
+	declare
+		claim_row public.free_case_claims;
+		inventory_row public.inventory;
+		new_balance integer;
+	begin
+		select * into claim_row from public.free_case_claims where id = p_claim_id and user_id = p_user_id for update;
+		if claim_row.id is null or claim_row.inventory_id is null then
+			return jsonb_build_object('sold', false, 'reason', 'claim_not_found');
+		end if;
+		select * into inventory_row from public.inventory where id = claim_row.inventory_id and user_id = p_user_id for update;
+		if inventory_row.id is null then
+			return jsonb_build_object('sold', false, 'reason', 'inventory_not_found');
+		end if;
+		delete from public.inventory where id = inventory_row.id;
+		update public.profiles
+		set balance = coalesce(balance, 0) + inventory_row.item_value,
+			updated_at = now()
+		where id = p_user_id
+		returning balance into new_balance;
+		update public.free_case_claims set inventory_id = null where id = claim_row.id;
+		return jsonb_build_object('sold', true, 'balance', new_balance);
+	end;
+	$$;
 
 create or replace function public.get_free_case_items()
 returns jsonb
@@ -287,6 +321,7 @@ $$;
 
 grant execute on function public.get_free_case_state(integer) to anon, authenticated;
 grant execute on function public.claim_free_case(integer) to anon, authenticated;
+grant execute on function public.sell_free_case_claim(bigint, integer) to anon, authenticated;
 grant execute on function public.get_free_case_items() to anon, authenticated;
 grant execute on function public.get_recent_free_case_wins(integer) to anon, authenticated;
 grant execute on function public.save_free_case_settings(integer, jsonb) to anon, authenticated;

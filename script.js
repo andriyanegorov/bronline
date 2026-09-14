@@ -114,6 +114,7 @@ function getReferralBotUsername() {
 let freeCaseTimer = null;
 let freeCaseOpening = false;
 let freeCaseForcedDrop = null;
+let freeCaseClaimId = null;
 
 function formatFreeCaseCountdown(value) {
     const milliseconds = Math.max(0, new Date(value).getTime() - Date.now());
@@ -161,7 +162,7 @@ async function loadFreeCaseState() {
 
 async function claimFreeCase() {
     const button = document.querySelector('#free-case-claim');
-    if (!supabase || currentProfileId === null || !button || button.disabled) return;
+    if (!supabase || currentProfileId === null || !button || button.disabled || document.body.classList.contains('case-opening-active')) return;
     button.disabled = true;
     button.textContent = 'ПОЛУЧЕНИЕ...';
     const [claimResult, itemsResult] = await Promise.all([
@@ -190,6 +191,7 @@ async function claimFreeCase() {
         chance: 0,
         itemId: data.item_id
     };
+    freeCaseClaimId = data.claim_id;
     const freeCaseDrops = freeCaseItems.map(item => ({
         name: item.name,
         price: Number(item.item_value || 0),
@@ -1865,12 +1867,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dropResultTotal) dropResultTotal.textContent = `${totalValue.toLocaleString('ru-RU')} BC`;
         if (dropSaveButton) dropSaveButton.textContent = `СОХРАНИТЬ ВЫБРАННЫЕ (${drops.length})`;
         if (dropResultSell) dropResultSell.textContent = 'ПРОДАТЬ ВЫБРАННЫЕ';
+        dropSaveButton?.removeAttribute('hidden');
+        dropResultSell?.removeAttribute('hidden');
         if (freeCaseOpening) {
-            dropSaveButton?.setAttribute('hidden', '');
-            dropResultSell?.setAttribute('hidden', '');
-        } else {
-            dropSaveButton?.removeAttribute('hidden');
-            dropResultSell?.removeAttribute('hidden');
+            if (dropSaveButton) dropSaveButton.textContent = 'СОХРАНИТЬ В ИНВЕНТАРЬ';
+            if (dropResultSell) dropResultSell.textContent = 'ПРОДАТЬ ДРОП';
         }
 
         dropResultModal.classList.add('active');
@@ -2075,10 +2076,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function startReelOpening() {
+    function startReelOpening(forcedCount = null) {
         if (!openingOverlay || !reelStage || !reelDrops.length) return;
         hideResultModal();
-        const selectedCount = Number(document.querySelector('.open-count.selected')?.textContent.replace('x', '')) || 1;
+        const selectedCount = forcedCount || Number(document.querySelector('.open-count.selected')?.textContent.replace('x', '')) || 1;
         reelStage.replaceChildren();
         const compact = selectedCount >= 5;
         const rows = selectedCount === 1 ? [1] : selectedCount === 2 ? [1, 1] : selectedCount === 3 ? [1, 1, 1] : selectedCount === 5 ? [2, 2, 1] : [2, 2, 2, 2, 2];
@@ -2116,10 +2117,15 @@ document.addEventListener('DOMContentLoaded', function() {
         reelDrops = drops;
         freeCaseForcedDrop = forcedDrop;
         freeCaseOpening = true;
+        reelInstances.forEach(instance => {
+            cancelAnimationFrame(instance.animationFrame);
+            cancelAnimationFrame(instance.inertiaFrame);
+        });
+        reelInstances = [];
         openingOverlay.classList.add('active');
         openingOverlay.setAttribute('aria-hidden', 'false');
         document.body.classList.add('case-opening-active');
-        startReelOpening();
+        startReelOpening(1);
     };
 
     if (openCaseButton) {
@@ -2162,6 +2168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             reelIsRunning = false;
             freeCaseOpening = false;
             freeCaseForcedDrop = null;
+            freeCaseClaimId = null;
             loadFreeCaseState();
             loadRecentWins();
         });
@@ -2186,6 +2193,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.remove('case-opening-active');
         freeCaseOpening = false;
         freeCaseForcedDrop = null;
+        freeCaseClaimId = null;
         loadInventory();
         loadFreeCaseState();
         loadRecentWins();
@@ -2208,6 +2216,11 @@ document.addEventListener('DOMContentLoaded', function() {
         dropSaveButton.addEventListener('click', async () => {
             const drops = getSelectedResultDrops();
             if (!drops.length) return;
+            if (freeCaseOpening) {
+                resultActionCompleted = true;
+                closeResultFlow();
+                return;
+            }
             dropSaveButton.disabled = true;
             const error = await saveResultDrops(drops);
             dropSaveButton.disabled = false;
@@ -2222,6 +2235,24 @@ document.addEventListener('DOMContentLoaded', function() {
         dropResultSell.addEventListener('click', async () => {
             const drops = getSelectedResultDrops();
             if (!drops.length) return;
+            if (freeCaseOpening) {
+                if (!supabase || !currentProfileId || !freeCaseClaimId) return;
+                dropResultSell.disabled = true;
+                const { data, error } = await supabase.rpc('sell_free_case_claim', {
+                    p_claim_id: Number(freeCaseClaimId),
+                    p_user_id: Number(currentProfileId)
+                });
+                dropResultSell.disabled = false;
+                if (error || !data?.sold) {
+                    dropResultSell.textContent = 'ОШИБКА ПРОДАЖИ';
+                    return;
+                }
+                const balanceAmount = document.querySelector('.balance-amount');
+                if (balanceAmount) balanceAmount.textContent = Number(data.balance || 0).toLocaleString('ru-RU');
+                resultActionCompleted = true;
+                closeResultFlow();
+                return;
+            }
             dropResultSell.disabled = true;
             const error = await sellResultDrops(drops);
             dropResultSell.disabled = false;
@@ -2254,6 +2285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             reelIsRunning = false;
             freeCaseOpening = false;
             freeCaseForcedDrop = null;
+            freeCaseClaimId = null;
             loadInventory();
             loadFreeCaseState();
             loadRecentWins();
