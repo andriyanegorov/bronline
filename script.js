@@ -1339,6 +1339,8 @@ let recentWinsRendered = false;
 let recentWinsIds = [];
 let recentWinsAnimationTimer = null;
 let recentWinsReloadTimer = null;
+let recentWinsPollTimer = null;
+let recentWinsLoading = false;
 
 function formatWinTime(value) {
     const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
@@ -1350,7 +1352,8 @@ function formatWinTime(value) {
 
 async function loadRecentWins() {
     const container = document.querySelector('.wins-list');
-    if (!supabase || !container) return;
+    if (!supabase || !container || recentWinsLoading) return;
+    recentWinsLoading = true;
 
     const [regularResult, freeCaseResult] = await Promise.all([
         supabase
@@ -1363,6 +1366,7 @@ async function loadRecentWins() {
     if (regularResult.error || freeCaseResult.error) {
         console.error('Supabase recent wins load error:', regularResult.error || freeCaseResult.error);
         container.innerHTML = '<p class="wins-loading">Не удалось загрузить выигрыши</p>';
+        recentWinsLoading = false;
         return;
     }
     const freeCaseWins = (Array.isArray(freeCaseResult.data) ? freeCaseResult.data : []).map(win => ({
@@ -1380,6 +1384,7 @@ async function loadRecentWins() {
         .slice(0, 5);
     if (!data?.length) {
         container.innerHTML = '<p class="wins-loading">Выигрышей пока нет</p>';
+        recentWinsLoading = false;
         return;
     }
 
@@ -1439,10 +1444,13 @@ async function loadRecentWins() {
         renderUpdatedWins();
     }
     recentWinsRendered = true;
+    recentWinsLoading = false;
 }
 
 function setupRecentWinsRealtime() {
     if (!supabase) return;
+    clearInterval(recentWinsPollTimer);
+    recentWinsPollTimer = setInterval(() => loadRecentWins(), 5000);
     supabase
         .channel('recent-wins-live')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'case_openings' }, () => {
@@ -2155,6 +2163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             freeCaseOpening = false;
             freeCaseForcedDrop = null;
             loadFreeCaseState();
+            loadRecentWins();
         });
     }
 
@@ -2179,6 +2188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         freeCaseForcedDrop = null;
         loadInventory();
         loadFreeCaseState();
+        loadRecentWins();
     }
 
     async function sellResultDrops(drops) {
@@ -2246,6 +2256,7 @@ document.addEventListener('DOMContentLoaded', function() {
             freeCaseForcedDrop = null;
             loadInventory();
             loadFreeCaseState();
+            loadRecentWins();
         });
     }
 
