@@ -23,6 +23,7 @@
                 <div class="player-name-row">
                     <div class="player-name">Player</div>
                     <span class="header-premium-badge" role="button" tabindex="0" aria-label="Premium статус"></span>
+                        <span class="header-admin-badge" aria-label="Администратор"></span>
                 </div>
                 <div class="player-status">Обычный игрок</div>
             </div>
@@ -49,18 +50,18 @@
                         <div class="case-info">
                             <img src="./data/assets/free-case.svg" alt="Free Case" class="gift-icon">
                             <div class="case-counter">
-                                <span class="counter-number">27 / 50</span>
+                                <span class="counter-number" id="free-case-counter">Загрузка...</span>
                                 <span class="counter-text">кейсов осталось</span>
                             </div>
                         </div>
                         <div class="case-timer">
                             <svg class="clock-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            <span class="timer-text">Сегодня в 18:30</span>
+                            <span class="timer-text" id="free-case-timer">Загрузка события...</span>
                         </div>
                     </div>
                     <div class="free-case-right"><div class="case-image"><img src="./data/case_logo/free.png" alt="Free Case" class="case-img"></div></div>
                 </div>
-                <button class="btn-grab-case" type="button">ЗАБРАТЬ КЕЙС</button>
+                <button class="btn-grab-case" id="free-case-claim" type="button">ЗАБРАТЬ КЕЙС</button>
             </div>
         </div>
 
@@ -538,6 +539,7 @@
                         <div class="profile-name-content">
                             <div class="profile-player-name">PlayerName</div>
                             <span class="profile-premium-badge" role="button" tabindex="0" aria-label="Premium статус"><img src="./data/assets/premium.svg" alt="Premium"></span>
+                            <span class="profile-admin-badge" aria-label="Администратор"></span>
                         </div>
                     </div>
                     <div class="profile-rating">
@@ -917,6 +919,15 @@
         <button class="premium-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
     </div>
 
+    <div class="premium-toast admin-toast" id="admin-toast" role="status" aria-live="polite" aria-hidden="true">
+        <div class="premium-toast-icon"><img src="./data/assets/verify.svg" alt="Администратор"></div>
+        <div class="premium-toast-copy">
+            <strong id="admin-toast-title">Официальный пользователь</strong>
+            <span id="admin-toast-message">Этот игрок является официальным представителем Black Drop, либо знаменитостью.</span>
+        </div>
+        <button class="premium-toast-close admin-toast-close" type="button" aria-label="Закрыть уведомление">×</button>
+    </div>
+
     <div class="error-toast" id="error-toast" role="alert" aria-live="assertive" aria-hidden="true">
         <div class="error-toast-icon"><img src="./data/assets/error.svg" alt="Ошибка"></div>
         <div class="error-toast-copy">
@@ -952,6 +963,7 @@
             <div class="leaderboard-profile-heading">
                 <h2 id="leaderboard-profile-name">Игрок</h2>
                 <span id="leaderboard-profile-premium" class="leaderboard-profile-premium" hidden><img src="./data/assets/premium.svg" alt="Premium"></span>
+                <span id="leaderboard-profile-admin" class="leaderboard-profile-admin" hidden><img src="./data/assets/verify.svg" alt="Администратор"></span>
             </div>
             <p id="leaderboard-profile-status" class="leaderboard-profile-status">Игрок рейтинга</p>
             <div class="leaderboard-profile-stats">

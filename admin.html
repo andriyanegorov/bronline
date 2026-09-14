@@ -82,6 +82,20 @@
                 <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
             </section>
 
+            <section class="panel free-case-admin-panel" id="free-case-settings">
+                <div class="panel-heading"><div><p class="section-kicker">СОБЫТИЕ</p><h2>FREE CASE</h2><p class="panel-subtitle">Бесплатный кейс с автоматическим сбросом каждые 24 часа.</p></div><span class="step-badge">04</span></div>
+                <div class="free-case-admin-grid">
+                    <label class="field">Количество кейсов для игроков<input id="free-case-limit" type="number" min="1" step="1" value="50"></label>
+                    <div class="free-case-admin-status"><span>Текущий цикл</span><strong id="free-case-admin-state">Загрузка...</strong><small id="free-case-admin-reset">Сброс: —</small></div>
+                </div>
+                <div class="free-case-admin-items">
+                    <div class="builder-heading"><div><strong>Содержимое бесплатного кейса</strong><span class="field-hint">Выберите предметы из общего каталога.</span></div><span class="field-hint" id="free-case-selected-count">Выбрано: 0</span></div>
+                    <div class="free-case-item-picker" id="free-case-item-picker"><p class="empty-state">Загрузка предметов...</p></div>
+                </div>
+                <div class="form-actions"><button class="button secondary" id="free-case-reset" type="button">Возобновить событие</button><button class="button primary" id="free-case-save" type="button">Сохранить настройки</button></div>
+                <p class="form-status" id="free-case-status" role="status"></p>
+            </section>
+
             <section class="panel promo-panel" id="promocodes">
                 <div class="panel-heading"><div><p class="section-kicker">НАГРАДЫ</p><h2>Генератор промокодов</h2></div><span class="step-badge">03</span></div>
                 <form class="promo-form" id="promo-form">
@@ -439,7 +453,82 @@
             await loadPromos();
         });
         document.querySelector('#refresh-promos').addEventListener('click', loadPromos);
-        updatePreview(); updateModalSelection(); loadCases(); loadItems(); loadBuilderItems(); loadPromos();
+
+        const freeCaseLimit = document.querySelector('#free-case-limit');
+        const freeCasePicker = document.querySelector('#free-case-item-picker');
+        const freeCaseStatus = document.querySelector('#free-case-status');
+        const freeCaseSelectedCount = document.querySelector('#free-case-selected-count');
+        const freeCaseAdminState = document.querySelector('#free-case-admin-state');
+        const freeCaseAdminReset = document.querySelector('#free-case-admin-reset');
+
+        function formatFreeCaseAdminDate(value) {
+            return value ? new Date(value).toLocaleString('ru-RU') : '—';
+        }
+
+        function renderFreeCaseItems(items, selectedIds = []) {
+            const selected = new Map((selectedIds || []).map(value => [String(value.item_id), value]));
+            freeCasePicker.innerHTML = items?.length ? items.map(item => {
+                const config = selected.get(String(item.id));
+                const selectedRarity = config?.rarity || item.rarity;
+                const selectedChance = config?.chance ?? 0;
+                return `<label class="free-case-item"><input type="checkbox" value="${item.id}"${config ? ' checked' : ''}><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="free-case-item-copy"><strong>${item.name}</strong><small>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</small></span><select class="free-case-rarity" data-free-case-rarity="${item.id}" aria-label="Редкость ${item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selectedRarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select><span class="free-case-chance input-with-suffix"><input type="number" min="0" step="0.01" value="${selectedChance}" data-free-case-chance="${item.id}" aria-label="Шанс ${item.name}"><b>%</b></span></label>`;
+            }).join('') : '<p class="empty-state">В каталоге пока нет предметов.</p>';
+            updateFreeCaseSelectedCount();
+        }
+
+        function updateFreeCaseSelectedCount() {
+            freeCaseSelectedCount.textContent = `Выбрано: ${freeCasePicker.querySelectorAll('input:checked').length}`;
+        }
+
+        async function loadFreeCaseAdmin() {
+            if (!supabaseClient) return;
+                const [stateResult, itemsResult] = await Promise.all([
+                supabaseClient.rpc('get_free_case_state', { p_user_id: null }),
+                    supabaseClient.from('free_case_items').select('item_id, rarity, chance')
+            ]);
+            if (stateResult.error) { freeCaseStatus.textContent = `Не удалось загрузить событие: ${stateResult.error.message}`; freeCaseStatus.className = 'form-status error'; return; }
+            const state = stateResult.data || {};
+            freeCaseLimit.value = state.daily_limit || 50;
+            freeCaseAdminState.textContent = `${state.claimed_count || 0} / ${state.daily_limit || 0} выдано`;
+            freeCaseAdminReset.textContent = `Сброс: ${formatFreeCaseAdminDate(state.reset_at)}`;
+            renderFreeCaseItems([...availableItems.values()], itemsResult.data || []);
+        }
+
+        freeCasePicker.addEventListener('change', updateFreeCaseSelectedCount);
+        document.querySelector('#free-case-save').addEventListener('click', async () => {
+            const limit = Number(freeCaseLimit.value);
+            const itemConfigs = [...freeCasePicker.querySelectorAll('input[type="checkbox"]:checked')].map(input => ({
+                item_id: Number(input.value),
+                rarity: freeCasePicker.querySelector(`[data-free-case-rarity="${input.value}"]`)?.value || 'common',
+                chance: Number(freeCasePicker.querySelector(`[data-free-case-chance="${input.value}"]`)?.value || 0)
+            }));
+            if (!Number.isInteger(limit) || limit < 1 || !itemConfigs.length || itemConfigs.some(item => !Number.isFinite(item.chance) || item.chance < 0)) { freeCaseStatus.textContent = 'Укажи лимит и корректные настройки предметов.'; freeCaseStatus.className = 'form-status error'; return; }
+            const button = document.querySelector('#free-case-save');
+            button.disabled = true;
+            const { data, error } = await supabaseClient.rpc('save_free_case_settings', { p_daily_limit: limit, p_items: itemConfigs });
+            button.disabled = false;
+            if (error) { freeCaseStatus.textContent = `Не удалось сохранить: ${error.message}`; freeCaseStatus.className = 'form-status error'; return; }
+            freeCaseStatus.textContent = 'Настройки FREE CASE сохранены.';
+            freeCaseStatus.className = 'form-status success';
+            await loadFreeCaseAdmin();
+        });
+
+        document.querySelector('#free-case-reset').addEventListener('click', async () => {
+            const button = document.querySelector('#free-case-reset');
+            button.disabled = true;
+            const { error } = await supabaseClient.rpc('reset_free_case_event');
+            button.disabled = false;
+            if (error) { freeCaseStatus.textContent = `Не удалось возобновить событие: ${error.message}`; freeCaseStatus.className = 'form-status error'; return; }
+            freeCaseStatus.textContent = 'Новое событие запущено, лимиты игроков сброшены.';
+            freeCaseStatus.className = 'form-status success';
+            await loadFreeCaseAdmin();
+        });
+
+        const freeCaseOriginalLoadItems = loadItems;
+        const loadItemsWithFreeCase = async () => { await freeCaseOriginalLoadItems(); await loadFreeCaseAdmin(); };
+        document.querySelector('#refresh-items').addEventListener('click', loadItemsWithFreeCase);
+        updatePreview(); updateModalSelection();
+        Promise.all([loadCases(), loadItems(), loadBuilderItems(), loadPromos()]).then(loadFreeCaseAdmin);
     </script>
 </body>
 </html>

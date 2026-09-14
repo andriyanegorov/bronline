@@ -13,6 +13,7 @@ const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !
 let currentProfileId = null;
 let currentProfileUsername = '';
 let currentProfilePremium = false;
+let currentProfileAdmin = false;
 let currentProfileBanned = false;
 let profileBanChannel = null;
 let profileBanPollTimer = null;
@@ -110,12 +111,108 @@ function getReferralBotUsername() {
     return 'blackdrop_robot';
 }
 
+let freeCaseTimer = null;
+let freeCaseOpening = false;
+let freeCaseForcedDrop = null;
+
+function formatFreeCaseCountdown(value) {
+    const milliseconds = Math.max(0, new Date(value).getTime() - Date.now());
+    const totalHours = Math.floor(milliseconds / 3600000);
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
+    const seconds = Math.floor((milliseconds % 60000) / 1000);
+    return `${String(totalHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function freeCaseRarityClass(rarity) {
+    return ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(rarity) ? rarity : 'common';
+}
+
+function renderFreeCaseState(state = {}) {
+    const counter = document.querySelector('#free-case-counter');
+    const timer = document.querySelector('#free-case-timer');
+    const button = document.querySelector('#free-case-claim');
+    const remaining = Math.max(0, Number(state.daily_limit || 0) - Number(state.claimed_count || 0));
+    if (counter) counter.textContent = `${remaining} / ${Number(state.daily_limit || 0)}`;
+    if (button) {
+        const claimed = Boolean(state.claimed);
+        button.disabled = claimed || remaining <= 0 || !Number(state.items_count);
+        button.classList.toggle('free-case-claimed', claimed);
+        button.textContent = claimed ? 'Вы уже открыли бесплатный кейс' : 'ЗАБРАТЬ КЕЙС';
+    }
+    clearInterval(freeCaseTimer);
+    if (timer && state.reset_at) {
+        const updateTimer = () => {
+            timer.textContent = `Сброс через ${formatFreeCaseCountdown(state.reset_at)}`;
+        };
+        updateTimer();
+        freeCaseTimer = setInterval(updateTimer, 1000);
+    }
+}
+
+async function loadFreeCaseState() {
+    if (!supabase) return;
+    const { data, error } = await supabase.rpc('get_free_case_state', { p_user_id: currentProfileId ? Number(currentProfileId) : null });
+    if (error) {
+        console.error('Supabase free case state error:', error);
+        return;
+    }
+    renderFreeCaseState(data || {});
+}
+
+async function claimFreeCase() {
+    const button = document.querySelector('#free-case-claim');
+    if (!supabase || currentProfileId === null || !button || button.disabled) return;
+    button.disabled = true;
+    button.textContent = 'ПОЛУЧЕНИЕ...';
+    const [claimResult, itemsResult] = await Promise.all([
+        supabase.rpc('claim_free_case', { p_user_id: Number(currentProfileId) }),
+        supabase.rpc('get_free_case_items')
+    ]);
+    const data = claimResult.data;
+    const error = claimResult.error;
+    if (error || !data?.claimed) {
+        const reason = data?.reason === 'already_claimed'
+            ? 'Ты уже получил бесплатный кейс в этом цикле.'
+            : data?.reason === 'limit_reached'
+                ? 'Лимит бесплатных кейсов на сегодня исчерпан.'
+                : 'Не удалось получить бесплатный кейс.';
+        showPromoResultToast('FREE CASE', reason, true);
+        await loadFreeCaseState();
+        return;
+    }
+    const freeCaseItems = Array.isArray(itemsResult.data) ? itemsResult.data : [];
+    const forcedDrop = {
+        name: data.item_name,
+        price: Number(data.item_value || 0),
+        image: data.image_url || './data/assets/items/m5f90.png',
+        alt: data.item_name,
+        rarity: freeCaseRarityClass(data.rarity),
+        chance: 0,
+        itemId: data.item_id
+    };
+    const freeCaseDrops = freeCaseItems.map(item => ({
+        name: item.name,
+        price: Number(item.item_value || 0),
+        image: item.image_url || './data/assets/items/m5f90.png',
+        alt: item.name,
+        rarity: freeCaseRarityClass(item.rarity),
+        chance: Number(item.chance || 0),
+        itemId: item.id
+    }));
+    if (!freeCaseDrops.some(item => String(item.itemId) === String(forcedDrop.itemId))) freeCaseDrops.push(forcedDrop);
+    window.startFreeCaseReel?.(forcedDrop, freeCaseDrops);
+}
+
+function getReferralAppShortName() {
+    return 'referral';
+}
+
 function renderReferralStats(stats = {}) {
     const referralUrl = document.querySelector('#referral-url');
     const referralCount = document.querySelector('#referral-count');
     const referralEarned = document.querySelector('#referral-earned');
     const code = stats.referral_code || (currentProfileId ? `ref_${currentProfileId}` : '');
-    if (referralUrl && code) referralUrl.textContent = `https://t.me/${getReferralBotUsername()}?start=${code}`;
+    if (referralUrl && code) referralUrl.textContent = `https://t.me/${getReferralBotUsername()}/${getReferralAppShortName()}?startapp=${code}`;
     if (referralCount) referralCount.textContent = Number(stats.referrals_count || 0).toLocaleString('ru-RU');
     if (referralEarned) referralEarned.textContent = `${Number(stats.earned_amount || 0).toLocaleString('ru-RU')} BC`;
 }
@@ -167,15 +264,27 @@ function safeText(element, value, fallback = 'Player') {
     element.textContent = value || fallback;
 }
 
-function updateHeaderPremiumStatus(isPremium) {
+function updateHeaderPremiumStatus(isPremium, isAdmin = false) {
     const headerStatus = document.querySelector('.player-status');
     const headerBadge = document.querySelector('.header-premium-badge');
-    if (headerStatus) headerStatus.textContent = isPremium ? 'PREMIUM' : 'Обычный игрок';
+    if (headerStatus) headerStatus.textContent = isAdmin ? 'Администратор' : isPremium ? 'PREMIUM' : 'Обычный игрок';
     if (headerBadge) {
         headerBadge.innerHTML = isPremium
             ? '<img src="./data/assets/premium.svg" alt="Premium">'
             : '';
     }
+}
+
+function renderAdminBadge(element, isAdmin) {
+    if (!element) return;
+    element.innerHTML = isAdmin ? '<img src="./data/assets/verify.svg" alt="Администратор">' : '';
+}
+
+function renderProfileBadges({ premium = false, admin = false } = {}) {
+    renderAdminBadge(document.querySelector('.header-admin-badge'), admin);
+    renderAdminBadge(document.querySelector('.profile-admin-badge'), admin);
+    const premiumBadge = document.querySelector('.profile-premium-badge');
+    if (premiumBadge) premiumBadge.innerHTML = premium ? '<img src="./data/assets/premium.svg" alt="Premium">' : '';
 }
 
 function applyTelegramProfileToUI(user) {
@@ -196,7 +305,8 @@ function applyTelegramProfileToUI(user) {
     const avatarUrl = getTelegramAvatar(user);
 
     safeText(headerName, displayName);
-    updateHeaderPremiumStatus(Boolean(user.is_premium));
+    updateHeaderPremiumStatus(Boolean(user.is_premium), false);
+    renderProfileBadges({ premium: Boolean(user.is_premium), admin: false });
     if (balanceAmount) {
         balanceAmount.textContent = balanceAmount.textContent && Number(balanceAmount.textContent.replace(/\s+/g, '')) ? balanceAmount.textContent : '0';
     }
@@ -325,7 +435,7 @@ async function loadCurrentUserProfile() {
     try {
         let profileQuery = supabase
             .from('profiles')
-            .select('id, balance, username, avatar_url, premium, showcase_background, ban');
+            .select('id, balance, username, avatar_url, premium, admin, showcase_background, ban');
 
         profileQuery = telegramUser
             ? profileQuery.eq('telegram_id', Number(telegramUser.id))
@@ -341,6 +451,7 @@ async function loadCurrentUserProfile() {
         currentProfileId = data?.id ?? currentProfileId;
         currentProfileUsername = data?.username || currentProfileUsername;
         currentProfilePremium = Boolean(data?.premium);
+        currentProfileAdmin = Boolean(data?.admin);
         setBanState(data?.ban);
         subscribeToProfileBan();
         showcaseSettings.background = data?.showcase_background || 'standard';
@@ -352,13 +463,8 @@ async function loadCurrentUserProfile() {
 
         await loadProfileStats();
 
-        const profileBadge = document.querySelector('.profile-premium-badge');
-        if (profileBadge) {
-            profileBadge.innerHTML = data?.premium
-                ? '<img src="./data/assets/premium.svg" alt="Premium">'
-                : '';
-        }
-        updateHeaderPremiumStatus(Boolean(data?.premium));
+        renderProfileBadges({ premium: Boolean(data?.premium), admin: currentProfileAdmin });
+        updateHeaderPremiumStatus(Boolean(data?.premium), currentProfileAdmin);
 
         if (data && data.username) {
             const displayName = data.username;
@@ -704,6 +810,7 @@ async function sellAllInventory() {
 
 let saleToastTimer = null;
 let premiumToastTimer = null;
+let adminToastTimer = null;
 let errorToastTimer = null;
 let showcaseDevelopmentToastTimer = null;
 let promoResultToastTimer = null;
@@ -752,6 +859,27 @@ function showPremiumToast(playerName = '') {
 
     if (closeButton) closeButton.onclick = closeToast;
     premiumToastTimer = setTimeout(closeToast, 4000);
+}
+
+function showAdminToast(playerName = '') {
+    const toast = document.querySelector('#admin-toast');
+    const closeButton = toast?.querySelector('.admin-toast-close');
+    const title = toast?.querySelector('#admin-toast-title');
+    if (!toast) return;
+
+    clearTimeout(adminToastTimer);
+    if (title) title.textContent = playerName
+        ? `${playerName} — официальный пользователь`
+        : 'Официальный пользователь';
+    toast.classList.add('open');
+    toast.setAttribute('aria-hidden', 'false');
+
+    const closeToast = () => {
+        toast.classList.remove('open');
+        toast.setAttribute('aria-hidden', 'true');
+    };
+    if (closeButton) closeButton.onclick = closeToast;
+    adminToastTimer = setTimeout(closeToast, 4500);
 }
 
 function showInsufficientFundsToast(message = 'Пополните баланс, чтобы открыть кейс.') {
@@ -990,6 +1118,12 @@ document.addEventListener('click', event => {
         return;
     }
 
+    const adminBadge = event.target.closest('.header-admin-badge, .profile-admin-badge, .top-admin-badge, .seller-admin-tag, .leaderboard-profile-admin');
+    if (adminBadge) {
+        showAdminToast(adminBadge.dataset.adminPlayer || '');
+        return;
+    }
+
     const topPlayer = event.target.closest('[data-profile-id]');
     if (topPlayer) {
         openLeaderboardProfile(topPlayer.dataset.profileId);
@@ -1058,7 +1192,7 @@ function renderShowcase(records) {
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const rarity = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(item.rarity) ? item.rarity : 'common';
         const itemSettings = record.settings || { frame: 'standard', styleLevel: 1 };
-        return `<article class="shop-item-card ${rarity} showcase-frame-${escapeLeaderboardText(itemSettings.frame)} showcase-style-${Number(itemSettings.styleLevel) || 1}" data-showcase-id="${record.id}"><div class="shop-item-price"><span>${Number(item.item_value || 0).toLocaleString('ru-RU')}</span><img src="./data/assets/coin.png" alt="Монеты" class="shop-coin-icon"></div><div class="shop-item-visual"><img src="${escapeLeaderboardText(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeLeaderboardText(item.item_name || 'Предмет')}"></div><div class="shop-item-rarity">${rarityNames[rarity]}</div><h3 class="shop-item-name">${escapeLeaderboardText(item.item_name || 'Без названия')}</h3><div class="shop-item-seller"><img src="${escapeLeaderboardText(profile.avatar_url || './data/assets/profile.png')}" alt="${escapeLeaderboardText(name)}"><div class="shop-seller-meta"><div class="seller-line"><span class="seller-name">${escapeLeaderboardText(name)}</span>${profile.premium ? '<span class="seller-tag"><img src="./data/assets/premium.svg" alt="Premium"></span>' : ''}</div><span class="shop-seller-rank">${record.likeCount || 0} лайков</span></div></div><button class="showcase-like-button${record.likedByCurrentUser ? ' liked' : ''}" type="button" data-showcase-like-id="${record.id}" aria-label="Лайкнуть витрину">❤ <span>${record.likeCount || 0}</span></button></article>`;
+        return `<article class="shop-item-card ${rarity} showcase-frame-${escapeLeaderboardText(itemSettings.frame)} showcase-style-${Number(itemSettings.styleLevel) || 1}" data-showcase-id="${record.id}"><div class="shop-item-price"><span>${Number(item.item_value || 0).toLocaleString('ru-RU')}</span><img src="./data/assets/coin.png" alt="Монеты" class="shop-coin-icon"></div><div class="shop-item-visual"><img src="${escapeLeaderboardText(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeLeaderboardText(item.item_name || 'Предмет')}"></div><div class="shop-item-rarity">${rarityNames[rarity]}</div><h3 class="shop-item-name">${escapeLeaderboardText(item.item_name || 'Без названия')}</h3><div class="shop-item-seller"><img src="${escapeLeaderboardText(profile.avatar_url || './data/assets/profile.png')}" alt="${escapeLeaderboardText(name)}"><div class="shop-seller-meta"><div class="seller-line"><span class="seller-name">${escapeLeaderboardText(name)}</span>${profile.premium ? '<span class="seller-tag"><img src="./data/assets/premium.svg" alt="Premium"></span>' : ''}${profile.admin ? '<span class="seller-admin-tag"><img src="./data/assets/verify.svg" alt="Администратор"></span>' : ''}</div><span class="shop-seller-rank">${record.likeCount || 0} лайков</span></div></div><button class="showcase-like-button${record.likedByCurrentUser ? ' liked' : ''}" type="button" data-showcase-like-id="${record.id}" aria-label="Лайкнуть витрину">❤ <span>${record.likeCount || 0}</span></button></article>`;
     }).join('');
 }
 
@@ -1068,7 +1202,7 @@ async function loadShowcase() {
     grid.innerHTML = '<p class="showcase-state">Загрузка витрины...</p>';
     const { data, error } = await supabase
         .from('showcase_items')
-        .select('id, inventory_id, user_id, created_at, inventory(item_name, rarity, item_value, image_url, quantity), profiles(username, first_name, last_name, avatar_url, premium)')
+        .select('id, inventory_id, user_id, created_at, inventory(item_name, rarity, item_value, image_url, quantity), profiles(username, first_name, last_name, avatar_url, premium, admin)')
         .order('created_at', { ascending: false });
     if (error) {
         console.error('Supabase showcase load error:', error);
@@ -1084,7 +1218,7 @@ async function loadShowcase() {
     const ids = records.map(record => record.id);
     const [likesResult, commentsResult, settingsResult] = await Promise.all([
         supabase.from('showcase_likes').select('showcase_id, user_id').in('showcase_id', ids),
-        supabase.from('showcase_comments').select('id, showcase_id, user_id, content, created_at, profiles(username, avatar_url)').in('showcase_id', ids).order('created_at', { ascending: true }),
+        supabase.from('showcase_comments').select('id, showcase_id, user_id, content, created_at, profiles(username, avatar_url, admin)').in('showcase_id', ids).order('created_at', { ascending: true }),
         supabase.from('showcase_item_settings').select('showcase_id, frame, style_level').in('showcase_id', ids)
     ]);
     const likes = likesResult.data || [];
@@ -1122,7 +1256,7 @@ function renderShowcaseModal(record) {
     comments.innerHTML = record.comments?.length ? record.comments.map(comment => {
         const commentProfile = Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles;
         const commentName = commentProfile?.username || 'Игрок';
-        return `<article class="showcase-comment"><img src="${escapeLeaderboardText(commentProfile?.avatar_url || './data/assets/profile.png')}" alt="${escapeLeaderboardText(commentName)}"><div class="showcase-comment-body"><strong>${escapeLeaderboardText(commentName)}</strong><p>${escapeLeaderboardText(comment.content)}</p><button class="showcase-comment-like${comment.likedByCurrentUser ? ' liked' : ''}" type="button" data-comment-like-id="${comment.id}">❤ ${comment.likeCount || 0}</button></div></article>`;
+        return `<article class="showcase-comment"><img src="${escapeLeaderboardText(commentProfile?.avatar_url || './data/assets/profile.png')}" alt="${escapeLeaderboardText(commentName)}"><div class="showcase-comment-body"><strong>${escapeLeaderboardText(commentName)}${commentProfile?.admin ? ' <span class="seller-admin-tag"><img src="./data/assets/verify.svg" alt="Администратор"></span>' : ''}</strong><p>${escapeLeaderboardText(comment.content)}</p><button class="showcase-comment-like${comment.likedByCurrentUser ? ' liked' : ''}" type="button" data-comment-like-id="${comment.id}">❤ ${comment.likeCount || 0}</button></div></article>`;
     }).join('') : '<p class="showcase-state">Комментариев пока нет</p>';
 }
 
@@ -1218,16 +1352,32 @@ async function loadRecentWins() {
     const container = document.querySelector('.wins-list');
     if (!supabase || !container) return;
 
-    const { data, error } = await supabase
-        .from('case_openings')
-        .select('id, item_name, rarity, item_value, opened_at, case_id, user_id, cases(name, image_url, case_items(item_name, image_url)), profiles(username, avatar_url)')
-        .order('opened_at', { ascending: false })
-        .limit(5);
-    if (error) {
-        console.error('Supabase recent wins load error:', error);
+    const [regularResult, freeCaseResult] = await Promise.all([
+        supabase
+            .from('case_openings')
+            .select('id, item_name, rarity, item_value, opened_at, case_id, user_id, cases(name, image_url, case_items(item_name, image_url)), profiles(username, avatar_url, premium, admin)')
+            .order('opened_at', { ascending: false })
+            .limit(5),
+        supabase.rpc('get_recent_free_case_wins', { p_limit: 5 })
+    ]);
+    if (regularResult.error || freeCaseResult.error) {
+        console.error('Supabase recent wins load error:', regularResult.error || freeCaseResult.error);
         container.innerHTML = '<p class="wins-loading">Не удалось загрузить выигрыши</p>';
         return;
     }
+    const freeCaseWins = (Array.isArray(freeCaseResult.data) ? freeCaseResult.data : []).map(win => ({
+        id: `free-${win.id}`,
+        item_name: win.item_name,
+        rarity: win.rarity,
+        item_value: win.item_value,
+        opened_at: win.opened_at,
+        user_id: win.user_id,
+        profiles: { username: win.username, avatar_url: win.avatar_url, premium: win.premium, admin: win.admin },
+        cases: { name: win.case_name, image_url: win.case_image, case_items: [{ item_name: win.item_name, image_url: win.item_image }] }
+    }));
+    const data = [...(regularResult.data || []), ...freeCaseWins]
+        .sort((first, second) => new Date(second.opened_at).getTime() - new Date(first.opened_at).getTime())
+        .slice(0, 5);
     if (!data?.length) {
         container.innerHTML = '<p class="wins-loading">Выигрышей пока нет</p>';
         return;
@@ -1243,7 +1393,7 @@ async function loadRecentWins() {
         const itemImage = caseItems.find(item => item.item_name === win.item_name)?.image_url || './data/assets/items/m5f90.png';
         const caseName = caseData?.name || 'Кейс';
         const caseImage = caseData?.image_url || './data/case_logo/free.png';
-        return `<button class="win-item" type="button" data-win-id="${win.id}" data-case-name="${escapeLeaderboardText(caseName)}" data-case-image="${escapeLeaderboardText(caseImage)}"><span class="win-left"><img src="${escapeLeaderboardText(image)}" alt="${escapeLeaderboardText(name)}" class="win-avatar"><span class="win-info"><span class="win-player-name">${escapeLeaderboardText(name)}</span><span class="win-item-name">${escapeLeaderboardText(win.item_name)}</span></span></span><span class="win-middle"><img src="${itemImage}" alt="${escapeLeaderboardText(win.item_name)}" class="win-item-image"></span><span class="win-right"><span class="rarity-badge ${escapeLeaderboardText(win.rarity || 'common')}">${rarityNames[win.rarity] || win.rarity || 'ПРЕДМЕТ'}</span><span class="win-time">${formatWinTime(win.opened_at)}</span></span></button>`;
+        return `<button class="win-item" type="button" data-win-id="${win.id}" data-case-name="${escapeLeaderboardText(caseName)}" data-case-image="${escapeLeaderboardText(caseImage)}"><span class="win-left"><img src="${escapeLeaderboardText(image)}" alt="${escapeLeaderboardText(name)}" class="win-avatar"><span class="win-info"><span class="win-player-name">${escapeLeaderboardText(name)}${profile?.premium ? ' <span class="seller-tag"><img src="./data/assets/premium.svg" alt="Premium"></span>' : ''}${profile?.admin ? ' <span class="seller-admin-tag"><img src="./data/assets/verify.svg" alt="Администратор"></span>' : ''}</span><span class="win-item-name">${escapeLeaderboardText(win.item_name)}</span></span></span><span class="win-middle"><img src="${itemImage}" alt="${escapeLeaderboardText(win.item_name)}" class="win-item-image"></span><span class="win-right"><span class="rarity-badge ${escapeLeaderboardText(win.rarity || 'common')}">${rarityNames[win.rarity] || win.rarity || 'ПРЕДМЕТ'}</span><span class="win-time">${formatWinTime(win.opened_at)}</span></span></button>`;
     }).join('');
 
     clearTimeout(recentWinsAnimationTimer);
@@ -1299,6 +1449,10 @@ function setupRecentWinsRealtime() {
             clearTimeout(recentWinsReloadTimer);
             recentWinsReloadTimer = setTimeout(() => loadRecentWins(), 180);
         })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'free_case_claims' }, () => {
+            clearTimeout(recentWinsReloadTimer);
+            recentWinsReloadTimer = setTimeout(() => loadRecentWins(), 180);
+        })
         .subscribe();
 }
 
@@ -1335,6 +1489,7 @@ async function openLeaderboardProfile(profileId) {
     const avatarElement = document.querySelector('#leaderboard-profile-avatar');
     const nameElement = document.querySelector('#leaderboard-profile-name');
     const premiumElement = document.querySelector('#leaderboard-profile-premium');
+    const adminElement = document.querySelector('#leaderboard-profile-admin');
     const balanceElement = document.querySelector('#leaderboard-profile-balance');
     const spentElement = document.querySelector('#leaderboard-profile-spent');
     const inventoryElement = document.querySelector('#leaderboard-profile-inventory');
@@ -1346,6 +1501,7 @@ async function openLeaderboardProfile(profileId) {
     }
     if (nameElement) nameElement.textContent = name;
     if (premiumElement) premiumElement.hidden = !profile.premium;
+    if (adminElement) adminElement.hidden = !profile.admin;
     if (balanceElement) balanceElement.textContent = `${Number(profile.balance || 0).toLocaleString('ru-RU')} BC`;
     if (spentElement) spentElement.textContent = `${Number(profile.total_spent || 0).toLocaleString('ru-RU')} BC`;
     if (inventoryElement) inventoryElement.innerHTML = '<p class="leaderboard-profile-inventory-state">Загрузка инвентаря...</p>';
@@ -1412,18 +1568,21 @@ function renderLeaderboard(profiles, metric = 'balance') {
     const premiumBadge = profile => profile.premium
         ? `<span class="top-player-badge" data-premium-player="${escapeLeaderboardText(profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок')}" role="button" tabindex="0" aria-label="Premium игрок"><img src="./data/assets/premium.svg" alt="Premium"></span>`
         : '';
+    const adminBadge = profile => profile.admin
+        ? '<span class="top-admin-badge" aria-label="Администратор"><img src="./data/assets/verify.svg" alt="Администратор"></span>'
+        : '';
     podium.innerHTML = profiles.slice(0, 3).map((profile, index) => {
         const place = index + 1;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
-        return `<article class="top-player-card ${podiumClasses[place]}" data-profile-id="${escapeLeaderboardText(profile.id)}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name-row"><div class="top-player-name">${escapeLeaderboardText(name)}</div>${premiumBadge(profile)}</div><div class="top-player-balance">${formatValue(profile)} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
+        return `<article class="top-player-card ${podiumClasses[place]}" data-profile-id="${escapeLeaderboardText(profile.id)}"><div class="top-place">${place}</div><div class="top-avatar-wrap"><div class="top-avatar ${place === 1 ? 'crowned' : 'masked'}"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"><div class="avatar-visor"></div></div></div><div class="top-player-name-row"><div class="top-player-name">${escapeLeaderboardText(name)}</div>${premiumBadge(profile)}${adminBadge(profile)}</div><div class="top-player-balance">${formatValue(profile)} <img src="./data/assets/coin.png" alt="Монеты" class="top-coin-icon"></div></article>`;
     }).join('');
     list.innerHTML = profiles.slice(3).map((profile, index) => {
         const place = index + 4;
         const name = profile.username || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Игрок';
         const avatar = profile.avatar_url || './data/assets/profile.png';
         const badge = premiumBadge(profile);
-        return `<div class="top-list-item" data-profile-id="${escapeLeaderboardText(profile.id)}"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${badge}</div></div><div class="top-list-score"><span>${formatValue(profile)}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
+        return `<div class="top-list-item" data-profile-id="${escapeLeaderboardText(profile.id)}"><div class="top-list-place">${place}</div><div class="top-list-avatar"><img src="${escapeLeaderboardText(avatar)}" alt="${escapeLeaderboardText(name)}"></div><div class="top-list-info"><div class="top-list-player-name">${escapeLeaderboardText(name)}</div><div class="top-list-badge">${badge}${adminBadge(profile)}</div></div><div class="top-list-score"><span>${formatValue(profile)}</span><img src="./data/assets/coin.png" alt="Монеты" class="list-coin-icon"></div><button class="top-list-arrow" type="button" aria-label="Открыть профиль">›</button></div>`;
     }).join('');
     const subtitle = document.querySelector('.top-subtitle');
     if (subtitle) subtitle.textContent = valueLabel;
@@ -1433,7 +1592,7 @@ async function loadLeaderboard(metric = 'balance') {
     if (!supabase) return;
     const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, username, first_name, last_name, avatar_url, balance, premium, total_spent');
+        .select('id, username, first_name, last_name, avatar_url, balance, premium, admin, total_spent');
     if (error) {
         console.error('Supabase leaderboard load error:', error);
         renderLeaderboard([]);
@@ -1485,6 +1644,7 @@ async function initTelegramAuth() {
     await loadCurrentUserProfile();
     await processIncomingReferral();
     await loadReferralStats();
+    await loadFreeCaseState();
     await loadInventory();
     await loadShowcase();
     await loadLeaderboard();
@@ -1544,7 +1704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showPromoResultToast('Промокод применён', `Начислено ${Number(data.reward_value || 0).toLocaleString('ru-RU')} BC.`);
         } else {
             currentProfilePremium = true;
-            updateHeaderPremiumStatus(true);
+            updateHeaderPremiumStatus(true, currentProfileAdmin);
             document.querySelector('.profile-premium-badge')?.replaceChildren(Object.assign(document.createElement('img'), { src: './data/assets/premium.svg', alt: 'Premium' }));
             showPromoResultToast('Промокод применён', 'Premium-статус активирован.');
         }
@@ -1697,6 +1857,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dropResultTotal) dropResultTotal.textContent = `${totalValue.toLocaleString('ru-RU')} BC`;
         if (dropSaveButton) dropSaveButton.textContent = `СОХРАНИТЬ ВЫБРАННЫЕ (${drops.length})`;
         if (dropResultSell) dropResultSell.textContent = 'ПРОДАТЬ ВЫБРАННЫЕ';
+        if (freeCaseOpening) {
+            dropSaveButton?.setAttribute('hidden', '');
+            dropResultSell?.setAttribute('hidden', '');
+        } else {
+            dropSaveButton?.removeAttribute('hidden');
+            dropResultSell?.removeAttribute('hidden');
+        }
 
         dropResultModal.classList.add('active');
         dropResultModal.setAttribute('aria-hidden', 'false');
@@ -1709,6 +1876,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function chooseDrop() {
+        if (freeCaseOpening && freeCaseForcedDrop) {
+            const forcedIndex = reelDrops.findIndex(drop => String(drop.itemId) === String(freeCaseForcedDrop.itemId) || drop.name === freeCaseForcedDrop.name);
+            return { drop: freeCaseForcedDrop, winnerIndex: forcedIndex >= 0 ? forcedIndex : reelDrops.length - 1 };
+        }
         const totalChance = reelDrops.reduce((total, drop) => total + drop.chance, 0);
         let randomChance = Math.random() * (totalChance || reelDrops.length);
         let winnerIndex = reelDrops.findIndex(drop => { randomChance -= drop.chance || (totalChance ? 0 : 1); return randomChance <= 0; });
@@ -1813,7 +1984,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return reelDrops[winnerIndex] || instance.drop;
         });
         resultDrop = results[0];
-        await recordCaseOpenings(results);
+        if (freeCaseOpening) {
+            resultActionCompleted = true;
+        } else {
+            await recordCaseOpenings(results);
+        }
         if (openingStatus) openingStatus.textContent = 'Открытие завершено';
         clearTimeout(openingFinishTimer);
         openingFinishTimer = setTimeout(() => showResultModal(results), 750);
@@ -1929,6 +2104,16 @@ document.addEventListener('DOMContentLoaded', function() {
         reelInstances.forEach(instance => { instance.animationFrame = requestAnimationFrame(time => animateReel(instance, time)); });
     }
 
+    window.startFreeCaseReel = (forcedDrop, drops) => {
+        reelDrops = drops;
+        freeCaseForcedDrop = forcedDrop;
+        freeCaseOpening = true;
+        openingOverlay.classList.add('active');
+        openingOverlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('case-opening-active');
+        startReelOpening();
+    };
+
     if (openCaseButton) {
         openCaseButton.addEventListener('click', async function() {
             if (openingInProgress || !selectedCase || !reelDrops.length) return;
@@ -1967,6 +2152,9 @@ document.addEventListener('DOMContentLoaded', function() {
             reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
             clearTimeout(openingFinishTimer);
             reelIsRunning = false;
+            freeCaseOpening = false;
+            freeCaseForcedDrop = null;
+            loadFreeCaseState();
         });
     }
 
@@ -1987,6 +2175,10 @@ document.addEventListener('DOMContentLoaded', function() {
         openingOverlay.classList.remove('active');
         openingOverlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('case-opening-active');
+        freeCaseOpening = false;
+        freeCaseForcedDrop = null;
+        loadInventory();
+        loadFreeCaseState();
     }
 
     async function sellResultDrops(drops) {
@@ -2050,6 +2242,10 @@ document.addEventListener('DOMContentLoaded', function() {
             reelInstances.forEach(instance => { cancelAnimationFrame(instance.animationFrame); cancelAnimationFrame(instance.inertiaFrame); });
             clearTimeout(openingFinishTimer);
             reelIsRunning = false;
+            freeCaseOpening = false;
+            freeCaseForcedDrop = null;
+            loadInventory();
+            loadFreeCaseState();
         });
     }
 
@@ -2101,6 +2297,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 openPremiumToast();
             }
         });
+    });
+
+    document.addEventListener('keydown', event => {
+        const adminBadge = event.target.closest('.header-admin-badge, .profile-admin-badge, .top-admin-badge, .seller-admin-tag, .leaderboard-profile-admin');
+        if (!adminBadge || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        showAdminToast(adminBadge.dataset.adminPlayer || '');
     });
 
     navItems.forEach(item => {
@@ -2176,6 +2379,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (error?.name !== 'AbortError') console.error('Referral share error:', error);
         }
     });
+
+    document.querySelector('#free-case-claim')?.addEventListener('click', claimFreeCase);
 
     document.querySelector('.referral-back-btn')?.addEventListener('click', () => {
         showPage('profile');

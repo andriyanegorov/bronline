@@ -170,6 +170,11 @@
 
 .premium-toast-close:hover { color: #fff; }
 
+.admin-toast .premium-toast-icon img {
+    width: 24px;
+    height: 24px;
+}
+
 .error-toast {
     position: fixed;
     top: 92px;
@@ -680,6 +685,10 @@ select {
     gap: 5px;
 }
 
+.player-name-row:has(.header-admin-badge img) {
+    gap: 2px;
+}
+
 .header-premium-badge {
     display: inline-flex;
     width: 18px;
@@ -688,11 +697,34 @@ select {
     justify-content: center;
 }
 
+.header-premium-badge:empty {
+    display: none;
+}
+
 .header-premium-badge img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
+    .header-admin-badge,
+    .profile-admin-badge,
+    .top-admin-badge,
+    .seller-admin-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .header-admin-badge {
+        width: 18px;
+        height: 18px;
+    }
+    .header-admin-badge img,
+    .top-admin-badge img,
+    .seller-admin-tag img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
 .player-status {
     font-size: var(--text-11);
@@ -920,6 +952,18 @@ select {
 .btn-grab-case:active {
     background: #a81818;
     transform: translateY(0);
+}
+
+.btn-grab-case.free-case-claimed,
+.btn-grab-case.free-case-claimed:hover,
+.btn-grab-case.free-case-claimed:active {
+    background: #4a4d52;
+    color: #b9bcc1;
+    cursor: not-allowed;
+    opacity: 0.85;
+    transform: none;
+    box-shadow: none;
+    text-transform: none;
 }
 
 .free-case-right {
@@ -1173,9 +1217,30 @@ select {
 }
 
 .win-player-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 18px;
     font-size: var(--text-13);
     font-weight: var(--font-medium);
     color: #ffffff;
+}
+
+.win-player-name .seller-tag,
+.win-player-name .seller-admin-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.win-player-name .seller-tag img,
+.win-player-name .seller-admin-tag img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .win-item-name {
@@ -3736,7 +3801,7 @@ background: rgb(158 19 18);
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 5px;
 }
 
 .profile-settings-btn {
@@ -3787,6 +3852,15 @@ background: rgb(158 19 18);
     height: 24px;
     object-fit: contain;
 }
+    .profile-admin-badge {
+        width: 24px;
+        height: 24px;
+    }
+    .profile-admin-badge img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
 .profile-rating {
     display: inline-flex;
@@ -4713,6 +4787,28 @@ border-color: rgb(126 63 38);
     height: 100%;
     object-fit: contain;
 }
+    .top-admin-badge {
+        width: 17px;
+        height: 17px;
+    }
+
+    .leaderboard-profile-admin {
+        display: inline-flex;
+        width: 22px;
+        height: 22px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .leaderboard-profile-admin[hidden] {
+        display: none !important;
+    }
+
+    .leaderboard-profile-admin img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
 
 .top-player-balance {
     display: inline-flex;
@@ -5514,6 +5610,21 @@ background: rgb(12 13 14);
 }
 
 .seller-tag img {
+    width: 84%;
+    height: 77%;
+    object-fit: contain;
+}
+
+.seller-admin-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    white-space: nowrap;
+}
+
+.seller-admin-tag img {
     width: 84%;
     height: 77%;
     object-fit: contain;

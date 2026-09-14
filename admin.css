@@ -26,6 +26,25 @@ button, input, select { font: inherit; }
 .selected-rarity select { width: 100%; border: 1px solid #30343a; background: #0c0e10; color: var(--text); padding: 7px 4px; font-size: 10px; }
 
 .promo-panel { margin-top: 18px; padding: 25px; }
+.free-case-admin-panel { margin-top: 18px; padding: 25px; }
+.panel-subtitle { margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+.free-case-admin-grid { display: grid; grid-template-columns: minmax(260px, .65fr) 1fr; gap: 16px; align-items: end; }
+.free-case-admin-status { min-height: 68px; display: grid; gap: 5px; align-content: center; padding: 12px 14px; border: 1px solid #30343a; background: #0c0e10; }
+.free-case-admin-status span, .free-case-admin-status small { color: var(--muted); font-size: 10px; }
+.free-case-admin-status strong { color: var(--text); font-size: 14px; }
+.free-case-admin-items { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 20px; }
+.free-case-item-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-height: 310px; overflow: auto; }
+.free-case-item { display: grid; grid-template-columns: auto 42px minmax(100px, 1fr) 108px 92px; gap: 8px; align-items: center; min-height: 62px; padding: 8px 10px; border: 1px solid var(--line); background: #0d0f11; cursor: pointer; }
+.free-case-item:has(input:checked) { border-color: var(--red); background: #211416; }
+.free-case-item input { accent-color: var(--red); }
+.free-case-item img { width: 40px; height: 40px; object-fit: contain; background: #181a1d; }
+.free-case-item span, .free-case-item strong, .free-case-item small { min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.free-case-item strong { color: var(--text); font-size: 11px; }
+.free-case-item small { margin-top: 4px; color: var(--muted); font-size: 9px; }
+.free-case-item select { min-width: 0; border: 1px solid #30343a; background: #0c0e10; color: var(--text); padding: 7px 4px; font-size: 10px; }
+.free-case-chance { min-width: 0; }
+.free-case-chance input { min-width: 0; width: 100%; padding: 7px 4px; font-size: 10px; }
+.free-case-chance b { padding-right: 5px; font-size: 9px; }
 .promo-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: end; }
 .promo-form-actions { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(220px, 1fr) auto; gap: 10px; align-items: center; padding-top: 16px; border-top: 1px solid var(--line); }
 .promo-code-output { min-width: 0; height: 42px; border: 1px solid #30343a; background: #0c0e10; color: var(--yellow); padding: 0 12px; font: 13px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
