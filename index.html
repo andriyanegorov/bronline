@@ -613,6 +613,14 @@
                     </span>
                     <span class="settings-option-arrow" aria-hidden="true">›</span>
                 </button>
+                <button class="settings-option" type="button" data-settings-action="referral">
+                    <span class="settings-option-icon"><img src="./data/assets/referral.svg" alt=""></span>
+                    <span class="settings-option-copy">
+                        <strong>Реферальная система</strong>
+                        <small>Приглашай друзей и получай бонусы</small>
+                    </span>
+                    <span class="settings-option-arrow" aria-hidden="true">›</span>
+                </button>
                 <button class="settings-option" type="button" data-settings-action="support">
                     <span class="settings-option-icon"><img src="./data/assets/support.svg" alt=""></span>
                     <span class="settings-option-copy">
@@ -624,6 +632,144 @@
             </div>
         </section>
     </div>
+
+    <section class="page referral-page" data-page="referral">
+        <div class="referral-shell">
+            <div class="referral-header-row">
+                <button class="referral-back-btn" type="button" aria-label="Назад">
+                    <span aria-hidden="true">‹</span>
+                </button>
+
+                <div class="referral-head">
+                    <h1>РЕФЕРАЛЬНАЯ СИСТЕМА</h1>
+                    <p>Приглашай друзей и получай бонусы</p>
+                </div>
+            </div>
+
+            <section class="referral-card" aria-labelledby="referral-bonus-title">
+                <div class="referral-copy">
+                    <div class="referral-bonus-label">
+                        <span class="referral-gift" aria-hidden="true"><img src="./data/assets/gift.svg" alt=""></span>
+                        <span id="referral-bonus-title">БОНУС</span>
+                    </div>
+
+                    <div class="referral-amount">100₽</div>
+                    <p class="referral-per-person">за каждого друга</p>
+
+                    <p class="referral-text">
+                        Приглашай друзей, и получай 100 рублей на свой баланс!<br>
+                    </p>
+                </div>
+
+                <div class="referral-visual" aria-hidden="true">
+                    <img class="referral-visual-image" src="./data/assets/referral_block.png" alt="">
+                </div>
+            </section>
+
+            <section class="referral-link-panel" aria-label="Реферальная ссылка">
+                <div class="referral-link-header">
+                    <span class="referral-link-icon"><img src="./data/assets/chain-red.svg" alt=""></span>
+                    <div class="referral-link-copy">
+                        <h2>Твоя реферальная ссылка</h2>
+                        <p>Поделись ссылкой с друзьями и получай бонус</p>
+                    </div>
+                </div>
+
+                <div class="referral-link-row">
+                    <div class="referral-url-box">
+                        <span class="referral-url-icon"><img src="./data/assets/chain.svg" alt=""></span>
+                        <span class="referral-url" id="referral-url">Загрузка ссылки...</span>
+                    </div>
+
+                    <button class="referral-share-btn" type="button" aria-label="Поделиться в Telegram">
+                        <span class="referral-share-icon"><img src="./data/assets/telegram.svg" alt=""></span>
+                    </button>
+                </div>
+
+                <div class="referral-stats" aria-live="polite">
+                    <div><strong id="referral-count">0</strong><span>приглашено</span></div>
+                    <div><strong id="referral-earned">0 BC</strong><span>заработано</span></div>
+                </div>
+            </section>
+
+            <section class="referral-how-panel" aria-labelledby="referral-how-title">
+                <h2 id="referral-how-title">Как это работает?</h2>
+
+                <div class="referral-steps">
+                    <div class="referral-step">
+                        <div class="referral-step-circle">
+                            <img src="./data/assets/chain-red.svg" alt="">
+                        </div>
+                        <div class="referral-step-copy">
+                            <strong>Ты делишься ссылкой</strong>
+                            <small>Отправь её друзьям в Telegram</small>
+                        </div>
+                    </div>
+
+                    <div class="referral-step-arrow" aria-hidden="true">→</div>
+
+                    <div class="referral-step">
+                        <div class="referral-step-circle">
+                            <img src="./data/assets/guide-referral.svg" alt="">
+                        </div>
+                        <div class="referral-step-copy">
+                            <strong>Друг регистрируется</strong>
+                            <small>Он присоединяется по твоей ссылке</small>
+                        </div>
+                    </div>
+
+                    <div class="referral-step-arrow" aria-hidden="true">→</div>
+
+                    <div class="referral-step">
+                        <div class="referral-step-circle referral-step-circle--reward">
+                            <img src="./data/assets/free-case.svg" alt="">
+                        </div>
+                        <div class="referral-step-copy">
+                            <strong>Получаешь бонус</strong>
+                            <small>На твой баланс начисляется 100₽</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="referral-benefits-panel" aria-labelledby="referral-benefits-title">
+                <div class="referral-benefits-header">
+                    <span class="referral-benefits-mark"><img src="./data/assets/crown.svg" alt=""></span>
+                    <h2 id="referral-benefits-title">Почему это выгодно?</h2>
+                </div>
+
+                <div class="referral-benefits-grid">
+                    <article class="referral-benefit">
+                        <div class="referral-benefit-icon"><img src="./data/assets/lightning.svg" alt=""></div>
+                        <div class="referral-benefit-copy">
+                            <strong>Быстрый заработок</strong>
+                        </div>
+                    </article>
+
+                    <article class="referral-benefit">
+                        <div class="referral-benefit-icon"><img src="./data/assets/safety.svg" alt=""></div>
+                        <div class="referral-benefit-copy">
+                            <strong>Надежная система</strong>
+                        </div>
+                    </article>
+
+                    <article class="referral-benefit">
+                        <div class="referral-benefit-icon"><img src="./data/assets/friends.svg" alt=""></div>
+                        <div class="referral-benefit-copy">
+                            <strong>Нет лимитов</strong>
+                        </div>
+                    </article>
+
+                    <article class="referral-benefit">
+                        <div class="referral-benefit-icon"><img src="./data/assets/star.svg" alt=""></div>
+                        <div class="referral-benefit-copy">
+                            <strong>Бонусы для всех</strong>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </section>
 
     <section class="page donate-page" data-page="donate">
         <div class="donate-wrap">

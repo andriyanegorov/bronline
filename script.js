@@ -98,6 +98,70 @@ function getTelegramAvatar(user) {
     return user.photo_url || './data/assets/profile.png';
 }
 
+function getReferralStartParam() {
+    const telegramApp = window.Telegram && window.Telegram.WebApp;
+    const telegramStartParam = telegramApp?.initDataUnsafe?.start_param;
+    if (telegramStartParam) return telegramStartParam;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('start') || params.get('startapp') || '';
+}
+
+function getReferralBotUsername() {
+    return 'blackdrop_robot';
+}
+
+function renderReferralStats(stats = {}) {
+    const referralUrl = document.querySelector('#referral-url');
+    const referralCount = document.querySelector('#referral-count');
+    const referralEarned = document.querySelector('#referral-earned');
+    const code = stats.referral_code || (currentProfileId ? `ref_${currentProfileId}` : '');
+    if (referralUrl && code) referralUrl.textContent = `https://t.me/${getReferralBotUsername()}?start=${code}`;
+    if (referralCount) referralCount.textContent = Number(stats.referrals_count || 0).toLocaleString('ru-RU');
+    if (referralEarned) referralEarned.textContent = `${Number(stats.earned_amount || 0).toLocaleString('ru-RU')} BC`;
+}
+
+async function processIncomingReferral() {
+    const referralCode = getReferralStartParam();
+    if (!supabase || currentProfileId === null || !referralCode) return;
+    const { data, error } = await supabase.rpc('claim_referral', {
+        p_referred_user_id: Number(currentProfileId),
+        p_referral_code: referralCode,
+        p_reward_amount: 100
+    });
+    if (error) {
+        console.error('Supabase referral claim error:', error);
+        return;
+    }
+    if (data?.claimed) console.log('Реферальный бонус начислен:', data.reward_amount);
+}
+
+async function loadReferralStats() {
+    if (!supabase || currentProfileId === null) return;
+    const { data, error } = await supabase.rpc('get_referral_stats', { p_user_id: Number(currentProfileId) });
+    if (error) {
+        console.error('Supabase referral stats error:', error);
+        return;
+    }
+    renderReferralStats(data || {});
+}
+
+async function shareReferralLink() {
+    const referralUrl = document.querySelector('#referral-url')?.textContent;
+    if (!referralUrl || referralUrl === 'Загрузка ссылки...') return;
+    const shareText = 'Присоединяйся к BR Online и получай бонусы!';
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(shareText)}`;
+    const telegramApp = window.Telegram && window.Telegram.WebApp;
+    if (telegramApp?.openTelegramLink) {
+        telegramApp.openTelegramLink(shareUrl);
+        return;
+    }
+    if (navigator.share) {
+        await navigator.share({ title: 'BR Online', text: shareText, url: referralUrl });
+        return;
+    }
+    await navigator.clipboard?.writeText(referralUrl);
+}
+
 function safeText(element, value, fallback = 'Player') {
     if (!element) return;
     element.textContent = value || fallback;
@@ -1419,6 +1483,8 @@ async function initTelegramAuth() {
     applyTelegramProfileToUI(telegramUser);
     await syncTelegramProfileToSupabase(telegramUser);
     await loadCurrentUserProfile();
+    await processIncomingReferral();
+    await loadReferralStats();
     await loadInventory();
     await loadShowcase();
     await loadLeaderboard();
@@ -2095,6 +2161,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('[data-settings-action="nickname"]')?.addEventListener('click', () => {
         setSettingsModal(false);
         openNicknameModal();
+    });
+
+    document.querySelector('[data-settings-action="referral"]')?.addEventListener('click', () => {
+        setSettingsModal(false);
+        showPage('referral');
+        loadReferralStats();
+    });
+
+    document.querySelector('.referral-share-btn')?.addEventListener('click', async () => {
+        try {
+            await shareReferralLink();
+        } catch (error) {
+            if (error?.name !== 'AbortError') console.error('Referral share error:', error);
+        }
+    });
+
+    document.querySelector('.referral-back-btn')?.addEventListener('click', () => {
+        showPage('profile');
     });
 
     const topTabs = document.querySelectorAll('.top-tab[data-top-metric]');
