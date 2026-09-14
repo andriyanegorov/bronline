@@ -1859,7 +1859,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showResultModal(drops) {
         if (!drops?.length || !dropResultModal || !dropResultsList) return;
         activeResultDrops = drops;
-        resultActionCompleted = false;
+        resultActionCompleted = freeCaseOpening;
         dropResultsList.innerHTML = drops.map((drop, index) => `<label class="drop-result-item"><input type="checkbox" checked data-result-index="${index}"><span class="drop-result-check"><img src="./data/assets/check.svg" alt=""></span><span class="drop-result-image-wrap"><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"></span><span class="drop-result-info"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small></span></label>`).join('');
         const totalValue = drops.reduce((sum, drop) => sum + (Number(drop.price) || 0), 0);
         if (dropResultTotal) dropResultTotal.textContent = `${totalValue.toLocaleString('ru-RU')} BC`;
