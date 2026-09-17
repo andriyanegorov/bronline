@@ -230,12 +230,12 @@
         function renderBuilderItems(items) {
             const list = document.querySelector('#case-items-builder');
             if (!items?.length) { list.innerHTML = '<p class="empty-state">В каталоге пока нет предметов</p>'; return; }
-            list.innerHTML = items.map(item => `<label class="picker-item rarity-${item.rarity}" data-name="${item.name.toLowerCase()}" data-price="${item.item_value || 0}" data-rarity="${item.rarity}"><input type="checkbox" data-item-id="${item.id}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="picker-item-info"><strong>${item.name}</strong><small>${rarityNames[item.rarity] || item.rarity}</small></span><span class="picker-item-price">${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</span><span class="picker-check">✓</span></label>`).join('');
+            list.innerHTML = items.map(item => `<label class="picker-item rarity-${item.rarity}" data-name="${String(item.name || '').toLocaleLowerCase('ru-RU')}" data-price="${item.item_value || 0}" data-rarity="${item.rarity}"><input type="checkbox" data-item-id="${item.id}"><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="picker-item-info"><strong>${item.name || 'Без названия'}</strong><small>${rarityNames[item.rarity] || item.rarity}</small></span><span class="picker-item-price">${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</span><span class="picker-check">✓</span></label>`).join('');
             list.querySelectorAll('[data-item-id]').forEach(checkbox => { checkbox.checked = selectedCaseItems.has(checkbox.dataset.itemId); });
             filterPickerItems();
         }
         function filterPickerItems() {
-            const query = document.querySelector('#case-item-search').value.trim().toLowerCase();
+            const query = document.querySelector('#case-item-search').value.trim().toLocaleLowerCase('ru-RU');
             const rarity = document.querySelector('#case-item-rarity-filter').value;
             const maxPrice = Number(document.querySelector('#case-item-price-filter').value);
             const sort = document.querySelector('#case-item-sort').value;
@@ -372,8 +372,11 @@
         document.querySelector('#refresh-items').addEventListener('click', loadItems);
         document.querySelector('#refresh-cases').addEventListener('click', loadCases);
         cancelCaseEdit.addEventListener('click', resetCaseForm);
-        ['case-item-search', 'case-item-rarity-filter', 'case-item-price-filter', 'case-item-sort'].forEach(id => document.querySelector(`#${id}`).addEventListener('input', filterPickerItems));
-        document.querySelector('#case-item-rarity-filter').addEventListener('change', filterPickerItems);
+        ['case-item-search', 'case-item-rarity-filter', 'case-item-price-filter', 'case-item-sort'].forEach(id => {
+            const control = document.querySelector(`#${id}`);
+            control.addEventListener('input', filterPickerItems);
+            control.addEventListener('change', filterPickerItems);
+        });
         document.querySelector('#case-items-builder').addEventListener('change', event => {
             const checkbox = event.target.closest('[data-item-id]');
             if (checkbox) {

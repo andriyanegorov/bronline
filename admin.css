@@ -52,3 +52,4 @@ button, input, select { font: inherit; }
 .promo-form [hidden] { display: none; }
 .promo-list-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--text); font-size: 13px; }
 .promo-code-cell { color: var(--yellow); font: 12px 'DM Mono', monospace; letter-spacing: .06em; }
+.picker-item[hidden] { display: none; }
