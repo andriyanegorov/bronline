@@ -68,6 +68,7 @@
                     <div class="picker-toolbar">
                         <label class="picker-search"><span>⌕</span><input id="case-item-search" type="search" placeholder="Поиск по названию"></label>
                         <label class="picker-filter"><span>Редкость</span><select id="case-item-rarity-filter"><option value="all">Все редкости</option><option value="common">Ширп</option><option value="uncommon">Обычный</option><option value="rare">Редкий</option><option value="epic">Эпичный</option><option value="legendary">Золотой</option><option value="mythical">Красный</option></select></label>
+                        <label class="picker-filter"><span>Цена от</span><input id="case-item-min-price-filter" type="number" min="0" placeholder="Без лимита"></label>
                         <label class="picker-filter"><span>Цена до</span><input id="case-item-price-filter" type="number" min="0" placeholder="Без лимита"></label>
                         <label class="picker-filter"><span>Сортировка</span><select id="case-item-sort"><option value="name">По названию</option><option value="price-asc">Цена: сначала дешевле</option><option value="price-desc">Цена: сначала дороже</option><option value="rarity">По редкости</option></select></label>
                     </div>
@@ -237,6 +238,8 @@
         function filterPickerItems() {
             const query = document.querySelector('#case-item-search').value.trim().toLocaleLowerCase('ru-RU');
             const rarity = document.querySelector('#case-item-rarity-filter').value;
+            const minPriceInput = document.querySelector('#case-item-min-price-filter');
+            const minPrice = Number(minPriceInput.value);
             const maxPrice = Number(document.querySelector('#case-item-price-filter').value);
             const sort = document.querySelector('#case-item-sort').value;
             const items = [...document.querySelectorAll('.picker-item')];
@@ -244,7 +247,7 @@
             const container = document.querySelector('#case-items-builder');
             items.forEach(item => container.appendChild(item));
             let visible = 0;
-            items.forEach(item => { const matches = (!query || item.dataset.name.includes(query)) && (rarity === 'all' || item.dataset.rarity === rarity) && (!Number.isFinite(maxPrice) || !document.querySelector('#case-item-price-filter').value || Number(item.dataset.price) <= maxPrice); item.hidden = !matches; if (matches) visible += 1; });
+            items.forEach(item => { const matches = (!query || item.dataset.name.includes(query)) && (rarity === 'all' || item.dataset.rarity === rarity) && (!minPriceInput.value || Number(item.dataset.price) >= minPrice) && (!document.querySelector('#case-item-price-filter').value || Number(item.dataset.price) <= maxPrice); item.hidden = !matches; if (matches) visible += 1; });
             document.querySelector('#picker-results-count').textContent = `${visible} ${visible === 1 ? 'предмет' : 'предметов'}`;
         }
         function selectAllItems() {
@@ -372,7 +375,7 @@
         document.querySelector('#refresh-items').addEventListener('click', loadItems);
         document.querySelector('#refresh-cases').addEventListener('click', loadCases);
         cancelCaseEdit.addEventListener('click', resetCaseForm);
-        ['case-item-search', 'case-item-rarity-filter', 'case-item-price-filter', 'case-item-sort'].forEach(id => {
+        ['case-item-search', 'case-item-rarity-filter', 'case-item-min-price-filter', 'case-item-price-filter', 'case-item-sort'].forEach(id => {
             const control = document.querySelector(`#${id}`);
             control.addEventListener('input', filterPickerItems);
             control.addEventListener('change', filterPickerItems);

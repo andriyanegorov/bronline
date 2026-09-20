@@ -1101,6 +1101,26 @@ select {
     margin-bottom: 10px;
 }
 
+.case-card-price--premium {
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.case-card-price-old,
+.case-open-old-price {
+    color: #ffFFFF;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #ff4444;
+    opacity: 0.8;
+}
+
+.case-card-price-new,
+.case-open-current-price {
+    color: #ff4544;
+    font-weight: var(--font-bold);
+}
+
 .price-coin {
     width: 29px;
     height: 26px;
@@ -1393,6 +1413,246 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
 
 .page.active {
     display: block;
+}
+
+.upgrader-event-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: calc(100% - 32px);
+    max-width: 420px;
+    margin: 4px auto 18px;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 55, 61, .45);
+    border-radius: 14px;
+    background: linear-gradient(105deg, #271014, #111318 70%);
+    color: #fff;
+    text-align: left;
+    box-shadow: 0 0 24px rgba(255, 35, 43, .12), inset 0 0 18px rgba(255, 57, 65, .05);
+    cursor: pointer;
+}
+.upgrader-event-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: #f23840; color: #fff; font-size: 25px; font-weight: 800; }
+.upgrader-event-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.upgrader-event-copy strong { font-size: 15px; letter-spacing: .7px; }
+.upgrader-event-copy small { color: #9ea4b1; font-size: 11px; }
+.upgrader-event-arrow { color: #f33e48; font-size: 27px; }
+
+.upgrader-page { min-height: calc(100vh - 82px); padding: 18px 16px 104px; background: #030507; color: #f4f5f7; }
+.upgrader-shell { width: min(100%, 720px); margin: 0 auto; }
+.upgrader-heading-row { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+.upgrader-heading-row h1 { margin: 0; color: #f1f2f5; font-size: 27px; letter-spacing: .4px; line-height: 1; }
+.upgrader-heading-row h1 span { color: #f33d45; font-size: 34px; }
+.upgrader-heading-row p { margin: 6px 0 0; color: #9097a5; font-size: 12px; }
+.upgrader-back-btn, .upgrader-help-btn { flex: 0 0 auto; border: 1px solid #1e252e; background: #080b10; color: #99a2b1; cursor: pointer; }
+.upgrader-back-btn { width: 31px; height: 31px; border-radius: 9px; font-size: 30px; line-height: 20px; }
+.upgrader-help-btn { width: 35px; height: 35px; margin-left: auto; border-radius: 10px; font-size: 17px; }
+.upgrader-deal { display: grid; grid-template-columns: minmax(0, 1fr) 116px minmax(0, 1fr); align-items: center; gap: 6px; }
+.upgrader-side-block { display: flex; flex-direction: column; min-width: 0; gap: 8px; }
+.upgrader-item-card {
+    --smoke-url: url('./data/assets/rarity/common_smoke.png');
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    padding: 16px 12px 12px;
+    border: 1px solid #202631;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #121315, #090a0b);
+    overflow: hidden;
+}
+.upgrader-source-card { --smoke-url: url('./data/assets/rarity/common_smoke.png'); border-color: #737b85; box-shadow: inset 0 0 20px rgba(115, 123, 133, .08); }
+.upgrader-source-card.rarity-uncommon { --smoke-url: url('./data/assets/rarity/uncommon_smoke.png'); border-color: #25b85a; box-shadow: inset 0 0 20px rgba(37, 184, 90, .08); }
+.upgrader-source-card.rarity-rare { --smoke-url: url('./data/assets/rarity/rare_smoke.png'); border-color: #328ee6; box-shadow: inset 0 0 20px rgba(50, 142, 230, .08); }
+.upgrader-source-card.rarity-epic { --smoke-url: url('./data/assets/rarity/epic_smoke.png'); border-color: #b44be0; box-shadow: inset 0 0 20px rgba(180, 75, 224, .08); }
+.upgrader-source-card.rarity-legendary { --smoke-url: url('./data/assets/rarity/legendary_smoke.png'); border-color: #e0ad32; box-shadow: inset 0 0 20px rgba(224, 173, 50, .08); }
+.upgrader-source-card.rarity-mythical { --smoke-url: url('./data/assets/rarity/mythic_smoke.png'); border-color: #ff3030; box-shadow: inset 0 0 20px rgba(255, 48, 48, .08); }
+.upgrader-target-card { --smoke-url: url('./data/assets/rarity/common_smoke.png'); border-color: #737b85; box-shadow: inset 0 0 20px rgba(115, 123, 133, .08); }
+.upgrader-target-card.rarity-uncommon { --smoke-url: url('./data/assets/rarity/uncommon_smoke.png'); border-color: #25b85a; box-shadow: inset 0 0 20px rgba(37, 184, 90, .08); }
+.upgrader-target-card.rarity-rare { --smoke-url: url('./data/assets/rarity/rare_smoke.png'); border-color: #328ee6; box-shadow: inset 0 0 20px rgba(50, 142, 230, .08); }
+.upgrader-target-card.rarity-epic { --smoke-url: url('./data/assets/rarity/epic_smoke.png'); border-color: #b44be0; box-shadow: inset 0 0 20px rgba(180, 75, 224, .08); }
+.upgrader-target-card.rarity-legendary { --smoke-url: url('./data/assets/rarity/legendary_smoke.png'); border-color: #e0ad32; box-shadow: inset 0 0 20px rgba(224, 173, 50, .08); }
+.upgrader-target-card.rarity-mythical { --smoke-url: url('./data/assets/rarity/mythic_smoke.png'); border-color: #ff3030; box-shadow: inset 0 0 20px rgba(255, 48, 48, .08); }
+.upgrader-item-card::before {
+    content: '';
+    position: absolute;
+    inset: -10% -5% -18%;
+    background: var(--smoke-url) center/cover no-repeat;
+    opacity: 0.7;
+    filter: saturate(0.8) brightness(0.7);
+    pointer-events: none;
+}
+.upgrader-card-label { display: block; position: relative; z-index: 1; color: #9da5b4; font-size: 12px; margin-bottom: 8px; }
+.upgrader-item-art { position: relative; z-index: 1; display: grid; width: 100%; aspect-ratio: 1 / 1; place-items: center; }
+.upgrader-item-art img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 12px rgba(0,0,0,.8)); }
+.upgrader-target-card .upgrader-item-art img[hidden] { display: none; }
+.upgrader-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0;
+    padding: 0 4px;
+    min-width: 0;
+}
+.upgrader-item-info > strong {
+    overflow: hidden;
+    color: #f7f8fa;
+    font-size: 12px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.upgrader-item-price {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #aeb5c1;
+    font-size: 12px;
+    line-height: 1;
+}
+.upgrader-item-price strong { color: #d63a39; font-size: 13px; }
+.upgrader-item-price img { width: 14px; height: 14px; object-fit: contain; }
+.upgrader-item-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    color: #f7f8fa;
+}
+.upgrader-item-line strong {
+    display: block;
+    flex: 1;
+    color: #f7f8fa;
+    font-size: clamp(15px, 3vw, 20px);
+    line-height: 1.1;
+    white-space: normal;
+    word-break: break-word;
+}
+.upgrader-item-line span {
+    display: block;
+    flex: 0 0 auto;
+    color: #eef0f4;
+    font-size: 12px;
+    font-weight: 600;
+}
+.upgrader-source-price { color: #eef0f4; }
+.upgrader-source-name { display: block; color: #eef0f4; font-size: 13px; font-weight: 600; opacity: .9; }
+.upgrader-covered-art { position: relative; margin-top: 0; border-radius: 48%; background: radial-gradient(ellipse, rgba(255, 37, 45, .33), transparent 67%); }
+.upgrader-covered-art::before { content: ''; position: absolute; inset: 22% 8% 16%; border-radius: 55% 45% 30% 35%; background: linear-gradient(145deg, #1c1c20, #050608); box-shadow: 0 0 20px #f22b35; transform: skew(-8deg); }
+.upgrader-covered-art span { position: relative; z-index: 1; color: #ff3f47; font-size: clamp(24px, 5vw, 34px); font-weight: 700; }
+@property --chance {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+.upgrader-chance { display: grid; place-items: center; }
+.upgrader-chance-ring { --chance: 0%; position: relative; display: grid; width: 108px; height: 108px; place-items: center; align-content: center; border-radius: 50%; background: conic-gradient(from 0deg, #ff3f48 0 var(--chance), #242b35 var(--chance) 100%); box-shadow: 0 0 28px rgba(255, 38, 48, .26); cursor: pointer; transition: --chance .55s cubic-bezier(.22, .8, .32, 1), transform .18s ease; }
+.upgrader-chance-ring:hover { transform: scale(1.03); }
+.upgrader-chance-ring::before { content: ''; position: absolute; inset: 10px; border-radius: 50%; background: #090c11; }
+.upgrader-chance-ring strong, .upgrader-chance-ring span { position: relative; z-index: 1; }
+.upgrader-chance-ring strong { color: #ff4149; font-size: 25px; }
+.upgrader-chance-ring span { margin-top: 3px; color: #aab0bc; font-size: 10px; white-space: nowrap; }
+.upgrader-action-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 16px; }
+.upgrader-action-controls { display: flex; flex-direction: row; align-items: stretch; gap: 8px; min-width: 0; }
+.upgrader-submit, .upgrader-fast-toggle { height: 58px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+.upgrader-submit { border: #9e1312;
+    background: #9e1312;
+    color: white;
+    font-size: 18px;
+    box-shadow: 0 5px 18px rgba(255, 34, 43, .2); }
+.upgrader-submit:disabled { opacity: .45; cursor: not-allowed; }
+.upgrader-submit span { font-size: 25px; vertical-align: -2px; }
+.upgrader-fast-toggle { flex: 0 0 154px; justify-self: end; display: flex; align-items: center; justify-content: center; gap: 7px; width: 154px; border: 1px solid #202731; background: #090c11; color: #a9b0bc; font-size: 11px; }
+.upgrader-fast-toggle > span { color: #ff414a; font-size: 24px; }
+.upgrader-fast-toggle i { width: 36px; height: 22px; border-radius: 20px; background: #202832; position: relative; }
+.upgrader-fast-toggle i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c6d0dd; transition: transform .2s ease; }
+.upgrader-fast-toggle[aria-pressed="true"] i::after { transform: translateX(14px); }
+.upgrader-multipliers { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; align-items: center; margin-top: 0; padding: 9px; border: 1px solid #1d242d; border-radius: 10px; background: #080b0f; }
+.upgrader-multipliers span { color: #aab1be; font-size: 11px; }
+.upgrader-multipliers span { grid-column: 1 / -1; }
+.upgrader-multipliers button { height: 42px; border: 1px solid #1f2730; border-radius: 9px; background: #0b0f14; color: #d7dbe2; font-size: 13px; cursor: pointer; }
+.upgrader-multipliers button.selected { border-color: #9e1312;
+    background: #9e1312; }
+.upgrader-inventory-panel { margin-top: 16px; padding: 11px 10px 14px; border: 1px solid #171e27; border-radius: 14px; background: #070a0e; }
+.upgrader-inventory-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.upgrader-inventory-heading h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.upgrader-inventory-heading h2 span { color: #eef4fb; font-size: 24px; vertical-align: -2px; }
+.upgrader-sort-btn { border: 1px solid #202832; border-radius: 8px; padding: 9px 10px; background: #090d12; color: #aab2c0; font-size: 11px; }
+.upgrader-inventory-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+.upgrader-inventory-grid > p { grid-column: 1 / -1; color: #89919e; font-size: 12px; }
+.upgrader-inventory-cell { display: flex; flex-direction: column; min-width: 0; }
+.upgrader-inventory-cell.selected .upgrader-inventory-item { border-color: #ef3c45; box-shadow: inset 0 0 15px rgba(255, 39, 47, .12); }
+.upgrader-inventory-item {
+    --smoke-url: url('./data/assets/rarity/common_smoke.png');
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+    padding: 5px;
+    border: 1px solid #1e252d;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #121315, #090a0b);
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+}
+.upgrader-inventory-item::before {
+    content: '';
+    position: absolute;
+    inset: -10% -5% -20%;
+    background: var(--smoke-url) center/cover no-repeat;
+    opacity: 0.58;
+    filter: saturate(0.8) brightness(0.7);
+    pointer-events: none;
+}
+.upgrader-inventory-item.rarity-common { --smoke-url: url('./data/assets/rarity/common_smoke.png'); border-color: #737b85; box-shadow: inset 0 0 20px rgba(115, 123, 133, 0.08); }
+.upgrader-inventory-item.rarity-uncommon { --smoke-url: url('./data/assets/rarity/uncommon_smoke.png'); border-color: #25b85a; box-shadow: inset 0 0 20px rgba(37, 184, 90, 0.08); }
+.upgrader-inventory-item.rarity-rare { --smoke-url: url('./data/assets/rarity/rare_smoke.png'); border-color: #328ee6; box-shadow: inset 0 0 20px rgba(50, 142, 230, 0.08); }
+.upgrader-inventory-item.rarity-epic { --smoke-url: url('./data/assets/rarity/epic_smoke.png'); border-color: #b44be0; box-shadow: inset 0 0 20px rgba(180, 75, 224, 0.08); }
+.upgrader-inventory-item.rarity-legendary { --smoke-url: url('./data/assets/rarity/legendary_smoke.png'); border-color: #e0ad32; box-shadow: inset 0 0 20px rgba(224, 173, 50, 0.08); }
+.upgrader-inventory-item.rarity-mythical { --smoke-url: url('./data/assets/rarity/mythic_smoke.png'); border-color: #ff3030; box-shadow: inset 0 0 20px rgba(255, 48, 48, 0.08); }
+.upgrader-inventory-item img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.upgrader-inventory-meta { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.upgrader-inventory-name, .upgrader-inventory-price { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upgrader-inventory-name { color: #f7f8fa; font-size: 10px; line-height: 1.25; }
+.upgrader-inventory-price { color: #ff4149; font-size: 12px; font-weight: 700; }
+.upgrader-warning { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 14px; border: 1px solid #1e252e; border-radius: 12px; color: #8f98a7; font-size: 10px; }
+.upgrader-warning > span:first-child { color: #ff3841; font-size: 26px; }
+.upgrader-warning > span:nth-child(2) { flex: 1; }
+.upgrader-warning button { flex: 0 0 auto; border: 1px solid #252d38; border-radius: 8px; padding: 9px; background: #090d12; color: #adb4c0; font-size: 10px; }
+
+@media (max-width: 420px) {
+    .upgrader-deal { grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr); gap: 4px; }
+    .upgrader-item-card { padding: 13px 9px 10px; }
+    .upgrader-item-card strong { font-size: 17px; }
+    .upgrader-item-art { height: auto; }
+    .upgrader-chance-ring { width: 86px; height: 86px; border-width: 8px; }
+    .upgrader-chance-ring strong { font-size: 21px; }
+    .upgrader-chance-ring span { font-size: 8px; }
+    .upgrader-action-row { grid-template-columns: 1fr; gap: 8px; }
+    .upgrader-action-controls { gap: 6px; }
+    .upgrader-fast-toggle { flex-basis: 128px; width: 128px; height: 42px; }
+    .upgrader-multipliers { gap: 4px; padding: 6px; }
+    .upgrader-multipliers button { height: 42px; font-size: 10px; }
+    .upgrader-inventory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+}
+
+@media (min-width: 768px) {
+    .upgrader-page { width: 420px; min-height: 100vh; margin: 0 auto; border-left: 1px solid #171c24; border-right: 1px solid #171c24; }
+    .upgrader-event-banner { margin-top: 12px; }
 }
 
 .referral-page {
@@ -2223,22 +2483,33 @@ display: grid;
     will-change: transform;
 }
 
-.reel-item {
+.reel-item-shell {
     --smoke-url: url('./data/assets/rarity/common_smoke.png');
-    position: relative;
-    width: 145px;
-    height: 220px;
-    flex: 0 0 145px;
-    padding: 11px 8px 13px;
     display: flex;
     flex-direction: column;
+    width: 145px;
+    flex: 0 0 145px;
+    gap: 8px;
+}
+
+.reel-item-shell.rarity-uncommon { --smoke-url: url('./data/assets/rarity/uncommon_smoke.png'); }
+.reel-item-shell.rarity-rare { --smoke-url: url('./data/assets/rarity/rare_smoke.png'); }
+.reel-item-shell.rarity-epic { --smoke-url: url('./data/assets/rarity/epic_smoke.png'); }
+.reel-item-shell.rarity-legendary { --smoke-url: url('./data/assets/rarity/legendary_smoke.png'); }
+.reel-item-shell.rarity-mythical { --smoke-url: url('./data/assets/rarity/mythic_smoke.png'); }
+
+.reel-item {
+    position: relative;
+    width: 145px;
+    height: 180px;
+    display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 7px;
+    justify-content: center;
+    padding: 11px 8px 0;
     border: 1px solid;
     border-radius: 9px;
-    background: #101113;
-    text-align: center;
+    background: linear-gradient(145deg, #121315, #090a0b);
+    overflow: hidden;
 }
 
 .reel-item::before {
@@ -2250,12 +2521,6 @@ display: grid;
     filter: saturate(0.8) brightness(0.7);
     pointer-events: none;
 }
-
-.reel-item.rarity-uncommon { --smoke-url: url('./data/assets/rarity/uncommon_smoke.png'); }
-.reel-item.rarity-rare { --smoke-url: url('./data/assets/rarity/rare_smoke.png'); }
-.reel-item.rarity-epic { --smoke-url: url('./data/assets/rarity/epic_smoke.png'); }
-.reel-item.rarity-legendary { --smoke-url: url('./data/assets/rarity/legendary_smoke.png'); }
-.reel-item.rarity-mythical { --smoke-url: url('./data/assets/rarity/mythic_smoke.png'); }
 
 .reel-item.rarity-common { border-color: #737b85; box-shadow: 0 0 13px rgba(115, 123, 133, 0.22); }
 .reel-item.rarity-uncommon { border-color: #25b85a; box-shadow: 0 0 13px rgba(37, 184, 90, 0.22); }
@@ -2278,23 +2543,28 @@ display: grid;
     z-index: 1;
     width: 94%;
     height: 125px;
-    margin-top: auto;
     object-fit: contain;
 }
 
-.reel-item strong {
+.reel-item-meta {
     position: relative;
     z-index: 1;
-    min-height: 35px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-align: center;
+}
+
+.reel-item-meta strong {
     color: #f1f1f1;
     font-size: 14px;
     line-height: 1.25;
     font-weight: 500;
 }
 
-.reel-item small {
-    position: relative;
-    z-index: 1;
+.reel-item-meta small {
     color: #f1f1f1;
     font-size: 14px;
 }

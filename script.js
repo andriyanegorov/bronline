@@ -25,6 +25,12 @@ let showcaseManagerItems = [];
 let showcaseSort = 'value';
 let showcaseSettings = { background: 'standard', frame: 'standard', styleLevel: 1 };
 let selectedShowcaseInventoryId = null;
+let upgraderItems = [];
+let upgraderCatalogItems = [];
+let upgraderMultiplier = 1.2;
+let selectedUpgraderItem = null;
+let selectedUpgraderTarget = null;
+const upgraderDebug = (...args) => console.debug('[UPGRADER DEBUG]', ...args);
 
 function setBanState(value) {
     currentProfileBanned = value === true || value === 'true';
@@ -115,6 +121,8 @@ let freeCaseTimer = null;
 let freeCaseOpening = false;
 let freeCaseForcedDrop = null;
 let freeCaseClaimId = null;
+let casesById = new Map();
+let selectedCase = null;
 
 function formatFreeCaseCountdown(value) {
     const milliseconds = Math.max(0, new Date(value).getTime() - Date.now());
@@ -454,6 +462,7 @@ async function loadCurrentUserProfile() {
         currentProfileUsername = data?.username || currentProfileUsername;
         currentProfilePremium = Boolean(data?.premium);
         currentProfileAdmin = Boolean(data?.admin);
+        window.refreshCasePriceUI?.();
         setBanState(data?.ban);
         subscribeToProfileBan();
         showcaseSettings.background = data?.showcase_background || 'standard';
@@ -566,6 +575,7 @@ async function toggleShowcaseItem(inventoryId, button) {
         return;
     }
     await loadInventory();
+    await loadUpgraderInventory();
     await loadShowcase();
     renderShowcaseManager();
 }
@@ -788,26 +798,36 @@ async function sellAllInventory() {
 
     const showcasedIds = new Set((showcaseResult.data || []).map(item => String(item.inventory_id)));
     const inventoryToSell = (inventoryResult.data || []).filter(item => !showcasedIds.has(String(item.id)));
-    let balance = null;
-    for (const item of inventoryToSell) {
-        const { data, error } = await supabase.rpc('sell_inventory_item', {
-            p_inventory_id: Number(item.id),
-            p_user_id: currentProfileId
-        });
-        if (error) {
-            console.error('Supabase sell all inventory error:', error);
-            continue;
-        }
-        balance = data;
+    if (!inventoryToSell.length) {
+        closeSellAllConfirmation();
+        if (submitButton) submitButton.disabled = false;
+        return;
     }
 
-    const balanceAmount = document.querySelector('.balance-amount');
-    if (balanceAmount && balance !== null) balanceAmount.textContent = Number(balance).toLocaleString('ru-RU');
-    closeSellAllConfirmation();
-    await loadInventory();
-    await loadProfileStats();
-    if (inventoryToSell.length) showSaleToast();
-    if (submitButton) submitButton.disabled = false;
+    try {
+        const { data: balance, error } = await supabase.rpc('sell_inventory_items', {
+            p_user_id: Number(currentProfileId),
+            p_inventory_ids: inventoryToSell.map(item => Number(item.id))
+        });
+
+        if (error) {
+            console.error('Supabase bulk sell all inventory error:', error);
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
+
+        const balanceAmount = document.querySelector('.balance-amount');
+        if (balanceAmount && balance !== null && balance !== undefined) {
+            balanceAmount.textContent = Number(balance).toLocaleString('ru-RU');
+        }
+
+        closeSellAllConfirmation();
+        await loadInventory();
+        await loadProfileStats();
+        showSaleToast();
+    } finally {
+        if (submitButton) submitButton.disabled = false;
+    }
 }
 
 let saleToastTimer = null;
@@ -1158,6 +1178,189 @@ async function loadInventory() {
     }
     if (showcaseResult.error) console.error('Supabase showcase ownership load error:', showcaseResult.error);
     renderInventory(inventoryResult.data, new Set((showcaseResult.data || []).map(item => String(item.inventory_id))));
+}
+
+function renderUpgraderState() {
+    const sourceValue = document.querySelector('.upgrader-source-value');
+    const sourcePrice = document.querySelector('.upgrader-source-price');
+    const sourceName = document.querySelector('.upgrader-source-name');
+    const sourceImage = document.querySelector('#upgrader-source-image');
+    const sourceCard = document.querySelector('.upgrader-source-card');
+    const targetCard = document.querySelector('.upgrader-target-card');
+    const targetImage = document.querySelector('#upgrader-target-image');
+    const targetName = document.querySelector('.upgrader-target-name');
+    const targetValue = document.querySelector('#upgrader-target-value');
+    const chanceValue = document.querySelector('#upgrader-chance-value');
+    const chanceRing = document.querySelector('.upgrader-chance-ring');
+    const submitButton = document.querySelector('.upgrader-submit');
+    if (!sourceValue || !chanceValue) return;
+    const rarity = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(selectedUpgraderItem?.rarity)
+        ? selectedUpgraderItem.rarity
+        : 'common';
+    if (sourceCard) {
+        sourceCard.classList.remove('rarity-common', 'rarity-uncommon', 'rarity-rare', 'rarity-epic', 'rarity-legendary', 'rarity-mythical');
+        sourceCard.classList.add(`rarity-${rarity}`);
+    }
+    if (!selectedUpgraderItem) {
+        sourceValue.textContent = 'Выберите предмет';
+        if (sourcePrice) sourcePrice.textContent = '0';
+        sourceImage.src = './data/assets/items/m5f90.png';
+        sourceImage.alt = 'Выберите предмет';
+        targetValue.textContent = '0';
+        if (targetName) targetName.textContent = 'Нажмите на шанс';
+        if (targetImage) {
+            targetImage.hidden = true;
+            targetImage.src = './data/assets/items/m5f90.png';
+        }
+        targetCard?.classList.remove('rarity-common', 'rarity-uncommon', 'rarity-rare', 'rarity-epic', 'rarity-legendary', 'rarity-mythical');
+        targetCard?.classList.add('rarity-common');
+        targetCard?.classList.remove('target-selected');
+        chanceValue.textContent = '0%';
+        if (chanceRing) chanceRing.style.setProperty('--chance', '0%');
+        submitButton.disabled = true;
+        return;
+    }
+    const itemValue = Number(selectedUpgraderItem.item_value || 0);
+    const expectedTargetValue = Math.round(itemValue * upgraderMultiplier);
+    const actualTargetValue = Number(selectedUpgraderTarget?.item_value || expectedTargetValue);
+    const chance = actualTargetValue > 0
+        ? Math.min(100, Math.round(itemValue / actualTargetValue * 100))
+        : 0;
+    sourceValue.textContent = selectedUpgraderItem.item_name || 'Предмет';
+    if (sourcePrice) sourcePrice.textContent = itemValue.toLocaleString('ru-RU');
+    sourceImage.src = selectedUpgraderItem.image_url || './data/assets/items/m5f90.png';
+    sourceImage.alt = selectedUpgraderItem.item_name || 'Предмет';
+    targetValue.textContent = actualTargetValue.toLocaleString('ru-RU');
+    if (targetName) targetName.textContent = selectedUpgraderTarget?.name || 'Нажмите на шанс';
+    if (targetImage) {
+        targetImage.hidden = !selectedUpgraderTarget;
+        targetImage.src = selectedUpgraderTarget?.image_url || './data/assets/items/m5f90.png';
+        targetImage.alt = selectedUpgraderTarget?.name || 'Выберите предмет';
+    }
+    if (targetCard) {
+        const targetRarity = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(selectedUpgraderTarget?.rarity)
+            ? selectedUpgraderTarget.rarity
+            : 'common';
+        targetCard.classList.remove('rarity-common', 'rarity-uncommon', 'rarity-rare', 'rarity-epic', 'rarity-legendary', 'rarity-mythical');
+        targetCard.classList.add(`rarity-${targetRarity}`);
+    }
+    chanceValue.textContent = `${chance}%`;
+    if (chanceRing) chanceRing.style.setProperty('--chance', `${chance}%`);
+    submitButton.disabled = false;
+}
+
+function renderUpgraderInventory() {
+    const grid = document.querySelector('#upgrader-inventory-grid');
+    if (!grid) return;
+    if (!upgraderItems.length) {
+        grid.innerHTML = '<p>Инвентарь пока пуст</p>';
+        renderUpgraderState();
+        return;
+    }
+    grid.innerHTML = upgraderItems.map(item => {
+        const rarity = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(item.rarity) ? item.rarity : 'common';
+        const isSelected = String(item.id) === String(selectedUpgraderItem?.id);
+        return `
+            <div class="upgrader-inventory-cell${isSelected ? ' selected' : ''}">
+                <button class="upgrader-inventory-item rarity-${rarity}${isSelected ? ' selected' : ''}" type="button" data-upgrader-item-id="${item.id}">
+                    <img src="${escapeLeaderboardText(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeLeaderboardText(item.item_name || 'Предмет')}">
+                </button>
+                <div class="upgrader-inventory-meta">
+                    <strong class="upgrader-inventory-name">${escapeLeaderboardText(item.item_name || 'Предмет')}</strong>
+                    <span class="upgrader-inventory-price">${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    renderUpgraderState();
+}
+
+async function loadUpgraderInventory() {
+    const grid = document.querySelector('#upgrader-inventory-grid');
+    if (!grid || !supabase || currentProfileId === null) return;
+    const { data, error } = await supabase.from('inventory').select('id, item_name, item_value, image_url, rarity, created_at').eq('user_id', currentProfileId).order('created_at', { ascending: false });
+    if (error) {
+        console.error('Supabase upgrader inventory error:', error);
+        grid.innerHTML = '<p>Не удалось загрузить инвентарь</p>';
+        return;
+    }
+    upgraderItems = data || [];
+    selectedUpgraderItem = upgraderItems[0] || null;
+    renderUpgraderInventory();
+}
+
+async function loadUpgraderCatalog() {
+    upgraderDebug('catalog: start', { cachedItems: upgraderCatalogItems.length, supabase: Boolean(supabase) });
+    if (!supabase || upgraderCatalogItems.length) {
+        upgraderDebug('catalog: skipped', { reason: !supabase ? 'supabase unavailable' : 'already cached' });
+        return;
+    }
+    const { data, error } = await supabase.from('items').select('id, name, rarity, item_value, image_url').order('item_value', { ascending: true });
+    if (!error && data?.length) {
+        upgraderCatalogItems = data;
+        upgraderDebug('catalog: loaded from items', { count: data.length, first: data[0] });
+        return;
+    }
+    if (error) console.error('[UPGRADER DEBUG] catalog items error:', error);
+    else upgraderDebug('catalog: items table returned no rows');
+
+    const fallback = await supabase
+        .from('cases')
+        .select('case_items(item_id, item_name, rarity, item_value, image_url)')
+        .eq('active', true);
+    if (fallback.error) {
+        console.error('[UPGRADER DEBUG] catalog fallback error:', fallback.error);
+        return;
+    }
+    const uniqueItems = new Map();
+    (fallback.data || []).forEach(caseRecord => {
+        (caseRecord.case_items || []).forEach(item => {
+            const itemId = item.item_id || `${item.item_name}-${item.item_value}`;
+            if (!uniqueItems.has(itemId)) {
+                uniqueItems.set(itemId, {
+                    id: itemId,
+                    name: item.item_name,
+                    rarity: item.rarity,
+                    item_value: item.item_value,
+                    image_url: item.image_url
+                });
+            }
+        });
+    });
+    upgraderCatalogItems = [...uniqueItems.values()].sort((first, second) => Number(first.item_value) - Number(second.item_value));
+    upgraderDebug('catalog: loaded from case_items fallback', { count: upgraderCatalogItems.length, first: upgraderCatalogItems[0] });
+}
+
+async function chooseUpgraderTarget() {
+    upgraderDebug('chance click', { source: selectedUpgraderItem, multiplier: upgraderMultiplier, catalogCount: upgraderCatalogItems.length });
+    try {
+        if (!upgraderCatalogItems.length) await loadUpgraderCatalog();
+        if (!selectedUpgraderItem) {
+            upgraderDebug('target: skipped, source item is not selected');
+            return;
+        }
+        if (!upgraderCatalogItems.length) {
+            upgraderDebug('target: skipped, catalog is empty');
+            return;
+        }
+        const expectedValue = Number(selectedUpgraderItem.item_value || 0) * upgraderMultiplier;
+        const tolerance = 0.05 + Math.random() * 0.05;
+        const minValue = expectedValue * (1 - tolerance);
+        const maxValue = expectedValue * (1 + tolerance);
+        const candidates = upgraderCatalogItems.filter(item => Number(item.item_value) >= minValue && Number(item.item_value) <= maxValue);
+        if (candidates.length) {
+            selectedUpgraderTarget = candidates[Math.floor(Math.random() * candidates.length)];
+        } else {
+            selectedUpgraderTarget = upgraderCatalogItems.reduce((closest, item) => {
+                const distance = Math.abs(Number(item.item_value) - expectedValue);
+                return !closest || distance < closest.distance ? { item, distance } : closest;
+            }, null)?.item || null;
+        }
+        upgraderDebug('target: selected', { expectedValue, tolerance, minValue, maxValue, candidates: candidates.length, target: selectedUpgraderTarget });
+        renderUpgraderState();
+    } catch (error) {
+        console.error('[UPGRADER DEBUG] target selection crashed:', error);
+    }
 }
 
 function showcaseProfile(record) {
@@ -1714,6 +1917,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showPromoResultToast('Промокод применён', `Начислено ${Number(data.reward_value || 0).toLocaleString('ru-RU')} BC.`);
         } else {
             currentProfilePremium = true;
+            window.refreshCasePriceUI?.();
             updateHeaderPremiumStatus(true, currentProfileAdmin);
             document.querySelector('.profile-premium-badge')?.replaceChildren(Object.assign(document.createElement('img'), { src: './data/assets/premium.svg', alt: 'Premium' }));
             showPromoResultToast('Промокод применён', 'Premium-статус активирован.');
@@ -1772,8 +1976,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let reelDrops = [];
     let activeResultDrops = [];
     let resultActionCompleted = false;
-    const casesById = new Map();
-    let selectedCase = null;
     let resultDrop = null;
     let openingInProgress = false;
 
@@ -1781,10 +1983,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const rarityClass = rarity => ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'].includes(rarity) ? rarity : 'common';
     const rarityLabel = rarity => ({ common: 'ШИРП', uncommon: 'ОБЫЧНЫЙ', rare: 'РЕДКИЙ', epic: 'ЭПИЧНЫЙ', legendary: 'ЗОЛОТОЙ', mythical: 'КРАСНЫЙ' }[rarity] || rarity || 'ПРЕДМЕТ');
 
+    function getPremiumMultiplier() {
+        return currentProfilePremium ? 0.9 : 1;
+    }
+
+    function getCasePriceInfo(price, quantity = 1) {
+        const basePrice = Number(price || 0) * Number(quantity || 1);
+        const premiumMultiplier = getPremiumMultiplier();
+        const discountedPrice = basePrice > 0 ? basePrice * premiumMultiplier : 0;
+        return {
+            basePrice,
+            discountedPrice,
+            hasPremiumDiscount: Boolean(currentProfilePremium && basePrice > 0)
+        };
+    }
+
+    function getAdjustedChance(chance) {
+        return Number((Number(chance || 0) * getPremiumMultiplier()).toFixed(4));
+    }
+
+    function refreshCasePriceUI() {
+        if (!casesContainer) return;
+        if (casesById.size) {
+            renderCases([...casesById.values()]);
+        }
+        if (selectedCase && casesById.has(String(selectedCase.id))) {
+            const refreshedCase = casesById.get(String(selectedCase.id));
+            if (refreshedCase) {
+                selectedCase = refreshedCase;
+                renderCaseDetail(refreshedCase);
+            }
+        }
+    }
+    window.refreshCasePriceUI = refreshCasePriceUI;
+
     function renderCases(cases) {
         if (!casesContainer) return;
         if (!cases.length) { casesContainer.innerHTML = '<p class="cases-loading">Активных кейсов пока нет</p>'; return; }
-        casesContainer.innerHTML = cases.map(item => `<article class="case-card" data-case-id="${item.id}"><h3 class="case-card-title">${escapeHtml(item.name)}</h3><div class="case-card-image"><img src="${escapeHtml(item.image_url || './data/case_logo/free.png')}" alt="${escapeHtml(item.name)}"></div><div class="case-card-price"><img src="./data/assets/coin.png" alt="Монеты" class="price-coin"><span>${Number(item.price || 0).toLocaleString('ru-RU')}</span></div><button class="btn-open" type="button">ОТКРЫТЬ</button></article>`).join('');
+        casesContainer.innerHTML = cases.map(item => {
+            const { basePrice, discountedPrice, hasPremiumDiscount } = getCasePriceInfo(item.price);
+            return `<article class="case-card${hasPremiumDiscount ? ' case-card--premium' : ''}" data-case-id="${item.id}"><h3 class="case-card-title">${escapeHtml(item.name)}</h3><div class="case-card-image"><img src="${escapeHtml(item.image_url || './data/case_logo/free.png')}" alt="${escapeHtml(item.name)}"></div><div class="case-card-price${hasPremiumDiscount ? ' case-card-price--premium' : ''}"><img src="./data/assets/coin.png" alt="Монеты" class="price-coin">${hasPremiumDiscount ? `<span class="case-card-price-old">${basePrice.toLocaleString('ru-RU')}</span><span class="case-card-price-new">${discountedPrice.toLocaleString('ru-RU')}</span>` : `<span>${basePrice.toLocaleString('ru-RU')}</span>`}</div><button class="btn-open" type="button">ОТКРЫТЬ</button></article>`;
+        }).join('');
         casesContainer.querySelectorAll('.case-card').forEach(card => card.addEventListener('click', openCaseDetail));
     }
 
@@ -1799,17 +2038,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderCaseDetail(caseData) {
         const items = [...(caseData.case_items || [])].sort((first, second) => Number(second.item_value || 0) - Number(first.item_value || 0));
+        const basePrice = Number(caseData.price || 0);
+        const { discountedPrice, hasPremiumDiscount } = getCasePriceInfo(basePrice);
+        const openButton = document.querySelector('.open-case-btn');
         document.querySelector('.case-detail-toolbar h1').textContent = caseData.name;
         const detailImage = document.querySelector('.detail-case-image');
         detailImage.src = caseData.image_url || './data/case_logo/free.png';
         detailImage.alt = caseData.name;
-        document.querySelector('.open-case-btn').textContent = `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC`;
         const contents = document.querySelector('.case-contents-grid');
-        contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><span class="drop-chance">${Number(item.chance || 0).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
-        reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: Number(item.chance) || 0, caseId: caseData.id }));
-        const openButton = document.querySelector('.open-case-btn');
-        openButton.disabled = !reelDrops.length;
-        openButton.textContent = reelDrops.length ? `ОТКРЫТЬ ЗА ${Number(caseData.price || 0).toLocaleString('ru-RU')} BC` : 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
+        contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><span class="drop-chance">${getAdjustedChance(item.chance).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
+        reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: getAdjustedChance(item.chance), caseId: caseData.id }));
+        if (openButton) {
+            openButton.disabled = !reelDrops.length;
+            if (reelDrops.length && hasPremiumDiscount) {
+                openButton.innerHTML = `ОТКРЫТЬ ЗА <span class="case-open-current-price">${discountedPrice.toLocaleString('ru-RU')} BC</span> <span class="case-open-old-price">${basePrice.toLocaleString('ru-RU')} BC</span>`;
+            } else if (reelDrops.length) {
+                openButton.textContent = `ОТКРЫТЬ ЗА ${basePrice.toLocaleString('ru-RU')} BC`;
+            } else {
+                openButton.textContent = 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
+            }
+        }
     }
 
     function openCaseDetail(event) {
@@ -1824,8 +2072,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateOpenCasePrice() {
         if (!openCaseButton || !selectedCase) return;
         const count = Number(document.querySelector('.open-count.selected')?.textContent.replace('x', '')) || 1;
+        const baseTotal = Number(selectedCase.price || 0) * count;
+        const { discountedPrice, hasPremiumDiscount } = getCasePriceInfo(baseTotal);
+        if (reelDrops.length && hasPremiumDiscount) {
+            openCaseButton.innerHTML = `ОТКРЫТЬ ЗА <span class="case-open-current-price">${discountedPrice.toLocaleString('ru-RU')} BC</span> <span class="case-open-old-price">${baseTotal.toLocaleString('ru-RU')} BC</span>`;
+            return;
+        }
         openCaseButton.textContent = reelDrops.length
-            ? `ОТКРЫТЬ ЗА ${(Number(selectedCase.price || 0) * count).toLocaleString('ru-RU')} BC`
+            ? `ОТКРЫТЬ ЗА ${baseTotal.toLocaleString('ru-RU')} BC`
             : 'В КЕЙСЕ НЕТ ПРЕДМЕТОВ';
     }
 
@@ -1900,8 +2154,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const track = windowElement.querySelector('.reel-track');
         const sourceItems = reelDrops.map(drop => {
             const item = document.createElement('article');
-            item.className = `reel-item rarity-${drop.rarity}`;
-            item.innerHTML = `<span>${Number(drop.chance).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}"><strong>${escapeHtml(drop.name)}</strong><small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small>`;
+            item.className = `reel-item-shell rarity-${drop.rarity}`;
+            item.innerHTML = `
+                <div class="reel-item">
+                    <span>${Number(drop.chance).toLocaleString('ru-RU')}%</span>
+                    <img src="${escapeHtml(drop.image)}" alt="${escapeHtml(drop.alt)}">
+                </div>
+                <div class="reel-item-meta">
+                    <strong>${escapeHtml(drop.name)}</strong>
+                    <small>${Number(drop.price || 0).toLocaleString('ru-RU')} BC</small>
+                </div>
+            `;
             return item;
         });
         track.replaceChildren();
@@ -2180,6 +2443,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .filter(Boolean);
     }
 
+    function isFreeCaseResultSale() {
+        return Boolean((freeCaseOpening || freeCaseClaimId) && (freeCaseForcedDrop || activeResultDrops.some(drop => String(drop.itemId || '') === String(freeCaseForcedDrop?.itemId || ''))));
+    }
+
     async function saveResultDrops(drops) {
         if (!drops.length) return new Error('Нет предметов для сохранения.');
         const results = await Promise.all(drops.map(drop => saveDropToInventory(drop)));
@@ -2195,6 +2462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         freeCaseForcedDrop = null;
         freeCaseClaimId = null;
         loadInventory();
+        loadProfileStats();
         loadFreeCaseState();
         loadRecentWins();
     }
@@ -2208,6 +2476,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!error) {
             const balanceAmount = document.querySelector('.balance-amount');
             if (balanceAmount) balanceAmount.textContent = (Number(profile.balance || 0) + total).toLocaleString('ru-RU');
+            await loadProfileStats();
         }
         return error;
     }
@@ -2216,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dropSaveButton.addEventListener('click', async () => {
             const drops = getSelectedResultDrops();
             if (!drops.length) return;
-            if (freeCaseOpening) {
+            if (isFreeCaseResultSale()) {
                 resultActionCompleted = true;
                 closeResultFlow();
                 return;
@@ -2235,7 +2504,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dropResultSell.addEventListener('click', async () => {
             const drops = getSelectedResultDrops();
             if (!drops.length) return;
-            if (freeCaseOpening) {
+            const isFreeCaseSale = isFreeCaseResultSale();
+            if (isFreeCaseSale) {
                 if (!supabase || !currentProfileId || !freeCaseClaimId) return;
                 dropResultSell.disabled = true;
                 const { data, error } = await supabase.rpc('sell_free_case_claim', {
@@ -2249,6 +2519,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 const balanceAmount = document.querySelector('.balance-amount');
                 if (balanceAmount) balanceAmount.textContent = Number(data.balance || 0).toLocaleString('ru-RU');
+                await loadProfileStats();
                 resultActionCompleted = true;
                 closeResultFlow();
                 return;
@@ -2287,6 +2558,7 @@ document.addEventListener('DOMContentLoaded', function() {
             freeCaseForcedDrop = null;
             freeCaseClaimId = null;
             loadInventory();
+            loadProfileStats();
             loadFreeCaseState();
             loadRecentWins();
         });
@@ -2328,6 +2600,47 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     document.querySelector('.btn-add')?.addEventListener('click', () => showPage('donate'));
+
+    document.querySelector('[data-open-upgrader]')?.addEventListener('click', () => {
+        upgraderDebug('upgrader opened');
+        showPage('upgrader');
+        loadUpgraderInventory();
+        loadUpgraderCatalog();
+    });
+    document.querySelector('[data-close-upgrader]')?.addEventListener('click', () => showPage('home'));
+    document.querySelector('.upgrader-fast-toggle')?.addEventListener('click', event => {
+        const button = event.currentTarget;
+        button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'));
+    });
+    const chanceRing = document.querySelector('.upgrader-chance-ring');
+    upgraderDebug('ring binding', { found: Boolean(chanceRing) });
+    chanceRing?.addEventListener('click', chooseUpgraderTarget);
+    chanceRing?.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            chooseUpgraderTarget();
+        }
+    });
+    document.querySelectorAll('[data-upgrader-multiplier]').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('[data-upgrader-multiplier]').forEach(option => option.classList.toggle('selected', option === button));
+            upgraderMultiplier = Number(button.dataset.upgraderMultiplier) || 1.2;
+            upgraderDebug('multiplier changed', { multiplier: upgraderMultiplier });
+            renderUpgraderState();
+            chooseUpgraderTarget();
+        });
+    });
+    document.querySelector('#upgrader-inventory-grid')?.addEventListener('click', event => {
+        const itemButton = event.target.closest('[data-upgrader-item-id]');
+        if (!itemButton) return;
+        selectedUpgraderItem = upgraderItems.find(item => String(item.id) === String(itemButton.dataset.upgraderItemId)) || null;
+        selectedUpgraderTarget = null;
+        renderUpgraderInventory();
+    });
+    document.querySelector('.upgrader-submit')?.addEventListener('click', () => {
+        if (!selectedUpgraderItem) return;
+        showInsufficientFundsToast('Механика апгрейда будет доступна после подключения события на сервере.');
+    });
 
     document.querySelectorAll('.header-premium-badge, .profile-premium-badge').forEach(badge => {
         const openPremiumToast = () => {

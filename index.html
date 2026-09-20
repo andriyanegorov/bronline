@@ -65,6 +65,12 @@
             </div>
         </div>
 
+        <button class="upgrader-event-banner" type="button" data-open-upgrader>
+            <span class="upgrader-event-icon" aria-hidden="true">↗</span>
+            <span class="upgrader-event-copy"><strong>АПГРЕЙДЕР</strong><small>Улучши предмет и получи более ценный</small></span>
+            <span class="upgrader-event-arrow" aria-hidden="true">›</span>
+        </button>
+
         <div class="regular-cases-section">
             <div class="regular-cases-header">
                 <h2 class="regular-cases-title">Обычные кейсы</h2>
@@ -88,11 +94,70 @@
     </div>
     </main>
 
+    <section class="page upgrader-page" data-page="upgrader">
+        <div class="upgrader-shell">
+            <div class="upgrader-heading-row">
+                <button class="upgrader-back-btn" type="button" data-close-upgrader aria-label="Назад">‹</button>
+                <div>
+                    <h1><span aria-hidden="true">▟</span> АПГРЕЙДЕР</h1>
+                    <p>Улучшай предметы и получай более ценные</p>
+                </div>
+                <button class="upgrader-help-btn" type="button" aria-label="Как это работает?">?</button>
+            </div>
+
+            <div class="upgrader-deal">
+                <div class="upgrader-side-block">
+                    <span class="upgrader-card-label">Ваш предмет</span>
+                    <article class="upgrader-item-card upgrader-source-card">
+                        <div class="upgrader-item-art"><img id="upgrader-source-image" src="./data/assets/items/m5f90.png" alt="Выберите предмет"></div>
+                    </article>
+                    <div class="upgrader-item-info">
+                        <strong class="upgrader-source-value">Выберите предмет</strong>
+                        <div class="upgrader-item-price"><span>Стоимость:</span><strong class="upgrader-source-price">0</strong><img src="./data/assets/coin.png" alt="BC"></div>
+                    </div>
+                </div>
+
+                <div class="upgrader-chance" aria-live="polite"><div class="upgrader-chance-ring" role="button" tabindex="0" aria-label="Подобрать предмет по шансу"><strong id="upgrader-chance-value">0%</strong><span>Шанс успеха</span></div></div>
+
+                <div class="upgrader-side-block">
+                    <span class="upgrader-card-label">Вы получите (=)</span>
+                    <article class="upgrader-item-card upgrader-target-card">
+                        <div class="upgrader-item-art"><img id="upgrader-target-image" src="./data/assets/items/m5f90.png" alt="Выберите предмет"></div>
+                    </article>
+                    <div class="upgrader-item-info">
+                        <strong class="upgrader-target-name">Нажмите на шанс</strong>
+                        <div class="upgrader-item-price"><span>Стоимость:</span><strong id="upgrader-target-value">0</strong><img src="./data/assets/coin.png" alt="BC"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upgrader-action-row">
+                <button class="upgrader-submit" type="button" disabled><span aria-hidden="true">↥</span> АПГРЕЙД</button>
+                <div class="upgrader-action-controls">
+                    <div class="upgrader-multipliers" role="group" aria-label="Множитель шанса">
+                        <button type="button" class="selected" data-upgrader-multiplier="1.2">1.2x</button>
+                        <button type="button" data-upgrader-multiplier="1.5">1.5x</button>
+                        <button type="button" data-upgrader-multiplier="2">2x</button>
+                        <button type="button" data-upgrader-multiplier="5">5x</button>
+                        <button type="button" data-upgrader-multiplier="10">10x</button>
+                    </div>
+                    <button class="upgrader-fast-toggle" type="button" aria-pressed="false">Быстрый режим<i></i></button>
+                </div>
+            </div>
+
+            <div class="upgrader-inventory-panel">
+                <div class="upgrader-inventory-heading"><h2><span aria-hidden="true">◇</span> Твой инвентарь</h2><button type="button" class="upgrader-sort-btn">По цене⌄</button></div>
+                <div class="upgrader-inventory-grid" id="upgrader-inventory-grid"><p>Загрузка инвентаря...</p></div>
+            </div>
+
+            <div class="upgrader-warning"><span aria-hidden="true">♢</span><span>Апгрейд — это риск. В случае неудачи предмет будет потерян.</span><button type="button">◷ &nbsp;История</button></div>
+        </div>
+    </section>
+
     <section class="page case-detail-page" data-page="case-detail">
         <div class="case-detail-toolbar">
             <button class="case-back-btn" type="button" aria-label="Назад">‹</button>
             <h1>КЕЙС</h1>
-            <button class="case-info-btn" type="button" aria-label="Информация">i</button>
         </div>
 
         <div class="case-detail-hero">
@@ -112,13 +177,11 @@
 
         <div class="quick-open-row">
             <span>Быстрое открытие</span>
-            <button class="quick-open-info" type="button" aria-label="Что такое быстрое открытие">?</button>
             <button class="quick-toggle" type="button" aria-label="Быстрое открытие" aria-pressed="false"><span></span></button>
         </div>
 
         <div class="contents-heading">
             <h2>СОДЕРЖИМОЕ КЕЙСА</h2>
-            <button type="button">Шансы дропа <span>i</span></button>
         </div>
 
         <div class="case-contents-grid">
