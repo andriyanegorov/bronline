@@ -66,9 +66,15 @@
         </div>
 
         <button class="upgrader-event-banner" type="button" data-open-upgrader>
+<<<<<<< HEAD
+            <span class="upgrader-event-icon" aria-hidden="true"><img src="./data/assets/upgrade-white.svg" alt=""></span>
+            <span class="upgrader-event-copy"><strong>АПГРЕЙДЕР</strong><small>Временное событие</small></span>
+            <span class="upgrader-event-arrow" aria-hidden="true"><img src="./data/assets/right.svg" alt=""></span>
+=======
             <span class="upgrader-event-icon" aria-hidden="true">↗</span>
             <span class="upgrader-event-copy"><strong>АПГРЕЙДЕР</strong><small>Улучши предмет и получи более ценный</small></span>
             <span class="upgrader-event-arrow" aria-hidden="true">›</span>
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         </button>
 
         <div class="regular-cases-section">
@@ -79,6 +85,16 @@
 
             <div class="cases-container">
                 <p class="cases-loading">Загрузка кейсов...</p>
+            </div>
+        </div>
+
+        <div class="all-cases-modal" id="all-cases-modal" aria-hidden="true">
+            <div class="all-cases-dialog" role="dialog" aria-modal="true" aria-labelledby="all-cases-title">
+                <button class="all-cases-close" type="button" aria-label="Закрыть список кейсов"><img src="./data/assets/cross.svg" alt=""></button>
+                <div class="all-cases-header">
+                    <h2 id="all-cases-title">Все кейсы</h2>
+                </div>
+                <div class="all-cases-grid" id="all-cases-grid"></div>
             </div>
         </div>
 
@@ -97,12 +113,20 @@
     <section class="page upgrader-page" data-page="upgrader">
         <div class="upgrader-shell">
             <div class="upgrader-heading-row">
+<<<<<<< HEAD
+                <button class="upgrader-back-btn" type="button" data-close-upgrader aria-label="Назад"><img src="./data/assets/left.svg" alt="Назад"></button>
+                <div>
+                    <h1><span class="upgrader-heading-icon" aria-hidden="true"><img src="./data/assets/upgrade.svg" alt=""></span> АПГРЕЙДЕР</h1>
+                    <p>Улучшай предметы и получай более ценные</p>
+                </div>
+=======
                 <button class="upgrader-back-btn" type="button" data-close-upgrader aria-label="Назад">‹</button>
                 <div>
                     <h1><span aria-hidden="true">▟</span> АПГРЕЙДЕР</h1>
                     <p>Улучшай предметы и получай более ценные</p>
                 </div>
                 <button class="upgrader-help-btn" type="button" aria-label="Как это работает?">?</button>
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
             </div>
 
             <div class="upgrader-deal">
@@ -117,7 +141,23 @@
                     </div>
                 </div>
 
+<<<<<<< HEAD
+                <div class="upgrader-chance" aria-live="polite">
+                    <div class="upgrader-chance-wrap">
+                        <span class="upgrader-chance-pointer" aria-hidden="true"></span>
+                        <div class="upgrader-chance-ring" role="button" tabindex="0" aria-label="Подобрать предмет по шансу"></div>
+                        <div class="upgrader-chance-center">
+                            <div class="upgrader-chance-info">
+                                <strong id="upgrader-chance-value">100%</strong>
+                                <span id="upgrader-chance-label">Шанс успеха</span>
+                            </div>
+                            <span id="upgrader-chance-status" class="upgrader-chance-status" aria-live="polite">Ждите</span>
+                        </div>
+                    </div>
+                </div>
+=======
                 <div class="upgrader-chance" aria-live="polite"><div class="upgrader-chance-ring" role="button" tabindex="0" aria-label="Подобрать предмет по шансу"><strong id="upgrader-chance-value">0%</strong><span>Шанс успеха</span></div></div>
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
 
                 <div class="upgrader-side-block">
                     <span class="upgrader-card-label">Вы получите (=)</span>
@@ -132,7 +172,11 @@
             </div>
 
             <div class="upgrader-action-row">
+<<<<<<< HEAD
+                <button class="upgrader-submit" type="button" disabled><span class="upgrader-submit-icon" aria-hidden="true"><img src="./data/assets/upgrade-white.svg" alt=""></span> АПГРЕЙД</button>
+=======
                 <button class="upgrader-submit" type="button" disabled><span aria-hidden="true">↥</span> АПГРЕЙД</button>
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
                 <div class="upgrader-action-controls">
                     <div class="upgrader-multipliers" role="group" aria-label="Множитель шанса">
                         <button type="button" class="selected" data-upgrader-multiplier="1.2">1.2x</button>
@@ -146,17 +190,25 @@
             </div>
 
             <div class="upgrader-inventory-panel">
+<<<<<<< HEAD
+                <div class="upgrader-inventory-heading"><h2><span class="upgrader-inventory-icon" aria-hidden="true"><img src="./data/assets/inventory.svg" alt=""></span> Твой инвентарь</h2><button type="button" class="upgrader-sort-btn">По цене⌄</button></div>
+                <div class="upgrader-inventory-grid" id="upgrader-inventory-grid"><p>Загрузка инвентаря...</p></div>
+            </div>
+
+            <div class="upgrader-warning"><span class="upgrader-warning-icon" aria-hidden="true"><img src="./data/assets/upgrade.svg" alt=""></span><span>Апгрейд — это риск. В случае неудачи предмет будет потерян.</span><button type="button">◷ &nbsp;История</button></div>
+=======
                 <div class="upgrader-inventory-heading"><h2><span aria-hidden="true">◇</span> Твой инвентарь</h2><button type="button" class="upgrader-sort-btn">По цене⌄</button></div>
                 <div class="upgrader-inventory-grid" id="upgrader-inventory-grid"><p>Загрузка инвентаря...</p></div>
             </div>
 
             <div class="upgrader-warning"><span aria-hidden="true">♢</span><span>Апгрейд — это риск. В случае неудачи предмет будет потерян.</span><button type="button">◷ &nbsp;История</button></div>
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         </div>
     </section>
 
     <section class="page case-detail-page" data-page="case-detail">
         <div class="case-detail-toolbar">
-            <button class="case-back-btn" type="button" aria-label="Назад">‹</button>
+            <button class="case-back-btn" type="button" aria-label="Назад"><img src="./data/assets/left.svg" alt="Назад"></button>
             <h1>КЕЙС</h1>
         </div>
 
@@ -676,7 +728,7 @@
                         <strong>Изменить никнейм</strong>
                         <small>Вы можете изменить свой никнейм</small>
                     </span>
-                    <span class="settings-option-arrow" aria-hidden="true">›</span>
+                    <span class="settings-option-arrow" aria-hidden="true"><img src="./data/assets/right.svg" alt=""></span>
                 </button>
                 <button class="settings-option" type="button" data-settings-action="referral">
                     <span class="settings-option-icon"><img src="./data/assets/referral.svg" alt=""></span>
@@ -684,7 +736,7 @@
                         <strong>Реферальная система</strong>
                         <small>Приглашай друзей и получай бонусы</small>
                     </span>
-                    <span class="settings-option-arrow" aria-hidden="true">›</span>
+                    <span class="settings-option-arrow" aria-hidden="true"><img src="./data/assets/right.svg" alt=""></span>
                 </button>
                 <button class="settings-option" type="button" data-settings-action="support">
                     <span class="settings-option-icon"><img src="./data/assets/support.svg" alt=""></span>
@@ -692,7 +744,7 @@
                         <strong>Поддержка</strong>
                         <small>Написать в техподдержку</small>
                     </span>
-                    <span class="settings-option-arrow" aria-hidden="true">›</span>
+                    <span class="settings-option-arrow" aria-hidden="true"><img src="./data/assets/right.svg" alt=""></span>
                 </button>
             </div>
         </section>
@@ -702,7 +754,7 @@
         <div class="referral-shell">
             <div class="referral-header-row">
                 <button class="referral-back-btn" type="button" aria-label="Назад">
-                    <span aria-hidden="true">‹</span>
+                    <span aria-hidden="true"><img src="./data/assets/left.svg" alt="Назад"></span>
                 </button>
 
                 <div class="referral-head">

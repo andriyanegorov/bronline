@@ -30,6 +30,11 @@ let upgraderCatalogItems = [];
 let upgraderMultiplier = 1.2;
 let selectedUpgraderItem = null;
 let selectedUpgraderTarget = null;
+<<<<<<< HEAD
+let upgraderSpinTimers = [];
+let upgraderWheelRotation = 0;
+=======
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
 const upgraderDebug = (...args) => console.debug('[UPGRADER DEBUG]', ...args);
 
 function setBanState(value) {
@@ -1180,6 +1185,146 @@ async function loadInventory() {
     renderInventory(inventoryResult.data, new Set((showcaseResult.data || []).map(item => String(item.inventory_id))));
 }
 
+<<<<<<< HEAD
+function resetUpgraderChanceUI() {
+    const wrap = document.querySelector('.upgrader-chance-wrap');
+    const info = document.querySelector('.upgrader-chance-info');
+    const status = document.querySelector('#upgrader-chance-status');
+    const page = document.querySelector('.upgrader-page');
+    if (wrap) {
+        wrap.classList.remove('is-upgrading', 'is-showing-wait', 'is-showing-result', 'is-status-visible');
+    }
+    page?.classList.remove('is-upgrader-spinning');
+    if (info) {
+        info.style.opacity = '1';
+        info.style.transform = 'translateY(0)';
+    }
+    if (status) {
+        status.textContent = '';
+        status.classList.remove('is-success', 'is-fail');
+        status.style.opacity = '0';
+    }
+}
+
+function setUpgraderChanceStatus(mode) {
+    const wrap = document.querySelector('.upgrader-chance-wrap');
+    const info = document.querySelector('.upgrader-chance-info');
+    const status = document.querySelector('#upgrader-chance-status');
+    if (!wrap || !status) return;
+
+    wrap.classList.remove('is-showing-wait', 'is-showing-result', 'is-status-visible');
+    status.classList.remove('is-success', 'is-fail');
+    status.textContent = '';
+
+    if (!mode) {
+        status.style.opacity = '0';
+        if (info) {
+            info.style.opacity = '1';
+            info.style.transform = 'translateY(0)';
+        }
+        return;
+    }
+
+    if (mode === 'wait') {
+        status.textContent = 'Ждите';
+        status.style.opacity = '1';
+        wrap.classList.add('is-showing-wait', 'is-status-visible');
+        if (info) {
+            info.style.opacity = '0';
+            info.style.transform = 'translateY(-10px)';
+        }
+        return;
+    }
+
+    status.textContent = mode === 'success' ? 'Успех' : 'Провал';
+    status.classList.add(mode === 'success' ? 'is-success' : 'is-fail');
+    status.style.opacity = '1';
+    wrap.classList.add('is-showing-result', 'is-status-visible');
+    if (info) {
+        info.style.opacity = '0';
+        info.style.transform = 'translateY(-10px)';
+    }
+}
+
+function spinUpgraderChance(resultSuccess, onComplete) {
+    const wrap = document.querySelector('.upgrader-chance-wrap');
+    const ring = document.querySelector('.upgrader-chance-ring');
+    if (!wrap || !ring) return;
+
+    upgraderSpinTimers.forEach(timer => clearTimeout(timer));
+    upgraderSpinTimers = [];
+
+    const value = document.querySelector('#upgrader-chance-value');
+    const chance = Number(value?.textContent?.replace('%', '') || 100);
+    const fastMode = document.querySelector('.upgrader-fast-toggle')?.getAttribute('aria-pressed') === 'true';
+    const totalDuration = fastMode ? 2000 : 5000;
+    const waitDelay = 250;
+    const resultDelay = totalDuration;
+    const resultStayDuration = 1000;
+    const baseTurns = fastMode ? 12 : 16;
+    const redArc = Math.max(0, Math.min(100, chance)) * 3.6;
+    const grayArc = 360 - redArc;
+    const nearBoundary = Math.random() < 0.3;
+    const edgeInset = Math.max(1, Math.min(4, Math.min(redArc, grayArc) * 0.08));
+    const targetCenter = resultSuccess
+        ? nearBoundary
+            ? Math.max(0.5, redArc - edgeInset)
+            : redArc * (0.2 + Math.random() * 0.6)
+        : nearBoundary
+            ? redArc + edgeInset
+            : redArc + grayArc * (0.2 + Math.random() * 0.6);
+    const currentAngle = upgraderWheelRotation % 360;
+    const spinDelta = (baseTurns * 360) + (360 - targetCenter) - currentAngle;
+    const nextRotation = upgraderWheelRotation + spinDelta;
+    upgraderWheelRotation = nextRotation;
+
+    document.querySelector('.upgrader-page')?.classList.add('is-upgrader-spinning');
+    wrap.classList.add('is-upgrading');
+    wrap.classList.remove('is-showing-wait', 'is-showing-result');
+    ring.style.transition = `transform ${totalDuration}ms cubic-bezier(0.12, 0.6, 0.22, 1)`;
+    ring.style.transform = `rotate(${nextRotation}deg)`;
+
+    const waitTimer = setTimeout(() => {
+        setUpgraderChanceStatus('wait');
+    }, waitDelay);
+
+    const resultTimer = setTimeout(() => {
+        wrap.classList.add('is-showing-result');
+        setUpgraderChanceStatus(resultSuccess ? 'success' : 'fail');
+    }, resultDelay);
+
+    const clearTimer = setTimeout(async () => {
+        resetUpgraderChanceUI();
+        if (typeof onComplete === 'function') {
+            await onComplete();
+        }
+    }, resultDelay + resultStayDuration);
+
+    upgraderSpinTimers = [waitTimer, resultTimer, clearTimer];
+}
+
+function animateUpgraderChanceValue(nextChance) {
+    const value = document.querySelector('#upgrader-chance-value');
+    const label = document.querySelector('#upgrader-chance-label');
+    if (!value || !label) return;
+
+    value.style.opacity = '0';
+    value.style.transform = 'translateY(-8px)';
+    label.style.opacity = '0';
+    label.style.transform = 'translateY(-8px)';
+
+    setTimeout(() => {
+        value.textContent = `${nextChance}%`;
+        label.textContent = 'Шанс успеха';
+        value.style.opacity = '1';
+        value.style.transform = 'translateY(0)';
+        label.style.opacity = '1';
+        label.style.transform = 'translateY(0)';
+    }, 220);
+}
+
+=======
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
 function renderUpgraderState() {
     const sourceValue = document.querySelector('.upgrader-source-value');
     const sourcePrice = document.querySelector('.upgrader-source-price');
@@ -1207,7 +1352,11 @@ function renderUpgraderState() {
         sourceImage.src = './data/assets/items/m5f90.png';
         sourceImage.alt = 'Выберите предмет';
         targetValue.textContent = '0';
+<<<<<<< HEAD
+        if (targetName) targetName.textContent = 'Выберите шанс, чтобы появился предмет для апгрейда';
+=======
         if (targetName) targetName.textContent = 'Нажмите на шанс';
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         if (targetImage) {
             targetImage.hidden = true;
             targetImage.src = './data/assets/items/m5f90.png';
@@ -1215,17 +1364,37 @@ function renderUpgraderState() {
         targetCard?.classList.remove('rarity-common', 'rarity-uncommon', 'rarity-rare', 'rarity-epic', 'rarity-legendary', 'rarity-mythical');
         targetCard?.classList.add('rarity-common');
         targetCard?.classList.remove('target-selected');
+<<<<<<< HEAD
+        const previousChance = Number(chanceValue.dataset.currentChance || 0);
+        const nextChance = 100;
+        chanceValue.dataset.currentChance = String(nextChance);
+        if (previousChance !== nextChance) {
+            animateUpgraderChanceValue(nextChance);
+        } else {
+            chanceValue.textContent = `${nextChance}%`;
+        }
+        if (chanceRing) chanceRing.style.setProperty('--chance', '100%');
+=======
         chanceValue.textContent = '0%';
         if (chanceRing) chanceRing.style.setProperty('--chance', '0%');
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         submitButton.disabled = true;
         return;
     }
     const itemValue = Number(selectedUpgraderItem.item_value || 0);
     const expectedTargetValue = Math.round(itemValue * upgraderMultiplier);
     const actualTargetValue = Number(selectedUpgraderTarget?.item_value || expectedTargetValue);
+<<<<<<< HEAD
+    const multiplierChance = Math.max(5, Math.min(95, Math.round(100 / Math.max(1.2, upgraderMultiplier))));
+    const valueChance = actualTargetValue > 0
+        ? Math.min(95, Math.round(itemValue / actualTargetValue * 100))
+        : multiplierChance;
+    const chance = Math.min(95, Math.max(multiplierChance, valueChance));
+=======
     const chance = actualTargetValue > 0
         ? Math.min(100, Math.round(itemValue / actualTargetValue * 100))
         : 0;
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
     sourceValue.textContent = selectedUpgraderItem.item_name || 'Предмет';
     if (sourcePrice) sourcePrice.textContent = itemValue.toLocaleString('ru-RU');
     sourceImage.src = selectedUpgraderItem.image_url || './data/assets/items/m5f90.png';
@@ -1244,7 +1413,18 @@ function renderUpgraderState() {
         targetCard.classList.remove('rarity-common', 'rarity-uncommon', 'rarity-rare', 'rarity-epic', 'rarity-legendary', 'rarity-mythical');
         targetCard.classList.add(`rarity-${targetRarity}`);
     }
+<<<<<<< HEAD
+    const previousChance = Number(chanceValue.dataset.currentChance || 0);
+    const nextChance = Number(chance);
+    chanceValue.dataset.currentChance = String(nextChance);
+    if (previousChance !== nextChance) {
+        animateUpgraderChanceValue(nextChance);
+    } else {
+        chanceValue.textContent = `${nextChance}%`;
+    }
+=======
     chanceValue.textContent = `${chance}%`;
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
     if (chanceRing) chanceRing.style.setProperty('--chance', `${chance}%`);
     submitButton.disabled = false;
 }
@@ -1344,6 +1524,19 @@ async function chooseUpgraderTarget() {
             return;
         }
         const expectedValue = Number(selectedUpgraderItem.item_value || 0) * upgraderMultiplier;
+<<<<<<< HEAD
+        selectedUpgraderTarget = upgraderCatalogItems.reduce((closest, item) => {
+            const distance = Math.abs(Number(item.item_value) - expectedValue);
+            return !closest || distance < closest.distance ? { item, distance } : closest;
+        }, null)?.item || null;
+        upgraderDebug('target: selected nearest item', {
+            expectedValue,
+            target: selectedUpgraderTarget,
+            targetDistance: selectedUpgraderTarget
+                ? Math.abs(Number(selectedUpgraderTarget.item_value) - expectedValue)
+                : null
+        });
+=======
         const tolerance = 0.05 + Math.random() * 0.05;
         const minValue = expectedValue * (1 - tolerance);
         const maxValue = expectedValue * (1 + tolerance);
@@ -1357,6 +1550,7 @@ async function chooseUpgraderTarget() {
             }, null)?.item || null;
         }
         upgraderDebug('target: selected', { expectedValue, tolerance, minValue, maxValue, candidates: candidates.length, target: selectedUpgraderTarget });
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         renderUpgraderState();
     } catch (error) {
         console.error('[UPGRADER DEBUG] target selection crashed:', error);
@@ -2005,7 +2199,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function refreshCasePriceUI() {
         if (!casesContainer) return;
         if (casesById.size) {
+<<<<<<< HEAD
+            renderCases(getOrderedCases([...casesById.values()]));
+=======
             renderCases([...casesById.values()]);
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         }
         if (selectedCase && casesById.has(String(selectedCase.id))) {
             const refreshedCase = casesById.get(String(selectedCase.id));
@@ -2017,6 +2215,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.refreshCasePriceUI = refreshCasePriceUI;
 
+<<<<<<< HEAD
+    function getOrderedCases(cases) {
+        return [...cases].sort((first, second) => {
+            const firstCreated = new Date(first.created_at || 0).getTime();
+            const secondCreated = new Date(second.created_at || 0).getTime();
+            return firstCreated - secondCreated;
+        });
+    }
+
+    function renderCaseCard(item) {
+        const { basePrice, discountedPrice, hasPremiumDiscount } = getCasePriceInfo(item.price);
+        return `<article class="case-card${hasPremiumDiscount ? ' case-card--premium' : ''}" data-case-id="${item.id}"><h3 class="case-card-title">${escapeHtml(item.name)}</h3><div class="case-card-image"><img src="${escapeHtml(item.image_url || './data/case_logo/free.png')}" alt="${escapeHtml(item.name)}"></div><div class="case-card-price${hasPremiumDiscount ? ' case-card-price--premium' : ''}"><img src="./data/assets/coin.png" alt="Монеты" class="price-coin">${hasPremiumDiscount ? `<span class="case-card-price-old">${basePrice.toLocaleString('ru-RU')}</span><span class="case-card-price-new">${discountedPrice.toLocaleString('ru-RU')}</span>` : `<span>${basePrice.toLocaleString('ru-RU')}</span>`}</div><button class="btn-open" type="button">ОТКРЫТЬ</button></article>`;
+    }
+
+    function bindCaseCardEvents(container) {
+        container?.querySelectorAll('.case-card').forEach(card => card.addEventListener('click', openCaseDetail));
+    }
+
+    function renderAllCasesModal(cases) {
+        const modalGrid = document.querySelector('#all-cases-grid');
+        if (!modalGrid) return;
+        modalGrid.innerHTML = cases.map(renderCaseCard).join('');
+        bindCaseCardEvents(modalGrid);
+    }
+
+    function openAllCasesModal() {
+        const modal = document.querySelector('#all-cases-modal');
+        if (!modal) return;
+        renderAllCasesModal(getOrderedCases([...casesById.values()]));
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeAllCasesModal() {
+        const modal = document.querySelector('#all-cases-modal');
+        if (!modal) return;
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function renderCases(cases) {
+        if (!casesContainer) return;
+        if (!cases.length) { casesContainer.innerHTML = '<p class="cases-loading">Активных кейсов пока нет</p>'; return; }
+        casesContainer.innerHTML = cases.map(renderCaseCard).join('');
+        bindCaseCardEvents(casesContainer);
+=======
     function renderCases(cases) {
         if (!casesContainer) return;
         if (!cases.length) { casesContainer.innerHTML = '<p class="cases-loading">Активных кейсов пока нет</p>'; return; }
@@ -2025,6 +2269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return `<article class="case-card${hasPremiumDiscount ? ' case-card--premium' : ''}" data-case-id="${item.id}"><h3 class="case-card-title">${escapeHtml(item.name)}</h3><div class="case-card-image"><img src="${escapeHtml(item.image_url || './data/case_logo/free.png')}" alt="${escapeHtml(item.name)}"></div><div class="case-card-price${hasPremiumDiscount ? ' case-card-price--premium' : ''}"><img src="./data/assets/coin.png" alt="Монеты" class="price-coin">${hasPremiumDiscount ? `<span class="case-card-price-old">${basePrice.toLocaleString('ru-RU')}</span><span class="case-card-price-new">${discountedPrice.toLocaleString('ru-RU')}</span>` : `<span>${basePrice.toLocaleString('ru-RU')}</span>`}</div><button class="btn-open" type="button">ОТКРЫТЬ</button></article>`;
         }).join('');
         casesContainer.querySelectorAll('.case-card').forEach(card => card.addEventListener('click', openCaseDetail));
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
     }
 
     async function loadCases() {
@@ -2033,7 +2278,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (error) { casesContainer.innerHTML = '<p class="cases-loading">Не удалось загрузить кейсы</p>'; console.error('Не удалось загрузить кейсы:', error); return; }
         casesById.clear();
         data.forEach(item => casesById.set(String(item.id), item));
-        renderCases(data);
+        renderCases(getOrderedCases(data).slice(0, 3));
+        renderAllCasesModal(getOrderedCases(data));
     }
 
     function renderCaseDetail(caseData) {
@@ -2046,7 +2292,11 @@ document.addEventListener('DOMContentLoaded', function() {
         detailImage.src = caseData.image_url || './data/case_logo/free.png';
         detailImage.alt = caseData.name;
         const contents = document.querySelector('.case-contents-grid');
+<<<<<<< HEAD
+        contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
+=======
         contents.innerHTML = items.length ? items.map(item => `<article class="case-content-item rarity-${rarityClass(item.rarity)}"><span class="drop-chance">${getAdjustedChance(item.chance).toLocaleString('ru-RU')}%</span><img src="${escapeHtml(item.image_url || './data/assets/items/m5f90.png')}" alt="${escapeHtml(item.item_name)}"><strong>${escapeHtml(item.item_name)}</strong><em>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</em></article>`).join('') : '<p class="cases-loading">В этом кейсе пока нет предметов</p>';
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
         reelDrops = items.map(item => ({ name: item.item_name, price: item.item_value, image: item.image_url || './data/assets/items/m5f90.png', alt: item.item_name, rarity: rarityClass(item.rarity), chance: getAdjustedChance(item.chance), caseId: caseData.id }));
         if (openButton) {
             openButton.disabled = !reelDrops.length;
@@ -2085,6 +2335,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     caseCards.forEach(card => card.addEventListener('click', openCaseDetail));
     openCaseButtons.forEach(button => button.addEventListener('click', openCaseDetail));
+
+    document.querySelector('.view-all')?.addEventListener('click', event => {
+        event.preventDefault();
+        openAllCasesModal();
+    });
+
+    document.querySelector('#all-cases-modal')?.addEventListener('click', event => {
+        if (event.target === event.currentTarget) closeAllCasesModal();
+    });
+
+    document.querySelector('.all-cases-close')?.addEventListener('click', closeAllCasesModal);
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            const allCasesModal = document.querySelector('#all-cases-modal');
+            if (allCasesModal && allCasesModal.classList.contains('open')) closeAllCasesModal();
+        }
+    });
 
     if (caseDetailBack) {
         caseDetailBack.addEventListener('click', function() {
@@ -2637,9 +2905,52 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedUpgraderTarget = null;
         renderUpgraderInventory();
     });
+<<<<<<< HEAD
+    document.querySelector('.upgrader-submit')?.addEventListener('click', async () => {
+        if (!selectedUpgraderItem || !supabase || currentProfileId === null) return;
+
+        const submitButton = document.querySelector('.upgrader-submit');
+        if (submitButton) submitButton.disabled = true;
+        document.querySelector('.upgrader-page')?.classList.add('is-upgrader-spinning');
+
+        try {
+            const { data, error } = await supabase.rpc('upgrade_inventory_item', {
+                p_user_id: Number(currentProfileId),
+                p_inventory_id: Number(selectedUpgraderItem.id),
+                p_multiplier: Number(upgraderMultiplier)
+            });
+
+            if (error) {
+                console.error('Supabase upgrader rpc error:', error);
+                resetUpgraderChanceUI();
+                showInsufficientFundsToast(error.message || 'Не удалось выполнить апгрейд.');
+                return;
+            }
+
+            if (!data || data.ok === false) {
+                resetUpgraderChanceUI();
+                showInsufficientFundsToast(data?.error || 'Не удалось выполнить апгрейд.');
+                return;
+            }
+
+            spinUpgraderChance(Boolean(data.success), async () => {
+                selectedUpgraderTarget = null;
+                await loadUpgraderInventory();
+                await loadInventory();
+                await chooseUpgraderTarget();
+            });
+        } catch (error) {
+            console.error('Upgrader submit crashed:', error);
+            resetUpgraderChanceUI();
+            showInsufficientFundsToast('Не удалось выполнить апгрейд. Попробуйте ещё раз.');
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+=======
     document.querySelector('.upgrader-submit')?.addEventListener('click', () => {
         if (!selectedUpgraderItem) return;
         showInsufficientFundsToast('Механика апгрейда будет доступна после подключения события на сервере.');
+>>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
     });
 
     document.querySelectorAll('.header-premium-badge, .profile-premium-badge').forEach(badge => {
