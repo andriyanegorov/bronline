@@ -109,7 +109,6 @@ BEGIN
         DELETE FROM public.inventory
         WHERE id = p_inventory_id;
 
-<<<<<<< HEAD
         INSERT INTO public.inventory (
             user_id,
             item_name,
@@ -137,93 +136,6 @@ BEGIN
         WHERE id = p_inventory_id;
         new_inventory_id := NULL;
     END IF;
-=======
-create or replace function public.sell_inventory_item(p_inventory_id integer, p_user_id integer)
-returns integer
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-	inventory_row public.inventory;
-	new_balance integer;
-begin
-	if p_inventory_id is null or p_user_id is null then
-		raise exception 'Inventory item and user are required';
-	end if;
-
-	select * into inventory_row
-	from public.inventory
-	where id = p_inventory_id and user_id = p_user_id
-	for update;
-
-	if inventory_row.id is null then
-		raise exception 'Inventory item not found';
-	end if;
-
-	update public.free_case_claims
-	set inventory_id = null
-	where inventory_id = inventory_row.id and user_id = p_user_id;
-
-	delete from public.inventory
-	where id = inventory_row.id and user_id = p_user_id;
-
-	update public.profiles
-	set balance = coalesce(balance, 0) + coalesce(inventory_row.item_value, 0),
-		updated_at = now()
-	where id = p_user_id
-	returning balance into new_balance;
-
-	return coalesce(new_balance, 0);
-end;
-$$;
-
-create or replace function public.sell_inventory_items(p_user_id integer, p_inventory_ids integer[])
-returns integer
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-	deleted_total integer;
-	new_balance integer;
-begin
-	if p_user_id is null or p_inventory_ids is null or array_length(p_inventory_ids, 1) is null then
-		return coalesce((select balance from public.profiles where id = p_user_id), 0);
-	end if;
-
-	update public.free_case_claims
-	set inventory_id = null
-	where user_id = p_user_id
-	  and inventory_id in (select unnest(p_inventory_ids));
-
-	with deleted as (
-		delete from public.inventory
-		where user_id = p_user_id
-		  and id = any(p_inventory_ids)
-		returning item_value
-	)
-	select coalesce(sum(item_value), 0) into deleted_total
-	from deleted;
-
-	update public.profiles
-	set balance = coalesce(balance, 0) + deleted_total,
-		updated_at = now()
-	where id = p_user_id
-	returning balance into new_balance;
-
-	return coalesce(new_balance, 0);
-end;
-$$;
-
-grant execute on function public.sell_inventory_item(integer, integer) to anon, authenticated;
-grant execute on function public.sell_inventory_items(integer, integer[]) to anon, authenticated;
-
-insert into public.free_case_events (id) values (1) on conflict (id) do nothing;
-alter table public.free_case_events enable row level security;
-alter table public.free_case_items enable row level security;
-alter table public.free_case_claims enable row level security;
->>>>>>> 9977d9143a52ad70c2fcfbe730c7edd8c268ad22
 
     INSERT INTO public.upgrader_history (
         user_id,
