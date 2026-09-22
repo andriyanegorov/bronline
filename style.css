@@ -1106,11 +1106,22 @@ select {
 
 .all-cases-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
+    gap: 22px;
     max-height: calc(80vh - 72px);
     overflow-y: auto;
     padding-right: 4px;
+}
+
+.all-cases-section h3 {
+    margin: 0 0 10px;
+    color: #f3f4f6;
+    font-size: 14px;
+}
+
+.all-cases-section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
 }
 
 .all-cases-grid .case-card {
@@ -1511,6 +1522,7 @@ filter: brightness(0) saturate(100%) invert(27%) sepia(96%) saturate(3500%) hue-
     box-shadow: 0 0 24px rgba(255, 35, 43, .12), inset 0 0 18px rgba(255, 57, 65, .05);
     cursor: pointer;
 }
+.upgrader-event-banner[hidden] { display: none !important; }
 .upgrader-event-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: #9e1312; color: #fff; font-size: 25px; font-weight: 800; }
 .upgrader-event-icon img { display: block; width: 50%; height: 50%; object-fit: contain; }
 .upgrader-event-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }

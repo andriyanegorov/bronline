@@ -42,6 +42,7 @@
                     <label class="field">Название кейса <input id="case-name" type="text" placeholder="Например, BLOOD CASE" maxlength="80" required></label>
                     <label class="field">Цена открытия <span class="input-with-suffix"><input id="case-price" type="number" min="0" step="1" placeholder="1000" required><b>BC</b></span></label>
                     <label class="field">Изображение <input id="case-image" type="text" value="./data/case_logo/free.png" placeholder="./data/case_logo/free.png"></label>
+                    <label class="field">Раздел кейса <input id="case-section" type="text" value="Обычные кейсы" maxlength="50" placeholder="Обычные кейсы"></label>
                     <div class="case-form-action"><label class="case-active-toggle"><input id="case-active" type="checkbox" checked><span></span>Кейс активен</label><span class="field-hint">Выбрано предметов: <b id="selected-items-count">0</b></span><div class="case-actions"><button class="button secondary hidden" id="cancel-case-edit" type="button">Отмена</button><button class="button primary" id="case-submit" type="submit"><span>+</span>Создать кейс</button></div></div>
                     <div class="case-items-builder">
                         <div class="builder-heading"><div><strong>Предметы в кейсе</strong><span class="field-hint">Добавьте предметы из общего каталога</span></div><button class="button secondary" id="open-item-picker" type="button"><span>+</span>Выбрать предметы</button></div>
@@ -80,7 +81,13 @@
 
             <section class="panel cases-list-panel">
                 <div class="panel-heading"><div><p class="section-kicker">КАТАЛОГ</p><h2>Последние кейсы</h2></div><button class="refresh-button" id="refresh-cases" type="button" title="Обновить список">↻ Обновить</button></div>
-                <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Цена</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="cases-list"><tr><td colspan="5" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
+                <div class="table-wrap"><table><thead><tr><th>Кейс</th><th>Раздел</th><th>Цена</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="cases-list"><tr><td colspan="6" class="empty-state">Загрузка кейсов...</td></tr></tbody></table></div>
+            </section>
+
+            <section class="panel users-list-panel" id="users">
+                <div class="panel-heading"><div><p class="section-kicker">АККАУНТЫ</p><h2>Пользователи</h2><p class="panel-subtitle">Удаление пользователя удаляет его профиль и связанные данные, если это разрешено схемой БД.</p></div><button class="refresh-button" id="refresh-users" type="button" title="Обновить список">↻ Обновить</button></div>
+                <p class="form-status" id="users-status" role="status"></p>
+                <div class="table-wrap"><table><thead><tr><th>Пользователь</th><th>Telegram ID</th><th>Баланс</th><th>Статус</th><th>Создан</th><th>Действия</th></tr></thead><tbody id="users-list"><tr><td colspan="6" class="empty-state">Загрузка пользователей...</td></tr></tbody></table></div>
             </section>
 
             <section class="panel free-case-admin-panel" id="free-case-settings">
@@ -90,11 +97,17 @@
                     <div class="free-case-admin-status"><span>Текущий цикл</span><strong id="free-case-admin-state">Загрузка...</strong><small id="free-case-admin-reset">Сброс: —</small></div>
                 </div>
                 <div class="free-case-admin-items">
-                    <div class="builder-heading"><div><strong>Содержимое бесплатного кейса</strong><span class="field-hint">Выберите предметы из общего каталога.</span></div><span class="field-hint" id="free-case-selected-count">Выбрано: 0</span></div>
+                    <div class="builder-heading"><div><strong>Содержимое бесплатного кейса</strong><span class="field-hint">Выберите предметы из общего каталога.</span></div><div class="free-case-picker-controls"><label class="picker-filter"><span>Сортировка</span><select id="free-case-item-sort"><option value="price-desc">Цена: сначала дороже</option><option value="price-asc">Цена: сначала дешевле</option><option value="name">По названию</option></select></label><span class="field-hint" id="free-case-selected-count">Выбрано: 0</span></div></div>
                     <div class="free-case-item-picker" id="free-case-item-picker"><p class="empty-state">Загрузка предметов...</p></div>
                 </div>
                 <div class="form-actions"><button class="button secondary" id="free-case-reset" type="button">Возобновить событие</button><button class="button primary" id="free-case-save" type="button">Сохранить настройки</button></div>
                 <p class="form-status" id="free-case-status" role="status"></p>
+            </section>
+
+            <section class="panel event-admin-panel" id="event-settings">
+                <div class="panel-heading"><div><p class="section-kicker">СОБЫТИЯ</p><h2>АПГРЕЙДЕР</h2><p class="panel-subtitle">Управление отображением кнопки перехода в апгрейдер на главной странице.</p></div><span class="step-badge">05</span></div>
+                <label class="case-active-toggle event-toggle"><input id="upgrader-event-enabled" type="checkbox"><span></span>Событие включено</label>
+                <p class="form-status" id="upgrader-event-status" role="status"></p>
             </section>
 
             <section class="panel promo-panel" id="promocodes">
@@ -161,7 +174,7 @@
         const caseForm = document.querySelector('#case-form');
         const status = document.querySelector('#form-status');
         const caseStatus = document.querySelector('#case-status');
-        const caseFields = { name: document.querySelector('#case-name'), price: document.querySelector('#case-price'), image: document.querySelector('#case-image') };
+        const caseFields = { name: document.querySelector('#case-name'), price: document.querySelector('#case-price'), image: document.querySelector('#case-image'), section: document.querySelector('#case-section') };
         const caseActive = document.querySelector('#case-active');
         const caseFormTitle = document.querySelector('#case-form-title');
         const caseSubmit = document.querySelector('#case-submit');
@@ -185,6 +198,7 @@
 
         function showStatus(message, type) { status.textContent = message; status.className = `form-status ${type}`; }
         function formatDate(value) { return value ? new Date(value).toLocaleDateString('ru-RU') : '—'; }
+        function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
         function updateSelectedItemsCount() { document.querySelector('#selected-items-count').textContent = selectedCaseItems.size; }
         function formatCoins(value) { return `${Math.round(value || 0).toLocaleString('ru-RU')} BC`; }
         function updateCaseAnalytics() {
@@ -226,8 +240,8 @@
             list.innerHTML = [...selectedCaseItems].map(([id, selection]) => `<div class="selected-item"><img src="${selection.item.image_url || './data/assets/items/m5f90.png'}" alt=""><div><strong>${selection.item.name}</strong><small>${Number(selection.item.item_value || 0).toLocaleString('ru-RU')} BC</small></div><label class="selected-rarity"><span>Редкость в кейсе</span><select data-selected-rarity-id="${id}" aria-label="Редкость ${selection.item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selection.rarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select></label><label class="selected-chance input-with-suffix"><input type="number" min="0" max="100" step="0.01" value="${selection.chance}" data-selected-chance-id="${id}" aria-label="Шанс для ${selection.item.name}"><b>%</b></label><button class="remove-selected" type="button" data-remove-item-id="${id}" aria-label="Удалить ${selection.item.name}">×</button></div>`).join('');
         }
         function updateModalSelection() { document.querySelector('#modal-selection-count').textContent = `Выбрано: ${selectedCaseItems.size}`; updateSelectedItemsCount(); renderSelectedItems(); updateCaseAnalytics(); }
-        function resetCaseForm() { editingCaseId = null; caseForm.reset(); caseFields.image.value = './data/case_logo/free.png'; caseActive.checked = true; selectedCaseItems.clear(); caseFormTitle.textContent = 'Создать кейс'; caseSubmit.innerHTML = '<span>+</span>Создать кейс'; cancelCaseEdit.classList.add('hidden'); updateModalSelection(); }
-        function startCaseEdit(caseData) { editingCaseId = caseData.id; caseFields.name.value = caseData.name || ''; caseFields.price.value = caseData.price ?? 0; caseFields.image.value = caseData.image_url || './data/case_logo/free.png'; caseActive.checked = Boolean(caseData.active); selectedCaseItems.clear(); (caseData.case_items || []).forEach(item => { const catalogItem = availableItems.get(String(item.item_id)) || { id: item.item_id, name: item.item_name, rarity: item.rarity, item_value: item.item_value, image_url: item.image_url }; selectedCaseItems.set(String(item.item_id), { item: catalogItem, rarity: item.rarity || catalogItem.rarity, chance: Number(item.chance) || 0 }); }); caseFormTitle.textContent = 'Редактировать кейс'; caseSubmit.innerHTML = '<span>✓</span>Сохранить изменения'; cancelCaseEdit.classList.remove('hidden'); updateModalSelection(); document.querySelector('#cases').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        function resetCaseForm() { editingCaseId = null; caseForm.reset(); caseFields.image.value = './data/case_logo/free.png'; caseFields.section.value = 'Обычные кейсы'; caseActive.checked = true; selectedCaseItems.clear(); caseFormTitle.textContent = 'Создать кейс'; caseSubmit.innerHTML = '<span>+</span>Создать кейс'; cancelCaseEdit.classList.add('hidden'); updateModalSelection(); }
+        function startCaseEdit(caseData) { editingCaseId = caseData.id; caseFields.name.value = caseData.name || ''; caseFields.price.value = caseData.price ?? 0; caseFields.image.value = caseData.image_url || './data/case_logo/free.png'; caseFields.section.value = caseData.section_name || 'Обычные кейсы'; caseActive.checked = Boolean(caseData.active); selectedCaseItems.clear(); (caseData.case_items || []).forEach(item => { const catalogItem = availableItems.get(String(item.item_id)) || { id: item.item_id, name: item.item_name, rarity: item.rarity, item_value: item.item_value, image_url: item.image_url }; selectedCaseItems.set(String(item.item_id), { item: catalogItem, rarity: item.rarity || catalogItem.rarity, chance: Number(item.chance) || 0 }); }); caseFormTitle.textContent = 'Редактировать кейс'; caseSubmit.innerHTML = '<span>✓</span>Сохранить изменения'; cancelCaseEdit.classList.remove('hidden'); updateModalSelection(); document.querySelector('#cases').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
         function renderBuilderItems(items) {
             const list = document.querySelector('#case-items-builder');
             if (!items?.length) { list.innerHTML = '<p class="empty-state">В каталоге пока нет предметов</p>'; return; }
@@ -269,8 +283,8 @@
         }
         function renderCases(cases) {
             const list = document.querySelector('#cases-list');
-            if (!cases?.length) { list.innerHTML = '<tr><td colspan="5" class="empty-state">Кейсов пока нет</td></tr>'; return; }
-            list.innerHTML = cases.map(item => `<tr><td><div class="table-item"><img src="${item.image_url || './data/case_logo/free.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${Number(item.price || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${item.active ? '' : ' inactive'}">${item.active ? 'Активен' : 'Скрыт'}</span></td><td>${formatDate(item.created_at)}</td><td class="case-row-actions"><button class="edit-case-button" type="button" data-case-id="${item.id}">Изменить</button><button class="delete-case-button" type="button" data-delete-case-id="${item.id}">Удалить</button></td></tr>`).join('');
+            if (!cases?.length) { list.innerHTML = '<tr><td colspan="6" class="empty-state">Кейсов пока нет</td></tr>'; return; }
+            list.innerHTML = cases.map(item => `<tr><td><div class="table-item"><img src="${item.image_url || './data/case_logo/free.png'}" alt=""><strong>${item.name || 'Без названия'}</strong></div></td><td>${item.section_name || 'Обычные кейсы'}</td><td>${Number(item.price || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${item.active ? '' : ' inactive'}">${item.active ? 'Активен' : 'Скрыт'}</span></td><td>${formatDate(item.created_at)}</td><td class="case-row-actions"><button class="edit-case-button" type="button" data-case-id="${item.id}">Изменить</button><button class="delete-case-button" type="button" data-delete-case-id="${item.id}">Удалить</button></td></tr>`).join('');
             list.querySelectorAll('[data-case-id]').forEach(button => button.addEventListener('click', () => { const caseData = cases.find(item => String(item.id) === button.dataset.caseId); if (caseData) startCaseEdit(caseData); }));
             list.querySelectorAll('[data-delete-case-id]').forEach(button => button.addEventListener('click', () => { const caseData = cases.find(item => String(item.id) === button.dataset.deleteCaseId); if (caseData) deleteCase(caseData, button); }));
         }
@@ -294,6 +308,48 @@
                 caseStatus.className = 'form-status error';
             }
         }
+        const usersList = document.querySelector('#users-list');
+        const usersStatus = document.querySelector('#users-status');
+        function renderUsers(users) {
+            if (!users?.length) { usersList.innerHTML = '<tr><td colspan="6" class="empty-state">Пользователей пока нет</td></tr>'; return; }
+            usersList.innerHTML = users.map(user => {
+                const displayName = user.username || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Без имени';
+                const isAdmin = Boolean(user.admin);
+                return `<tr><td><div class="table-item"><img src="${escapeHtml(user.avatar_url || './data/assets/profile.png')}" alt=""><strong>${escapeHtml(displayName)}</strong></div></td><td>${escapeHtml(user.telegram_id || '—')}</td><td>${Number(user.balance || 0).toLocaleString('ru-RU')} BC</td><td><span class="status-pill${isAdmin ? '' : ' inactive'}">${isAdmin ? 'Администратор' : user.ban ? 'Заблокирован' : 'Игрок'}</span></td><td>${formatDate(user.created_at)}</td><td class="user-row-actions">${isAdmin ? '<span class="field-hint">Защищён</span>' : `<button class="delete-user-button" type="button" data-delete-user-id="${user.id}" data-delete-user-name="${escapeHtml(displayName)}">Удалить</button>`}</td></tr>`;
+            }).join('');
+            usersList.querySelectorAll('[data-delete-user-id]').forEach(button => button.addEventListener('click', () => deleteUser(button)));
+        }
+        async function loadUsers() {
+            if (!supabaseClient) return;
+            usersList.innerHTML = '<tr><td colspan="6" class="empty-state">Загрузка пользователей...</td></tr>';
+            const { data, error } = await supabaseClient.from('profiles').select('id, telegram_id, username, first_name, last_name, avatar_url, balance, admin, ban, created_at').order('created_at', { ascending: false });
+            if (error) { usersList.innerHTML = `<tr><td colspan="6" class="empty-state error-text">Не удалось загрузить пользователей: ${escapeHtml(error.message)}</td></tr>`; return; }
+            renderUsers(data);
+        }
+        async function deleteUser(button) {
+            const userName = button.dataset.deleteUserName || 'этого пользователя';
+            if (!confirm(`Удалить пользователя «${userName}»? Это действие нельзя отменить.`)) return;
+            button.disabled = true;
+            button.textContent = 'Удаление...';
+            const { data: deletedUsers, error } = await supabaseClient.from('profiles').delete().eq('id', button.dataset.deleteUserId).select('id');
+            if (error) {
+                button.disabled = false;
+                button.textContent = 'Удалить';
+                usersStatus.textContent = `Не удалось удалить пользователя: ${error.message}`;
+                usersStatus.className = 'form-status error';
+                return;
+            }
+            if (!deletedUsers?.length) {
+                button.disabled = false;
+                button.textContent = 'Удалить';
+                usersStatus.textContent = 'Пользователь не удалён: Supabase не разрешил удаление (проверьте RLS-политику DELETE для profiles).';
+                usersStatus.className = 'form-status error';
+                return;
+            }
+            usersStatus.textContent = `Пользователь «${userName}» удалён.`;
+            usersStatus.className = 'form-status success';
+            await loadUsers();
+        }
         function renderItems(items) {
             const list = document.querySelector('#items-list');
             if (!items?.length) { list.innerHTML = '<tr><td colspan="6" class="empty-state">Предметов пока нет</td></tr>'; return; }
@@ -301,7 +357,7 @@
         }
         async function loadCases() {
             if (!supabaseClient) return;
-            const { data, error } = await supabaseClient.from('cases').select('id, name, price, image_url, active, created_at, case_items(id, item_id, item_name, rarity, chance, item_value, image_url)').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('cases').select('id, name, price, image_url, active, section_name, created_at, case_items(id, item_id, item_name, rarity, chance, item_value, image_url)').order('created_at', { ascending: false });
             if (error) { fields.caseId.innerHTML = '<option value="">Не удалось загрузить кейсы</option>'; renderCases([]); return; }
             renderCases(data);
             const activeCases = data?.filter(item => item.active) || [];
@@ -319,7 +375,7 @@
             caseStatus.textContent = 'Отправка на сервер...';
             caseStatus.className = 'form-status loading';
             try {
-                const payload = { name, price, image_url: caseFields.image.value.trim() || null, active: caseActive.checked };
+                const payload = { name, price, image_url: caseFields.image.value.trim() || null, section_name: caseFields.section.value.trim() || 'Обычные кейсы', active: caseActive.checked };
                 const caseRequest = editingCaseId ? supabaseClient.from('cases').update(payload).eq('id', editingCaseId).select('id, name').single() : supabaseClient.from('cases').insert(payload).select('id, name').single();
                 const { data, error } = await caseRequest;
                 if (error) { caseStatus.textContent = `Ошибка: ${error.message}`; caseStatus.className = 'form-status error'; return; }
@@ -466,6 +522,9 @@
         const freeCaseSelectedCount = document.querySelector('#free-case-selected-count');
         const freeCaseAdminState = document.querySelector('#free-case-admin-state');
         const freeCaseAdminReset = document.querySelector('#free-case-admin-reset');
+        const freeCaseItemSort = document.querySelector('#free-case-item-sort');
+        const upgraderEventEnabled = document.querySelector('#upgrader-event-enabled');
+        const upgraderEventStatus = document.querySelector('#upgrader-event-status');
 
         function formatFreeCaseAdminDate(value) {
             return value ? new Date(value).toLocaleString('ru-RU') : '—';
@@ -477,9 +536,21 @@
                 const config = selected.get(String(item.id));
                 const selectedRarity = config?.rarity || item.rarity;
                 const selectedChance = config?.chance ?? 0;
-                return `<label class="free-case-item"><input type="checkbox" value="${item.id}"${config ? ' checked' : ''}><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="free-case-item-copy"><strong>${item.name}</strong><small>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</small></span><select class="free-case-rarity" data-free-case-rarity="${item.id}" aria-label="Редкость ${item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selectedRarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select><span class="free-case-chance input-with-suffix"><input type="number" min="0" step="0.01" value="${selectedChance}" data-free-case-chance="${item.id}" aria-label="Шанс ${item.name}"><b>%</b></span></label>`;
+                return `<label class="free-case-item" data-name="${String(item.name || '').toLocaleLowerCase('ru-RU')}" data-price="${Number(item.item_value || 0)}"><input type="checkbox" value="${item.id}"${config ? ' checked' : ''}><img src="${item.image_url || './data/assets/items/m5f90.png'}" alt=""><span class="free-case-item-copy"><strong>${item.name}</strong><small>${Number(item.item_value || 0).toLocaleString('ru-RU')} BC</small></span><select class="free-case-rarity" data-free-case-rarity="${item.id}" aria-label="Редкость ${item.name}">${Object.entries(rarityNames).map(([value, label]) => `<option value="${value}"${selectedRarity === value ? ' selected' : ''}>${label}</option>`).join('')}</select><span class="free-case-chance input-with-suffix"><input type="number" min="0" step="0.01" value="${selectedChance}" data-free-case-chance="${item.id}" aria-label="Шанс ${item.name}"><b>%</b></span></label>`;
             }).join('') : '<p class="empty-state">В каталоге пока нет предметов.</p>';
+            sortFreeCaseItems();
             updateFreeCaseSelectedCount();
+        }
+
+        function sortFreeCaseItems() {
+            const items = [...freeCasePicker.querySelectorAll('.free-case-item')];
+            const sort = freeCaseItemSort.value;
+            items.sort((first, second) => {
+                if (sort === 'name') return (first.dataset.name || '').localeCompare(second.dataset.name || '', 'ru');
+                const priceDifference = Number(second.dataset.price || 0) - Number(first.dataset.price || 0);
+                return sort === 'price-asc' ? -priceDifference : priceDifference;
+            });
+            items.forEach(item => freeCasePicker.appendChild(item));
         }
 
         function updateFreeCaseSelectedCount() {
@@ -501,6 +572,7 @@
         }
 
         freeCasePicker.addEventListener('change', updateFreeCaseSelectedCount);
+        freeCaseItemSort.addEventListener('change', sortFreeCaseItems);
         document.querySelector('#free-case-save').addEventListener('click', async () => {
             const limit = Number(freeCaseLimit.value);
             const itemConfigs = [...freeCasePicker.querySelectorAll('input[type="checkbox"]:checked')].map(input => ({
@@ -530,11 +602,39 @@
             await loadFreeCaseAdmin();
         });
 
+        async function loadUpgraderEventSettings() {
+            const { data, error } = await supabaseClient.from('app_settings').select('upgrader_enabled').eq('setting_key', 'global').maybeSingle();
+            if (error) {
+                upgraderEventStatus.textContent = `Не удалось загрузить состояние: ${error.message}`;
+                upgraderEventStatus.className = 'form-status error';
+                return;
+            }
+            upgraderEventEnabled.checked = data?.upgrader_enabled !== false;
+        }
+
+        upgraderEventEnabled.addEventListener('change', async () => {
+            const enabled = upgraderEventEnabled.checked;
+            upgraderEventEnabled.disabled = true;
+            upgraderEventStatus.textContent = 'Сохраняем...';
+            upgraderEventStatus.className = 'form-status loading';
+            const { error } = await supabaseClient.from('app_settings').upsert({ setting_key: 'global', upgrader_enabled: enabled }, { onConflict: 'setting_key' });
+            upgraderEventEnabled.disabled = false;
+            if (error) {
+                upgraderEventEnabled.checked = !enabled;
+                upgraderEventStatus.textContent = `Не удалось сохранить: ${error.message}`;
+                upgraderEventStatus.className = 'form-status error';
+                return;
+            }
+            upgraderEventStatus.textContent = enabled ? 'Событие включено.' : 'Событие выключено.';
+            upgraderEventStatus.className = 'form-status success';
+        });
+
         const freeCaseOriginalLoadItems = loadItems;
         const loadItemsWithFreeCase = async () => { await freeCaseOriginalLoadItems(); await loadFreeCaseAdmin(); };
         document.querySelector('#refresh-items').addEventListener('click', loadItemsWithFreeCase);
         updatePreview(); updateModalSelection();
-        Promise.all([loadCases(), loadItems(), loadBuilderItems(), loadPromos()]).then(loadFreeCaseAdmin);
+        Promise.all([loadCases(), loadItems(), loadBuilderItems(), loadPromos(), loadUsers(), loadUpgraderEventSettings()]).then(loadFreeCaseAdmin);
+        document.querySelector('#refresh-users').addEventListener('click', loadUsers);
     </script>
 </body>
 </html>

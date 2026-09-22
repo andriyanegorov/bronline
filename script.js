@@ -549,8 +549,10 @@ function openNicknameModal() {
     const modal = document.querySelector('#nickname-modal');
     const input = document.querySelector('#nickname-input');
     if (!modal || !input) return;
+    const status = document.querySelector('#nickname-status');
     input.value = currentProfileUsername.slice(0, 12);
     document.querySelector('#nickname-counter').textContent = input.value.length;
+    if (status) status.textContent = '';
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     setTimeout(() => input.focus(), 0);
@@ -562,12 +564,8 @@ function setupNicknamePrompt(telegramUser) {
     const input = document.querySelector('#nickname-input');
     const counter = document.querySelector('#nickname-counter');
     const status = document.querySelector('#nickname-status');
-    if (!modal || !form || !input || !telegramUser || !currentProfileId) return;
-    const storageKey = `nickname-created-${telegramUser.id}`;
-    let alreadyCompleted = false;
-    try { alreadyCompleted = localStorage.getItem(storageKey) === 'true'; } catch (error) { console.warn('Не удалось проверить первый вход:', error); }
-    if (alreadyCompleted) return;
-    openNicknameModal();
+    if (!modal || !form || !input || currentProfileId === null) return;
+    const storageKey = `nickname-created-${telegramUser?.id || currentProfileId}`;
     input.addEventListener('input', () => { input.value = input.value.slice(0, 12); counter.textContent = input.value.length; });
     form.addEventListener('submit', async event => {
         event.preventDefault();
@@ -576,15 +574,20 @@ function setupNicknamePrompt(telegramUser) {
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
         status.textContent = 'Сохраняем...';
-        const { error } = await supabase.from('profiles').update({ username: nickname, updated_at: new Date().toISOString() }).eq('id', currentProfileId);
+        const { data, error } = await supabase.from('profiles').update({ username: nickname, updated_at: new Date().toISOString() }).eq('id', currentProfileId).select('id, username').maybeSingle();
         button.disabled = false;
         if (error) { status.textContent = `Не удалось сохранить ник: ${error.message}`; return; }
+        if (!data) { status.textContent = 'Не удалось сохранить ник: профиль не найден или обновление запрещено RLS.'; return; }
         currentProfileUsername = nickname;
         updateDisplayedUsername(nickname);
         try { localStorage.setItem(storageKey, 'true'); } catch (storageError) { console.warn('Не удалось запомнить первый вход:', storageError); }
         modal.classList.remove('open');
         modal.setAttribute('aria-hidden', 'true');
     });
+    let alreadyCompleted = false;
+    try { alreadyCompleted = localStorage.getItem(storageKey) === 'true'; } catch (error) { console.warn('Не удалось проверить первый вход:', error); }
+    if (alreadyCompleted) return;
+    openNicknameModal();
 }
 
 function inventoryRarityClass(rarity) {
@@ -2080,6 +2083,23 @@ async function loadLeaderboard(metric = 'balance') {
     renderLeaderboard(rankedProfiles.slice(0, 10), metric);
 }
 
+async function loadUpgraderEventState() {
+    const banner = document.querySelector('[data-open-upgrader]');
+    if (!banner) return;
+    banner.hidden = true;
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from('app_settings')
+        .select('upgrader_enabled')
+        .eq('setting_key', 'global')
+        .maybeSingle();
+    if (error) {
+        console.error('Supabase upgrader event settings error:', error);
+        return;
+    }
+    banner.hidden = data?.upgrader_enabled === false;
+}
+
 async function initTelegramAuth() {
     const telegramApp = window.Telegram && window.Telegram.WebApp;
     if (telegramApp) {
@@ -2094,6 +2114,7 @@ async function initTelegramAuth() {
     applyTelegramProfileToUI(telegramUser);
     await syncTelegramProfileToSupabase(telegramUser);
     await loadCurrentUserProfile();
+    await loadUpgraderEventState();
     await processIncomingReferral();
     await loadReferralStats();
     await loadFreeCaseState();
@@ -2284,8 +2305,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderAllCasesModal(cases) {
         const modalGrid = document.querySelector('#all-cases-grid');
         if (!modalGrid) return;
-        modalGrid.innerHTML = cases.map(renderCaseCard).join('');
-        bindCaseCardEvents(modalGrid);
+        const sections = new Map();
+        cases.forEach(item => {
+            const sectionName = String(item.section_name || 'Обычные кейсы').trim() || 'Обычные кейсы';
+            if (!sections.has(sectionName)) sections.set(sectionName, []);
+            sections.get(sectionName).push(item);
+        });
+        modalGrid.innerHTML = [...sections].map(([sectionName, sectionCases]) => `<section class="all-cases-section"><h3>${escapeHtml(sectionName)}</h3><div class="all-cases-section-grid">${sectionCases.map(renderCaseCard).join('')}</div></section>`).join('');
+        modalGrid.querySelectorAll('.all-cases-section-grid').forEach(bindCaseCardEvents);
     }
 
     function openAllCasesModal() {
@@ -2312,7 +2339,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadCases() {
         if (!supabase || !casesContainer) return;
-        const { data, error } = await supabase.from('cases').select('id, name, price, image_url, active, case_items(id, item_name, rarity, chance, item_value, image_url)').eq('active', true).order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('cases').select('id, name, price, image_url, active, section_name, created_at, case_items(id, item_name, rarity, chance, item_value, image_url)').eq('active', true).order('created_at', { ascending: false });
         if (error) { casesContainer.innerHTML = '<p class="cases-loading">Не удалось загрузить кейсы</p>'; console.error('Не удалось загрузить кейсы:', error); return; }
         casesById.clear();
         data.forEach(item => casesById.set(String(item.id), item));
