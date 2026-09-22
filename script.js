@@ -2202,6 +2202,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             this.classList.add('selected');
             this.setAttribute('aria-pressed', 'true');
+            const topupSubmit = document.querySelector('.topup-submit');
+            if (topupSubmit) topupSubmit.dataset.funpayUrl = this.dataset.funpayUrl || '';
+        });
+    });
+
+    document.querySelectorAll('[data-funpay-url]').forEach(button => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.funpayUrl;
+            if (url) window.open(url, '_blank', 'noopener,noreferrer');
         });
     });
 

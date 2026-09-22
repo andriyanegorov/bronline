@@ -5527,7 +5527,7 @@ border-color: rgb(126 63 38);
 
 .leaderboard-profile-dialog {
     position: relative;
-    width: min(330px, 100%);
+    width: min(390px, 100%);
     padding: 34px 22px 22px;
     overflow: hidden;
     border: 1px solid rgba(255, 62, 62, 0.5);
@@ -5667,9 +5667,9 @@ border-color: rgb(126 63 38);
 
 .leaderboard-profile-inventory {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    max-height: 190px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    max-height: 270px;
     overflow-y: auto;
     padding-right: 3px;
 }
@@ -5679,7 +5679,7 @@ border-color: rgb(126 63 38);
 
 .leaderboard-profile-inventory-item {
     min-width: 0;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.035);
@@ -5699,8 +5699,8 @@ border-color: rgb(126 63 38);
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 62px;
-    margin-bottom: 6px;
+    height: 96px;
+    margin-bottom: 8px;
     overflow: hidden;
     border-radius: 7px;
     background: #101214;
@@ -5728,8 +5728,8 @@ border-color: rgb(126 63 38);
 }
 
 .leaderboard-profile-inventory-visual img {
-    width: 56px;
-    height: 56px;
+    width: 100px;
+    height: 100px;
     object-fit: contain;
 }
 
@@ -5737,7 +5737,7 @@ border-color: rgb(126 63 38);
     display: block;
     overflow: hidden;
     color: #f0f0f2;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -5747,7 +5747,7 @@ border-color: rgb(126 63 38);
     display: block;
     margin-top: 4px;
     color: #ff6b6b;
-    font-size: 10px;
+    font-size: 11px;
 }
 
 .leaderboard-profile-inventory-state {
