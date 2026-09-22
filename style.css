@@ -2496,7 +2496,6 @@ display: grid;
     width: min(92%, 500px);
     max-height: 255px;
     object-fit: contain;
-    filter: drop-shadow(0 15px 17px rgba(255, 25, 25, 0.36));
 }
 
 .open-count-label {
