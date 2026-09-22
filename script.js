@@ -12,6 +12,35 @@ const supabase = window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.url !
     : null;
 let currentProfileId = null;
 let currentProfileUsername = '';
+async function logPlayerAction(action, details = {}) {
+    if (!supabase || currentProfileId === null) return null;
+
+    try {
+const payload = {
+    ...details,
+    username: currentProfileUsername || null,
+    page: document.querySelector('.page.active')?.dataset?.page || null,
+    url: window.location.href,
+    client_time: new Date().toISOString()
+};
+
+        const { data, error } = await supabase.rpc('log_player_action', {
+            p_user_id: Number(currentProfileId),
+            p_action: action,
+            p_details: payload
+        });
+
+        if (error) {
+            console.error('[PLAYER LOG]', action, error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('[PLAYER LOG CRASH]', action, error);
+        return null;
+    }
+}
 let currentProfilePremium = false;
 let currentProfileAdmin = false;
 let currentProfileBanned = false;
@@ -191,6 +220,13 @@ async function claimFreeCase() {
         await loadFreeCaseState();
         return;
     }
+    await logPlayerAction('free_case_claimed', {
+    claim_id: data.claim_id,
+    item_id: data.item_id,
+    item_name: data.item_name,
+    rarity: data.rarity,
+    item_value: Number(data.item_value || 0)
+});
     const freeCaseItems = Array.isArray(itemsResult.data) ? itemsResult.data : [];
     const forcedDrop = {
         name: data.item_name,
@@ -241,7 +277,14 @@ async function processIncomingReferral() {
         console.error('Supabase referral claim error:', error);
         return;
     }
-    if (data?.claimed) console.log('Реферальный бонус начислен:', data.reward_amount);
+if (data?.claimed) {
+    await logPlayerAction('referral_claimed', {
+        referral_code: referralCode,
+        reward_amount: Number(data.reward_amount || 0)
+    });
+
+    console.log('Реферальный бонус начислен:', data.reward_amount);
+}
 }
 
 async function loadReferralStats() {
@@ -576,6 +619,14 @@ async function toggleShowcaseItem(inventoryId, button) {
         button.disabled = false;
         return;
     }
+    await logPlayerAction(
+    isPublished
+        ? 'showcase_item_removed'
+        : 'showcase_item_added',
+    {
+        inventory_id: Number(inventoryId)
+    }
+);
     await loadInventory();
     await loadUpgraderInventory();
     await loadShowcase();
@@ -762,6 +813,11 @@ async function sellInventoryItem(inventoryId, button) {
         return;
     }
 
+await logPlayerAction('inventory_item_sold', {
+    inventory_id: Number(inventoryId),
+    balance_after: Number(data || 0)
+});
+
     const balanceAmount = document.querySelector('.balance-amount');
     if (balanceAmount) balanceAmount.textContent = Number(data || 0).toLocaleString('ru-RU');
     await loadInventory();
@@ -817,6 +873,12 @@ async function sellAllInventory() {
             if (submitButton) submitButton.disabled = false;
             return;
         }
+
+        await logPlayerAction('inventory_bulk_sold', {
+    inventory_ids: inventoryToSell.map(item => Number(item.id)),
+    count: inventoryToSell.length,
+    balance_after: Number(balance || 0)
+});
 
         const balanceAmount = document.querySelector('.balance-amount');
         if (balanceAmount && balance !== null && balance !== undefined) {
@@ -1643,6 +1705,14 @@ async function toggleShowcaseLike(showcaseId) {
         ? await supabase.from('showcase_likes').delete().eq('id', existing.data.id)
         : await supabase.from('showcase_likes').insert({ showcase_id: showcaseId, user_id: currentProfileId });
     if (result.error) console.error('Supabase showcase like error:', result.error);
+    if (!result.error) {
+    await logPlayerAction(
+        existing.data ? 'showcase_unliked' : 'showcase_liked',
+        {
+            showcase_id: Number(showcaseId)
+        }
+    );
+}
     await loadShowcase();
     if (activeShowcaseId) openShowcaseModal(activeShowcaseId);
 }
@@ -1654,6 +1724,16 @@ async function toggleShowcaseCommentLike(commentId) {
         ? await supabase.from('showcase_comment_likes').delete().eq('id', existing.data.id)
         : await supabase.from('showcase_comment_likes').insert({ comment_id: commentId, user_id: currentProfileId });
     if (result.error) console.error('Supabase comment like error:', result.error);
+    if (!result.error) {
+    await logPlayerAction(
+        existing.data
+            ? 'showcase_comment_unliked'
+            : 'showcase_comment_liked',
+        {
+            comment_id: Number(commentId)
+        }
+    );
+}
     await loadShowcase();
     if (activeShowcaseId) openShowcaseModal(activeShowcaseId);
 }
@@ -1835,6 +1915,12 @@ async function saveDropToInventory(drop) {
         quantity: 1
     });
     if (!error) {
+        await logPlayerAction('inventory_item_received', {
+    item_id: drop.itemId || null,
+    item_name: drop.name,
+    rarity: drop.rarity,
+    item_value: Number(drop.price || 0)
+});
         await loadInventory();
         await loadProfileStats();
     }
@@ -2063,6 +2149,14 @@ document.addEventListener('DOMContentLoaded', function() {
             showPromoResultToast('Не удалось применить промокод', error.message, true);
             return;
         }
+        await logPlayerAction('promo_used', {
+    code: code,
+    reward_type: data?.reward_type || null,
+    reward_value: Number(data?.reward_value || 0),
+    balance_after: data?.balance != null
+        ? Number(data.balance)
+        : null
+});
         if (promoInput) promoInput.value = '';
         if (data?.reward_type === 'coins') {
             const balanceAmount = document.querySelector('.balance-amount');
@@ -2487,6 +2581,21 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Supabase case opening save error:', error);
             return;
         }
+await logPlayerAction('case_opened', {
+    case_id: Number(selectedCase.id),
+    case_name: selectedCase.name || null,
+    quantity: drops.length,
+    drops: drops.map(drop => ({
+        item_id: drop.itemId || null,
+        item_name: drop.name,
+        rarity: drop.rarity,
+        value: Number(drop.price || 0)
+    })),
+    total_value: drops.reduce(
+        (sum, drop) => sum + Number(drop.price || 0),
+        0
+    )
+});
         await loadProfileStats();
     }
 
@@ -2500,6 +2609,13 @@ document.addEventListener('DOMContentLoaded', function() {
             p_quantity: Number(quantity)
         });
         if (!error) {
+
+await logPlayerAction('case_open_started', {
+    case_id: Number(selectedCase.id),
+    case_name: selectedCase.name || null,
+    quantity: Number(quantity),
+    balance_after: Number(data || 0)
+});
             const balanceAmount = document.querySelector('.balance-amount');
             if (balanceAmount) balanceAmount.textContent = Number(data || 0).toLocaleString('ru-RU');
         }
@@ -2682,6 +2798,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (readError) return readError;
         const { error } = await supabase.from('profiles').update({ balance: Number(profile.balance || 0) + total, updated_at: new Date().toISOString() }).eq('id', currentProfileId);
         if (!error) {
+
+await logPlayerAction('case_items_sold', {
+    case_id: selectedCase?.id || null,
+    case_name: selectedCase?.name || null,
+    items: drops.map(drop => ({
+        item_id: drop.itemId || null,
+        item_name: drop.name,
+        rarity: drop.rarity,
+        value: Number(drop.price || 0)
+    })),
+    total_value: total,
+    balance_before: Number(profile.balance || 0),
+    balance_after: Number(profile.balance || 0) + total
+});
+
             const balanceAmount = document.querySelector('.balance-amount');
             if (balanceAmount) balanceAmount.textContent = (Number(profile.balance || 0) + total).toLocaleString('ru-RU');
             await loadProfileStats();
@@ -2725,6 +2856,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     dropResultSell.textContent = 'ОШИБКА ПРОДАЖИ';
                     return;
                 }
+                await logPlayerAction('free_case_sold', {
+    claim_id: Number(freeCaseClaimId),
+    item_id: drops[0]?.itemId || null,
+    item_name: drops[0]?.name || null,
+    item_value: Number(drops[0]?.price || 0),
+    balance_after: Number(data.balance || 0)
+});
                 const balanceAmount = document.querySelector('.balance-amount');
                 if (balanceAmount) balanceAmount.textContent = Number(data.balance || 0).toLocaleString('ru-RU');
                 await loadProfileStats();
@@ -2871,6 +3009,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 showInsufficientFundsToast(data?.error || 'Не удалось выполнить апгрейд.');
                 return;
             }
+await logPlayerAction(
+    data.success ? 'upgrader_success' : 'upgrader_failed',
+    {
+        inventory_id: Number(selectedUpgraderItem.id),
+        item_name: selectedUpgraderItem.item_name || null,
+        item_value: Number(selectedUpgraderItem.item_value || 0),
+        rarity: selectedUpgraderItem.rarity || null,
+        multiplier: Number(upgraderMultiplier),
+        success: Boolean(data.success),
+        result: data
+    }
+);
 
             spinUpgraderChance(Boolean(data.success), async () => {
                 selectedUpgraderTarget = null;
@@ -3006,3 +3156,270 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 })();
+
+function processPlayerLogs_() {
+  const props = PropertiesService.getScriptProperties();
+
+  let lastId = Number(
+    props.getProperty('PLAYER_LOG_LAST_ID') || 0
+  );
+
+  const rows = supabaseRequest_(
+    'bot_logs',
+    'get',
+    null,
+    {
+      id: 'gt.' + lastId,
+      order: 'id.asc',
+      limit: '50'
+    }
+  );
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return;
+  }
+
+  let maxId = lastId;
+
+  rows.forEach(function(row) {
+    try {
+      const text = formatPlayerLog_(row);
+
+      sendAdminTopic_(
+        cfg_('TOPIC_LOGGING'),
+        text
+      );
+
+      maxId = Math.max(maxId, Number(row.id));
+
+    } catch (err) {
+      console.error(
+        'PLAYER LOG SEND ERROR:',
+        err
+      );
+    }
+  });
+
+  if (maxId > lastId) {
+    props.setProperty(
+      'PLAYER_LOG_LAST_ID',
+      String(maxId)
+    );
+  }
+}
+
+
+function formatPlayerLog_(row) {
+  const details = row.details || {};
+  const action = row.action || 'unknown';
+
+  const telegramId = row.telegram_id
+    ? String(row.telegram_id)
+    : '—';
+
+  const userId = details.user_id
+    ? String(details.user_id)
+    : '—';
+
+  const username = details.username
+    ? '@' + String(details.username).replace(/^@/, '')
+    : '—';
+
+  const time = row.created_at
+    ? String(row.created_at)
+    : '—';
+
+  let icon = '📌';
+  let title = action;
+
+  switch (action) {
+
+    case 'case_open_started':
+      icon = '🎰';
+      title = 'Начато открытие кейса';
+      break;
+
+    case 'case_opened':
+      icon = '📦';
+      title = 'Кейс открыт';
+      break;
+
+    case 'inventory_item_received':
+      icon = '🎁';
+      title = 'Предмет получен';
+      break;
+
+    case 'inventory_item_sold':
+      icon = '💰';
+      title = 'Предмет продан';
+      break;
+
+    case 'inventory_bulk_sold':
+      icon = '💰';
+      title = 'Инвентарь продан';
+      break;
+
+    case 'case_items_sold':
+      icon = '💵';
+      title = 'Предметы из кейса проданы';
+      break;
+
+    case 'free_case_claimed':
+      icon = '🎁';
+      title = 'Бесплатный кейс получен';
+      break;
+
+    case 'free_case_sold':
+      icon = '💵';
+      title = 'Предмет бесплатного кейса продан';
+      break;
+
+    case 'upgrader_success':
+      icon = '🚀';
+      title = 'Апгрейд успешен';
+      break;
+
+    case 'upgrader_failed':
+      icon = '❌';
+      title = 'Апгрейд неудачен';
+      break;
+
+    case 'promo_used':
+      icon = '🎟️';
+      title = 'Промокод использован';
+      break;
+
+    case 'referral_claimed':
+      icon = '👥';
+      title = 'Реферальный бонус получен';
+      break;
+
+    case 'showcase_item_added':
+      icon = '🖼️';
+      title = 'Предмет добавлен на витрину';
+      break;
+
+    case 'showcase_item_removed':
+      icon = '🖼️';
+      title = 'Предмет убран с витрины';
+      break;
+
+    case 'showcase_liked':
+      icon = '❤️';
+      title = 'Лайк витрины';
+      break;
+
+    case 'showcase_unliked':
+      icon = '💔';
+      title = 'Лайк витрины снят';
+      break;
+
+    case 'showcase_comment_added':
+      icon = '💬';
+      title = 'Добавлен комментарий';
+      break;
+
+    case 'showcase_comment_liked':
+      icon = '❤️';
+      title = 'Лайк комментария';
+      break;
+
+    case 'showcase_comment_unliked':
+      icon = '💔';
+      title = 'Лайк комментария снят';
+      break;
+
+    case 'showcase_settings_changed':
+      icon = '🎨';
+      title = 'Изменены настройки витрины';
+      break;
+  }
+
+  let text =
+    icon + ' <b>' + escapeHtml_(title) + '</b>\n\n' +
+    '👤 User ID: <code>' + escapeHtml_(userId) + '</code>\n' +
+    '🆔 Telegram: <code>' + escapeHtml_(telegramId) + '</code>\n' +
+    '📛 Username: ' + escapeHtml_(username) + '\n' +
+    '🕐 ' + escapeHtml_(time);
+
+  const important = [];
+
+  if (details.case_name) {
+    important.push(
+      '🎰 Кейс: <b>' +
+      escapeHtml_(details.case_name) +
+      '</b>'
+    );
+  }
+
+  if (details.item_name) {
+    important.push(
+      '📦 Предмет: <b>' +
+      escapeHtml_(details.item_name) +
+      '</b>'
+    );
+  }
+
+  if (details.quantity != null) {
+    important.push(
+      '🔢 Количество: <b>' +
+      escapeHtml_(String(details.quantity)) +
+      '</b>'
+    );
+  }
+
+  if (details.item_value != null) {
+    important.push(
+      '💎 Стоимость: <b>' +
+      escapeHtml_(String(details.item_value)) +
+      '</b>'
+    );
+  }
+
+  if (details.total_value != null) {
+    important.push(
+      '💰 Сумма: <b>' +
+      escapeHtml_(String(details.total_value)) +
+      '</b>'
+    );
+  }
+
+  if (details.balance_after != null) {
+    important.push(
+      '💳 Баланс после: <b>' +
+      escapeHtml_(String(details.balance_after)) +
+      '</b>'
+    );
+  }
+
+  if (details.multiplier != null) {
+    important.push(
+      '⚡ Множитель: <b>x' +
+      escapeHtml_(String(details.multiplier)) +
+      '</b>'
+    );
+  }
+
+  if (details.success != null) {
+    important.push(
+      '📊 Результат: <b>' +
+      (details.success ? 'УСПЕХ' : 'НЕУДАЧА') +
+      '</b>'
+    );
+  }
+
+  if (important.length) {
+    text += '\n\n' + important.join('\n');
+  }
+
+  return text;
+}
+
+
+function escapeHtml_(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
